@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: financial-system-ingress
+  namespace: financial-system
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+spec:
+  rules:
+  - host: api.financial-system.com
+    http:
+      paths:
+      - path: /products
+        pathType: Prefix
+        backend:
+          service:
+            name: policy-service
+            port:
+              number: 8001
+      - path: /sessions
+        pathType: Prefix
+        backend:
+          service:
+            name: journey-service
+            port:
+              number: 8003
+      - path: /parse_intent
+        pathType: Prefix
+        backend:
+          service:
+            name: agent-service
+            port:
+              number: 8002
+      - path: /execute_tools
+        pathType: Prefix
+        backend:
+          service:
+            name: pil-service
+            port:
+              number: 8001
+      - path: /query_audit
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-service
+            port:
+              number: 8005
+      - path: /provider/ingest
+        pathType: Prefix
+        backend:
+          service:
+            name: ingestion-worker
+            port:
+              number: 8006

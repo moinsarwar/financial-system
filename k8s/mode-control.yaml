@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mode-control
+  namespace: financial-system
+spec:
+  selector:
+    app: mode-control
+  ports:
+  - port: 8006
+    targetPort: 8006
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mode-control
+  namespace: financial-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mode-control
+  template:
+    metadata:
+      labels:
+        app: mode-control
+    spec:
+      containers:
+      - name: mode-control
+        image: financial-system/mode-control:5.2
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: REDIS_URL
+          value: redis://:redis123@redis:6379
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: kafka:9092
+        - name: POSTGRES_HOST
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: financial-system-secrets
+              key: postgres-password
+        ports:
+        - containerPort: 8006
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "400m"
