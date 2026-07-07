@@ -62,7 +62,7 @@ async def query_products(
                 query += " AND product_type = %s"
                 params.append(product_type)
             if jurisdiction:
-                query += " AND %s = ANY(jurisdiction_list)"
+                query += " AND jurisdiction ? %s"
                 params.append(jurisdiction)
             
             query += " LIMIT %s OFFSET %s"
@@ -77,14 +77,14 @@ async def query_products(
                     "product_id": row["product_id"],
                     "provider_id": row["provider_id"],
                     "product_type": row["product_type"],
-                    "jurisdiction": row["jurisdiction_list"],
+                    "jurisdiction": row["jurisdiction"],
                     "status": row["status"],
                     "version": row["version"],
                     "last_updated": row["last_updated"].isoformat() if row["last_updated"] else None,
-                    "pricing": row["pricing_json"],
-                    "eligibility_rules": row["eligibility_rules_json"],
-                    "features": row["features_json"],
-                    "compliance": row["compliance_json"]
+                    "pricing": row["pricing"],
+                    "eligibility_rules": row["eligibility_rules"],
+                    "features": row["features"],
+                    "compliance": row["compliance"]
                 })
             
             return {"total": len(formatted_products), "products": formatted_products}
@@ -108,14 +108,14 @@ async def get_product(product_id: str):
                 "product_id": row["product_id"],
                 "provider_id": row["provider_id"],
                 "product_type": row["product_type"],
-                "jurisdiction": row["jurisdiction_list"],
+                "jurisdiction": row["jurisdiction"],
                 "status": row["status"],
                 "version": row["version"],
                 "last_updated": row["last_updated"].isoformat() if row["last_updated"] else None,
-                "pricing": row["pricing_json"],
-                "eligibility_rules": row["eligibility_rules_json"],
-                "features": row["features_json"],
-                "compliance": row["compliance_json"]
+                "pricing": row["pricing"],
+                "eligibility_rules": row["eligibility_rules"],
+                "features": row["features"],
+                "compliance": row["compliance"]
             }
     except HTTPException:
         raise
@@ -137,20 +137,20 @@ async def ingest_product_feed(feed: ProductFeed):
                 
                 cur.execute("""
                     INSERT INTO products (
-                        product_id, provider_id, product_type, jurisdiction_list, status, 
-                        version, last_updated, pricing_json, eligibility_rules_json, features_json, compliance_json
+                        product_id, provider_id, product_type, jurisdiction, status, 
+                        version, last_updated, pricing, eligibility_rules, features, compliance
                     ) VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s)
                     ON CONFLICT (product_id) DO UPDATE SET
-                        pricing_json = EXCLUDED.pricing_json,
-                        eligibility_rules_json = EXCLUDED.eligibility_rules_json,
-                        features_json = EXCLUDED.features_json,
-                        compliance_json = EXCLUDED.compliance_json,
+                        pricing = EXCLUDED.pricing,
+                        eligibility_rules = EXCLUDED.eligibility_rules,
+                        features = EXCLUDED.features,
+                        compliance = EXCLUDED.compliance,
                         last_updated = NOW()
                 """, (
                     prod_id,
                     feed.provider_id,
                     prod.get("product_type", "unknown"),
-                    prod.get("jurisdiction", ["PK"]),
+                    json.dumps(prod.get("jurisdiction", ["PK"])),
                     prod.get("status", "active"),
                     prod.get("version", "1"),
                     json.dumps(prod.get("pricing", {})),
