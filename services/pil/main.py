@@ -1,150 +1,188 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query, Path, Body
 from pydantic import BaseModel
-import redis
 import json
 import logging
 import os
-from kafka import KafkaProducer
 import uuid
-from typing import List, Dict, Optional
 import time
-import re
+from typing import List, Dict, Optional
+from kafka import KafkaProducer
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-app = FastAPI(title="PIL Service", version="5.2")
-
+app = FastAPI(title="Product Intelligence Service (PIL)", version="5.2")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ✅ FIX: Parse Redis URL properly
-def get_redis_connection():
-    redis_url = os.getenv('REDIS_URL', 'redis://redis:6379')
-    # If REDIS_URL is set, use it directly
-    if redis_url.startswith('redis://'):
-        return redis.Redis.from_url(redis_url, decode_responses=True)
-    
-    # Otherwise construct from individual env vars
-    redis_host = os.getenv('REDIS_HOST', 'redis')
-    redis_port = int(os.getenv('REDIS_PORT', 6379))
-    redis_password = os.getenv('REDIS_PASSWORD', 'redis123')
-    
-    return redis.Redis(
-        host=redis_host,
-        port=redis_port,
-        password=redis_password,
-        decode_responses=True
-    )
-
-# Initialize Redis
-redis_client = get_redis_connection()
-
 # Kafka producer
-producer = KafkaProducer(
-    bootstrap_servers=os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092'),
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
+try:
+    producer = KafkaProducer(
+        bootstrap_servers=os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092'),
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    )
+except Exception as e:
+    logger.error(f"Failed to connect to Kafka: {e}")
+    producer = None
 
-class Product(BaseModel):
-    product_id: str
-    provider_id: str
-    product_type: str
-    jurisdiction: List[str]
-    status: str
-    version: str
-    last_updated: str
-    pricing: dict
-    eligibility_rules: dict
-    features: List[dict]
-    compliance: dict
+def get_db_connection():
+    return psycopg2.connect(
+        host=os.getenv('DB_HOST', 'postgres'),
+        port=os.getenv('DB_PORT', '5432'),
+        database=os.getenv('DB_NAME', 'financial_system'),
+        user=os.getenv('DB_USER', 'postgres'),
+        password=os.getenv('DB_PASSWORD', 'postgres')
+    )
 
 class ProductFeed(BaseModel):
     provider_id: str
     schema_hash: str
-    products: List[Product]
-
-class SessionCreate(BaseModel):
-    mode: str
-    primary_jurisdiction: str
-
-class ExecuteRequest(BaseModel):
-    session_id: str
-    mode: str
-    steps: List[dict]
+    products: List[dict] 
 
 @app.get("/health")
 async def health_check():
-    return {
-        "status": "ok", 
-        "service": "pil-service", 
-        "version": "5.2",
-        "timestamp": time.time()
-    }
+    return {"status": "ok", "service": "pil-service", "version": "5.2", "timestamp": time.time()}
+
+@app.get("/products")
+async def query_products(
+    product_type: Optional[str] = None,
+    jurisdiction: Optional[str] = None,
+    sharia_certified: Optional[bool] = None,
+    min_premium: Optional[float] = None,
+    max_premium: Optional[float] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            query = "SELECT * FROM products WHERE status = 'active'"
+            params = []
+            
+            if product_type:
+                query += " AND product_type = %s"
+                params.append(product_type)
+            if jurisdiction:
+                query += " AND %s = ANY(jurisdiction_list)"
+                params.append(jurisdiction)
+            
+            query += " LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+            
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            
+            formatted_products = []
+            for row in rows:
+                formatted_products.append({
+                    "product_id": row["product_id"],
+                    "provider_id": row["provider_id"],
+                    "product_type": row["product_type"],
+                    "jurisdiction": row["jurisdiction_list"],
+                    "status": row["status"],
+                    "version": row["version"],
+                    "last_updated": row["last_updated"].isoformat() if row["last_updated"] else None,
+                    "pricing": row["pricing_json"],
+                    "eligibility_rules": row["eligibility_rules_json"],
+                    "features": row["features_json"],
+                    "compliance": row["compliance_json"]
+                })
+            
+            return {"total": len(formatted_products), "products": formatted_products}
+    except Exception as e:
+        logger.error(f"Error querying products: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.get("/products/{product_id}")
+async def get_product(product_id: str):
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT * FROM products WHERE product_id = %s", (product_id,))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Product not found")
+                
+            return {
+                "product_id": row["product_id"],
+                "provider_id": row["provider_id"],
+                "product_type": row["product_type"],
+                "jurisdiction": row["jurisdiction_list"],
+                "status": row["status"],
+                "version": row["version"],
+                "last_updated": row["last_updated"].isoformat() if row["last_updated"] else None,
+                "pricing": row["pricing_json"],
+                "eligibility_rules": row["eligibility_rules_json"],
+                "features": row["features_json"],
+                "compliance": row["compliance_json"]
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting product: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
 @app.post("/provider/ingest")
 async def ingest_product_feed(feed: ProductFeed):
+    conn = get_db_connection()
     try:
-        event_id = str(uuid.uuid4())
-        
-        producer.send('provider-feeds', {
-            'event_id': event_id,
-            'provider_id': feed.provider_id,
-            'schema_hash': feed.schema_hash,
-            'product_count': len(feed.products)
-        })
-        
-        return {
-            "status": "success",
-            "event_id": event_id,
-            "products_ingested": len(feed.products)
-        }
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            event_id = str(uuid.uuid4())
+            
+            for prod in feed.products:
+                prod_id = prod.get('product_id', f"{feed.provider_id}_{prod.get('product_type', 'unknown')}_{uuid.uuid4().hex[:6]}")
+                
+                cur.execute("""
+                    INSERT INTO products (
+                        product_id, provider_id, product_type, jurisdiction_list, status, 
+                        version, last_updated, pricing_json, eligibility_rules_json, features_json, compliance_json
+                    ) VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s)
+                    ON CONFLICT (product_id) DO UPDATE SET
+                        pricing_json = EXCLUDED.pricing_json,
+                        eligibility_rules_json = EXCLUDED.eligibility_rules_json,
+                        features_json = EXCLUDED.features_json,
+                        compliance_json = EXCLUDED.compliance_json,
+                        last_updated = NOW()
+                """, (
+                    prod_id,
+                    feed.provider_id,
+                    prod.get("product_type", "unknown"),
+                    prod.get("jurisdiction", ["PK"]),
+                    prod.get("status", "active"),
+                    prod.get("version", "1"),
+                    json.dumps(prod.get("pricing", {})),
+                    json.dumps(prod.get("eligibility_rules", {})),
+                    json.dumps(prod.get("features", [])),
+                    json.dumps(prod.get("compliance", {}))
+                ))
+            
+            conn.commit()
+            
+            if producer:
+                producer.send('provider-feeds', {
+                    'event_id': event_id,
+                    'provider_id': feed.provider_id,
+                    'schema_hash': feed.schema_hash,
+                    'product_count': len(feed.products)
+                })
+                
+            return {"status": "Accepted for processing", "event_id": event_id, "products_ingested": len(feed.products)}
     except Exception as e:
-        logger.error(f"Error ingesting feed: {str(e)}")
+        conn.rollback()
+        logger.error(f"Error ingesting feed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
 
-@app.post("/execute_tools")
-async def execute_tools(request: ExecuteRequest):
-    try:
-        result = {
-            "session_id": request.session_id,
-            "mode": request.mode,
-            "results": [{"step": step, "status": "completed"} for step in request.steps],
-            "disclaimer": "This is a marketplace comparison. No recommendation is provided."
-        }
-        
-        audit_event = {
-            "event_type": "execution",
-            "session_id": request.session_id,
-            "mode": request.mode,
-            "timestamp": str(uuid.uuid4())
-        }
-        producer.send('audit-events', audit_event)
-        
-        return result
-    except Exception as e:
-        logger.error(f"Error executing tools: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/sessions")
-async def create_session(session: SessionCreate):
-    session_id = f"sess_{uuid.uuid4().hex[:8]}"
-    
-    session_data = {
-        "session_id": session_id,
-        "mode": session.mode,
-        "primary_jurisdiction": session.primary_jurisdiction,
-        "stage": "entry",
-        "created_at": str(uuid.uuid4())
-    }
-    
-    redis_client.setex(
-        f"session:{session_id}",
-        3600,
-        json.dumps(session_data)
-    )
-    
+@app.post("/validate/product")
+async def validate_product(product: dict):
     return {
-        "session_id": session_id,
-        "stage": "entry",
-        "mode": session.mode
+        "valid": True,
+        "errors": [],
+        "warnings": []
     }
 
 if __name__ == "__main__":

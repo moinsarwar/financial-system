@@ -14,9 +14,9 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: policy-service
+            name: pil-service
             port:
-              number: 8002
+              number: 8000
       - path: /sessions
         pathType: Prefix
         backend:
@@ -35,9 +35,9 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: pil-service
+            name: agent-service
             port:
-              number: 8001
+              number: 8002
       - path: /query_audit
         pathType: Prefix
         backend:
@@ -49,9 +49,16 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: ingestion-worker
+            name: pil-service
             port:
-              number: 8008
+              number: 8000
+      - path: /validate/product
+        pathType: Prefix
+        backend:
+          service:
+            name: pil-service
+            port:
+              number: 8000
       - path: /digital-asset-register
         pathType: Prefix
         backend:
