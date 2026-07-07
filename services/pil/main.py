@@ -33,6 +33,18 @@ def get_db_connection():
         password=os.getenv('POSTGRES_PASSWORD', 'postgres')
     )
 
+class ProductSchema(BaseModel):
+    product_id: Optional[str] = None
+    provider_id: str
+    product_type: str
+    jurisdiction: List[str]
+    status: str
+    version: str
+    pricing: dict
+    eligibility_rules: dict
+    features: List[dict]
+    compliance: dict
+
 class ProductFeed(BaseModel):
     provider_id: str
     schema_hash: str
@@ -178,7 +190,8 @@ async def ingest_product_feed(feed: ProductFeed):
         conn.close()
 
 @app.post("/validate/product")
-async def validate_product(product: dict):
+async def validate_product(product: ProductSchema):
+    # If the payload successfully parses into ProductSchema, it is structurally valid.
     return {
         "valid": True,
         "errors": [],
