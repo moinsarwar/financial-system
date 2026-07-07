@@ -26,11 +26,11 @@ except Exception as e:
 
 def get_db_connection():
     return psycopg2.connect(
-        host=os.getenv('DB_HOST', 'postgres'),
-        port=os.getenv('DB_PORT', '5432'),
-        database=os.getenv('DB_NAME', 'financial_system'),
-        user=os.getenv('DB_USER', 'postgres'),
-        password=os.getenv('DB_PASSWORD', 'postgres')
+        host=os.getenv('POSTGRES_HOST', 'postgres'),
+        port=os.getenv('POSTGRES_PORT', '5432'),
+        database=os.getenv('POSTGRES_DB', 'financial_system'),
+        user=os.getenv('POSTGRES_USER', 'postgres'),
+        password=os.getenv('POSTGRES_PASSWORD', 'postgres')
     )
 
 class ProductFeed(BaseModel):
