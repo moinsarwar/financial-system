@@ -4,7 +4,6 @@ metadata:
   name: financial-system-ingress
   namespace: financial-system
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/limit-rps: "100"
 spec:
   rules:
