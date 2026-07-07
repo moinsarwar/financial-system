@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📦 Digital Asset Register – Works in Sandbox</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body { background: #f4f6f9; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
+        .navbar-brand { font-weight: 700; }
+        .stats-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-left: 5px solid #0d6efd;
+            transition: 0.2s;
+        }
+        .stats-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+        .stats-card .number { font-size: 2rem; font-weight: 700; line-height: 1; }
+        .stats-card .label { color: #6c757d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tab-pane {
+            background: white;
+            border-radius: 0 0 16px 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid #e9ecef;
+            border-top: none;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+            font-weight: 500;
+            border: 1px solid #e9ecef;
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            padding: 12px 24px;
+            background: #f8f9fa;
+        }
+        .nav-tabs .nav-link.active {
+            background: white;
+            color: #0d6efd;
+            border-color: #e9ecef;
+            border-bottom: 2px solid #0d6efd;
+        }
+        .table th { background: #f8fafc; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 2px solid #dee2e6; }
+        .badge-expiry { font-size: 0.7rem; padding: 4px 10px; }
+        .modal-lg-custom { max-width: 900px; }
+        .form-section-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #0d6efd;
+            border-bottom: 1px dashed #dee2e6;
+            padding-bottom: 6px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+        .table-responsive { border-radius: 12px; }
+        .action-btn { margin: 0 2px; }
+        .demo-hint {
+            background: #e7f1ff;
+            border-radius: 30px;
+            padding: 4px 16px;
+            font-size: 0.8rem;
+            color: #0d6efd;
+        }
+        #debugInfo {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 8px 16px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+        .reset-btn { transition: 0.2s; }
+        .reset-btn:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container-fluid px-4">
+        <span class="navbar-brand"><i class="fas fa-database me-2"></i>Digital Asset Register</span>
+        <span class="navbar-text text-light-50 small" id="currentTime"></span>
+    </div>
+</nav>
+
+<div class="container-fluid px-4 py-4">
+
+    <!-- Debug Panel -->
+    <div id="debugInfo" class="d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-bug me-2"></i><strong>Status:</strong> <span id="debugStatus">Loading...</span></span>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="stats-card"><div class="number" id="countDomains">0</div><div class="label"><i class="fas fa-globe me-1"></i>Domains</div></div></div>
+        <div class="col-6 col-md-3"><div class="stats-card"><div class="number" id="countWebsites">0</div><div class="label"><i class="fas fa-window-maximize me-1"></i>Websites</div></div></div>
+        <div class="col-6 col-md-3"><div class="stats-card"><div class="number" id="countServers">0</div><div class="label"><i class="fas fa-server me-1"></i>Servers</div></div></div>
+        <div class="col-6 col-md-3"><div class="stats-card"><div class="number" id="countSoftware">0</div><div class="label"><i class="fas fa-code me-1"></i>Software</div></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="assetTabs">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabDomains"><i class="fas fa-globe me-1"></i>Domains</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabWebsites"><i class="fas fa-window-maximize me-1"></i>Websites</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabServers"><i class="fas fa-server me-1"></i>Servers</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSoftware"><i class="fas fa-code me-1"></i>Software</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="tabDomains">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-globe text-primary me-2"></i>Domain Namespace</h5>
+                <button class="btn btn-primary btn-sm" onclick="openCreateModal('domains')"><i class="fas fa-plus me-1"></i>Add Domain</button>
+            </div>
+            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>FQDN</th><th>Registrar</th><th>Expiry</th><th>SSL Expiry</th><th>DNS</th><th>Actions</th></tr></thead><tbody id="tbodyDomains"></tbody></table></div>
+        </div>
+        <div class="tab-pane fade" id="tabWebsites">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-window-maximize text-success me-2"></i>Web Applications</h5>
+                <button class="btn btn-success btn-sm" onclick="openCreateModal('websites')"><i class="fas fa-plus me-1"></i>Add Website</button>
+            </div>
+            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Name</th><th>Domain</th><th>Env</th><th>Platform</th><th>Server</th><th>SLA</th><th>Actions</th></tr></thead><tbody id="tbodyWebsites"></tbody></table></div>
+        </div>
+        <div class="tab-pane fade" id="tabServers">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-server text-warning me-2"></i>Compute Infrastructure</h5>
+                <button class="btn btn-warning btn-sm" onclick="openCreateModal('servers')"><i class="fas fa-plus me-1"></i>Add Server</button>
+            </div>
+            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Hostname</th><th>Type</th><th>Provider</th><th>vCPU / RAM</th><th>OS</th><th>IP (Private)</th><th>Status</th><th>Actions</th></tr></thead><tbody id="tbodyServers"></tbody></table></div>
+        </div>
+        <div class="tab-pane fade" id="tabSoftware">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="fas fa-code text-info me-2"></i>Software & Licenses</h5>
+                <button class="btn btn-info btn-sm text-white" onclick="openCreateModal('software')"><i class="fas fa-plus me-1"></i>Add Software</button>
+            </div>
+            <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Title</th><th>Vendor</th><th>Version</th><th>License Type</th><th>Seats (Used/Total)</th><th>EOL</th><th>Actions</th></tr></thead><tbody id="tbodySoftware"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="assetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-lg-custom">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="assetModalLabel"><i class="fas fa-pen-to-square me-2"></i><span id="modalTitleText">Add Asset</span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="modalSaveBtn"><i class="fas fa-save me-1"></i>Save Asset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ============================================================
+    //  HELPERS
+    // ============================================================
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    function addDays(date, days) {
+        const d = new Date(date);
+        d.setDate(d.getDate() + days);
+        return d;
+    }
+
+    function formatDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    // ============================================================
+    //  SEED DATA
+    // ============================================================
+    const DUMMY = {
+        dom1: generateUUID(), dom2: generateUUID(),
+        srv1: generateUUID(), srv2: generateUUID(),
+        web1: generateUUID(), web2: generateUUID(),
+        sw1: generateUUID(), sw2: generateUUID()
+    };
+
+    function buildSeed() {
+        const now = new Date();
+        const future = formatDate(addDays(now, 365));
+        const soon = formatDate(addDays(now, 10));
+        const expired = formatDate(addDays(now, -365));
+
+        return {
+            domains: [
+                { uuid: DUMMY.dom1, fqdn: 'example.com', registrar: 'GoDaddy', registrarAccountId: 'GD-12345', registrationDate: '2022-01-15', expiryDate: future, autoRenew: true, transferLock: true, nameservers: 'ns1.godaddy.com, ns2.godaddy.com', dnsProvider: 'GoDaddy', sslIssuer: 'DigiCert', sslExpiryDate: '2026-08-01', dnssec: false, whoisPrivacy: true, purpose: 'Corporate website', annualCost: 12.99 },
+                { uuid: DUMMY.dom2, fqdn: 'staging.internal', registrar: 'Cloudflare', registrarAccountId: 'CF-98765', registrationDate: '2023-06-01', expiryDate: soon, autoRenew: false, transferLock: false, nameservers: 'ns3.cloudflare.com, ns4.cloudflare.com', dnsProvider: 'Cloudflare', sslIssuer: "Let's Encrypt", sslExpiryDate: expired, dnssec: true, whoisPrivacy: false, purpose: 'Staging QA', annualCost: 5.50 }
+            ],
+            servers: [
+                { uuid: DUMMY.srv1, hostname: 'web-prod-01', assetTag: 'DELL-TAG-001', virtualPhysical: 'Virtual (VM)', cloudProvider: 'AWS', instanceType: 'm5.xlarge', vCpu: 4, ramGb: 16, storage: '512 GB NVMe SSD', os: 'Ubuntu 22.04.5 LTS', kernel: '5.15.0-122-generic', publicIp: '54.12.34.56', privateIp: '10.0.1.10', subnetVlan: 'VPC-Prod-A', sshPort: 22, keyAuth: 'SSH-RSA prod', patchCycle: 'Weekly', backupSchedule: 'Daily 30d', backupTool: 'AWS AMI', monitoringAgent: 'Datadog', hypervisor: 'VMware', status: 'Running' },
+                { uuid: DUMMY.srv2, hostname: 'db-staging-01', assetTag: 'DELL-TAG-002', virtualPhysical: 'Physical', cloudProvider: 'On-Prem', instanceType: 'Dell R740', vCpu: 16, ramGb: 64, storage: '2 TB SAS', os: 'Debian 11.7', kernel: '5.10.0-21', publicIp: '', privateIp: '10.0.2.20', subnetVlan: 'VPC-Staging-DB', sshPort: 2222, keyAuth: 'LDAP', patchCycle: 'Monthly', backupSchedule: 'Daily+Weekly', backupTool: 'Veeam', monitoringAgent: 'Zabbix', hypervisor: '', status: 'Stopped' }
+            ],
+            websites: [
+                { uuid: DUMMY.web1, name: 'Corporate Homepage', primaryDomainFk: DUMMY.dom1, environment: 'Production', platform: 'WordPress 6.5', repoUrl: 'https://github.com/org/corp', branchVersion: 'v3.0.1', hostingServerFk: DUMMY.srv1, webServer: 'Nginx 1.24', cdnWaf: 'Cloudflare', analyticsId: 'G-ABC123', cookieConsent: true, publicStatus: 'Public-Facing', uptimeSla: 99.99, lastPenTest: '2026-02-14' },
+                { uuid: DUMMY.web2, name: 'API Sandbox', primaryDomainFk: DUMMY.dom2, environment: 'Staging', platform: 'React 18 / Django', repoUrl: 'https://github.com/org/api', branchVersion: 'v2.3.1', hostingServerFk: DUMMY.srv2, webServer: 'Gunicorn', cdnWaf: 'Fastly', analyticsId: 'G-XYZ789', cookieConsent: false, publicStatus: 'Internal-Only', uptimeSla: 99.50, lastPenTest: '2026-01-10' }
+            ],
+            software: [
+                { uuid: DUMMY.sw1, title: 'MySQL Community', vendor: 'Oracle', version: '8.0.36', licenseType: 'Open Source', licenseMetric: 'Per Server', totalLicenses: 0, usageCount: 2, productKey: 'N/A', procurementDate: '2023-01-01', maintenanceRenewal: future, supportCost: 0, installedOnServers: [DUMMY.srv1, DUMMY.srv2], eulaAccepted: true, eolDate: '2027-02-01', saasUrl: '', ssoEnabled: false, knownCves: 'CVE-2023-1234' },
+                { uuid: DUMMY.sw2, title: 'SQL Server 2022', vendor: 'Microsoft', version: '16.0.1000.6', licenseType: 'Perpetual', licenseMetric: 'Per Core', totalLicenses: 4, usageCount: 2, productKey: 'ENC-XXXX-YYYY', procurementDate: '2025-03-01', maintenanceRenewal: soon, supportCost: 1200, installedOnServers: [DUMMY.srv1], eulaAccepted: true, eolDate: '2032-01-01', saasUrl: '', ssoEnabled: true, knownCves: '' }
+            ]
+        };
+    }
+
+    // ============================================================
+    //  DATA LAYER – FAILS FOR localStorage, FALLBACK TO MEMORY
+    // ============================================================
+    const STORAGE_KEY = 'digitalAssetRegister';
+    let appData = {};
+    let inMemoryData = null; // fallback if localStorage is blocked
+
+    async function saveData(data) {
+        try {
+            await fetch('/digital-asset-register/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } catch (e) {
+            console.error('Save error:', e);
+        }
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch('/digital-asset-register/api/data');
+            if (res.ok) {
+                const raw = await res.json();
+                if (Object.keys(raw).length > 0) return raw;
+            }
+        } catch (e) {
+            console.error('Load error:', e);
+        }
+        return null;
+    }
+
+    // ============================================================
+    //  SCHEMAS (same as before, full detail)
+    // ============================================================
+    const SCHEMAS = {
+        domains: {
+            label: 'Domain',
+            fields: [
+                { key: 'uuid', type: 'hidden' },
+                { key: 'fqdn', label: 'FQDN', type: 'text', section: 'Identity', required: true, placeholder: 'example.com' },
+                { key: 'registrar', label: 'Registrar', type: 'text', section: 'Identity', placeholder: 'GoDaddy' },
+                { key: 'registrarAccountId', label: 'Registrar Account ID', type: 'text', section: 'Identity' },
+                { key: 'registrationDate', label: 'Registration Date', type: 'date', section: 'Lifecycle' },
+                { key: 'expiryDate', label: 'Expiry Date', type: 'date', section: 'Lifecycle', required: true },
+                { key: 'autoRenew', label: 'Auto-Renew', type: 'checkbox', section: 'Lifecycle' },
+                { key: 'transferLock', label: 'Transfer Lock', type: 'checkbox', section: 'Security' },
+                { key: 'nameservers', label: 'Nameservers', type: 'text', section: 'DNS', placeholder: 'ns1...' },
+                { key: 'dnsProvider', label: 'DNS Provider', type: 'text', section: 'DNS', placeholder: 'Cloudflare' },
+                { key: 'sslIssuer', label: 'SSL Issuer', type: 'text', section: 'SSL', placeholder: "Let's Encrypt" },
+                { key: 'sslExpiryDate', label: 'SSL Expiry Date', type: 'date', section: 'SSL' },
+                { key: 'dnssec', label: 'DNSSEC', type: 'checkbox', section: 'Security' },
+                { key: 'whoisPrivacy', label: 'WHOIS Privacy', type: 'checkbox', section: 'Security' },
+                { key: 'purpose', label: 'Purpose', type: 'textarea', section: 'Business', placeholder: 'Corporate site' },
+                { key: 'annualCost', label: 'Annual Cost (USD)', type: 'number', section: 'Financial', step: '0.01' }
+            ]
+        },
+        websites: {
+            label: 'Website',
+            fields: [
+                { key: 'uuid', type: 'hidden' },
+                { key: 'name', label: 'Application Name', type: 'text', section: 'Identity', required: true, placeholder: 'My App' },
+                { key: 'primaryDomainFk', label: 'Primary Domain', type: 'select_fk', fkType: 'domains', displayKey: 'fqdn', section: 'Relationships', required: true },
+                { key: 'environment', label: 'Environment', type: 'select', options: ['Production','Staging','Development','Testing'], section: 'Deployment' },
+                { key: 'platform', label: 'Platform / Framework', type: 'text', section: 'Deployment', placeholder: 'React 18' },
+                { key: 'repoUrl', label: 'Repository URL', type: 'url', section: 'DevOps', placeholder: 'https://github.com/...' },
+                { key: 'branchVersion', label: 'Branch / Version', type: 'text', section: 'DevOps', placeholder: 'v2.3.1' },
+                { key: 'hostingServerFk', label: 'Hosting Server', type: 'select_fk', fkType: 'servers', displayKey: 'hostname', section: 'Infrastructure' },
+                { key: 'webServer', label: 'Web Server Software', type: 'text', section: 'Infrastructure', placeholder: 'Nginx' },
+                { key: 'cdnWaf', label: 'CDN / WAF', type: 'text', section: 'Infrastructure', placeholder: 'Cloudflare' },
+                { key: 'analyticsId', label: 'Analytics ID', type: 'text', section: 'Observability', placeholder: 'G-XXX' },
+                { key: 'cookieConsent', label: 'Cookie Consent Active', type: 'checkbox', section: 'Compliance' },
+                { key: 'publicStatus', label: 'Public Status', type: 'select', options: ['Public-Facing','Internal-Only','Partner-Access'], section: 'Access' },
+                { key: 'uptimeSla', label: 'Uptime SLA (%)', type: 'number', section: 'Business', step: '0.01', placeholder: '99.99' },
+                { key: 'lastPenTest', label: 'Last Pen Test Date', type: 'date', section: 'Security' }
+            ]
+        },
+        servers: {
+            label: 'Server',
+            fields: [
+                { key: 'uuid', type: 'hidden' },
+                { key: 'hostname', label: 'Hostname', type: 'text', section: 'Identity', required: true, placeholder: 'server-01' },
+                { key: 'assetTag', label: 'Asset Tag', type: 'text', section: 'Identity', placeholder: 'DELL-001' },
+                { key: 'virtualPhysical', label: 'Virtual / Physical', type: 'select', options: ['Virtual (VM)','Physical (Bare Metal)'], section: 'Type' },
+                { key: 'cloudProvider', label: 'Cloud Provider', type: 'text', section: 'Location', placeholder: 'AWS' },
+                { key: 'instanceType', label: 'Instance Type', type: 'text', section: 'Hardware', placeholder: 'm5.xlarge' },
+                { key: 'vCpu', label: 'vCPU Cores', type: 'number', section: 'Hardware', min: 1 },
+                { key: 'ramGb', label: 'RAM (GB)', type: 'number', section: 'Hardware', min: 1 },
+                { key: 'storage', label: 'Storage (GB / Type)', type: 'text', section: 'Hardware', placeholder: '512 GB NVMe' },
+                { key: 'os', label: 'Operating System', type: 'text', section: 'Software', placeholder: 'Ubuntu 22.04' },
+                { key: 'kernel', label: 'Kernel Version', type: 'text', section: 'Software', placeholder: '5.15.0-122' },
+                { key: 'publicIp', label: 'Public IP', type: 'text', section: 'Network', placeholder: '203.0.113.10' },
+                { key: 'privateIp', label: 'Private IP', type: 'text', section: 'Network', placeholder: '10.0.1.10' },
+                { key: 'subnetVlan', label: 'Subnet / VLAN', type: 'text', section: 'Network', placeholder: 'VPC-Prod-A' },
+                { key: 'sshPort', label: 'SSH / RDP Port', type: 'number', section: 'Network', placeholder: '22' },
+                { key: 'keyAuth', label: 'Auth Method', type: 'text', section: 'Security', placeholder: 'SSH-RSA' },
+                { key: 'patchCycle', label: 'Patch Cycle', type: 'select', options: ['Daily','Weekly','Monthly','Quarterly'], section: 'Operations' },
+                { key: 'backupSchedule', label: 'Backup Schedule', type: 'text', section: 'Operations', placeholder: 'Daily 30d' },
+                { key: 'backupTool', label: 'Backup Tool', type: 'text', section: 'Operations', placeholder: 'Veeam' },
+                { key: 'monitoringAgent', label: 'Monitoring Agent', type: 'text', section: 'Observability', placeholder: 'Datadog' },
+                { key: 'hypervisor', label: 'Hypervisor (if VM)', type: 'text', section: 'Virtualization', placeholder: 'VMware' },
+                { key: 'status', label: 'Status', type: 'select', options: ['Running','Stopped','Maintenance','Decommissioned'], section: 'State' }
+            ]
+        },
+        software: {
+            label: 'Software',
+            fields: [
+                { key: 'uuid', type: 'hidden' },
+                { key: 'title', label: 'Software Title', type: 'text', section: 'Identity', required: true, placeholder: 'MySQL' },
+                { key: 'vendor', label: 'Vendor', type: 'text', section: 'Identity', placeholder: 'Oracle' },
+                { key: 'version', label: 'Version', type: 'text', section: 'Identity', placeholder: '8.0.36' },
+                { key: 'licenseType', label: 'License Type', type: 'select', options: ['Perpetual','Subscription (SaaS)','Open Source','Freeware'], section: 'Licensing' },
+                { key: 'licenseMetric', label: 'License Metric', type: 'text', section: 'Licensing', placeholder: 'Per Core' },
+                { key: 'totalLicenses', label: 'Total Licenses', type: 'number', section: 'Licensing', min: 0 },
+                { key: 'usageCount', label: 'Current Usage Count', type: 'number', section: 'Licensing', min: 0 },
+                { key: 'productKey', label: 'Product Key (Encrypted)', type: 'text', section: 'Licensing', placeholder: 'XXXX-YYYY' },
+                { key: 'procurementDate', label: 'Procurement Date', type: 'date', section: 'Lifecycle' },
+                { key: 'maintenanceRenewal', label: 'Maintenance Renewal Date', type: 'date', section: 'Lifecycle' },
+                { key: 'supportCost', label: 'Annual Support Cost (USD)', type: 'number', section: 'Financial', step: '0.01' },
+                { key: 'installedOnServers', label: 'Installed On Servers (multi-select)', type: 'select_fk_multi', fkType: 'servers', displayKey: 'hostname', section: 'Relationships' },
+                { key: 'eulaAccepted', label: 'EULA Accepted', type: 'checkbox', section: 'Compliance' },
+                { key: 'eolDate', label: 'End-of-Life Date', type: 'date', section: 'Lifecycle' },
+                { key: 'saasUrl', label: 'SaaS URL', type: 'url', section: 'Access', placeholder: 'https://...' },
+                { key: 'ssoEnabled', label: 'SSO Integration', type: 'checkbox', section: 'Security' },
+                { key: 'knownCves', label: 'Known CVEs', type: 'textarea', section: 'Security', placeholder: 'CVE-2025-1234' }
+            ]
+        }
+    };
+
+    // ============================================================
+    //  UI RENDER
+    // ============================================================
+    function refreshStats() {
+        document.getElementById('countDomains').textContent = (appData.domains || []).length;
+        document.getElementById('countWebsites').textContent = (appData.websites || []).length;
+        document.getElementById('countServers').textContent = (appData.servers || []).length;
+        document.getElementById('countSoftware').textContent = (appData.software || []).length;
+    }
+
+    function getFkLabel(type, uuid) {
+        if (!uuid) return '—';
+        const item = (appData[type] || []).find(x => x.uuid === uuid);
+        if (!item) return '❓';
+        return item.fqdn || item.hostname || item.title || item.name || '?';
+    }
+
+    function getFkOptions(type) {
+        return appData[type] || [];
+    }
+
+    function renderTable(type) {
+        const tbody = document.getElementById(`tbody${type.charAt(0).toUpperCase()+type.slice(1)}`);
+        const items = appData[type] || [];
+        if (!items.length) {
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">No ${type} yet. Click "Add" to create one.</td></tr>`;
+            return;
+        }
+        let html = '';
+        items.forEach(item => {
+            let expiryBadge = '';
+            const expDate = item.expiryDate || item.sslExpiryDate || item.eolDate || item.maintenanceRenewal;
+            if (expDate) {
+                const days = Math.ceil((new Date(expDate) - new Date()) / (1000*60*60*24));
+                if (days < 0) expiryBadge = `<span class="badge bg-danger">Expired</span>`;
+                else if (days <= 30) expiryBadge = `<span class="badge bg-warning text-dark">⚠️ ${days}d</span>`;
+                else expiryBadge = `<span class="badge bg-success">✔️ ${days}d</span>`;
+            }
+
+            let row = `<tr>`;
+            if (type === 'domains') {
+                row += `<td><strong>${item.fqdn || '—'}</strong></td>`;
+                row += `<td>${item.registrar || '—'}</td>`;
+                row += `<td>${item.expiryDate || '—'}<br>${expiryBadge}</td>`;
+                row += `<td>${item.sslExpiryDate || '—'}</td>`;
+                row += `<td>${item.dnsProvider || '—'}</td>`;
+            } else if (type === 'websites') {
+                row += `<td><strong>${item.name || '—'}</strong></td>`;
+                row += `<td>${getFkLabel('domains', item.primaryDomainFk)}</td>`;
+                const envColor = item.environment === 'Production' ? 'danger' : item.environment === 'Staging' ? 'warning' : 'secondary';
+                row += `<td><span class="badge bg-${envColor}">${item.environment || '—'}</span></td>`;
+                row += `<td>${item.platform || '—'}</td>`;
+                row += `<td>${getFkLabel('servers', item.hostingServerFk)}</td>`;
+                row += `<td>${item.uptimeSla || '—'}%</td>`;
+            } else if (type === 'servers') {
+                row += `<td><strong>${item.hostname || '—'}</strong></td>`;
+                row += `<td>${item.virtualPhysical || '—'}</td>`;
+                row += `<td>${item.cloudProvider || '—'}</td>`;
+                row += `<td>${item.vCpu || '?'} / ${item.ramGb || '?'} GB</td>`;
+                row += `<td>${item.os || '—'}</td>`;
+                row += `<td>${item.privateIp || '—'}</td>`;
+                const sc = item.status === 'Running' ? 'success' : item.status === 'Stopped' ? 'secondary' : 'warning';
+                row += `<td><span class="badge bg-${sc}">${item.status || '—'}</span></td>`;
+            } else if (type === 'software') {
+                row += `<td><strong>${item.title || '—'}</strong></td>`;
+                row += `<td>${item.vendor || '—'}</td>`;
+                row += `<td>${item.version || '—'}</td>`;
+                row += `<td><span class="badge bg-info">${item.licenseType || '—'}</span></td>`;
+                row += `<td>${item.usageCount || 0} / ${item.totalLicenses || 0}</td>`;
+                row += `<td>${item.eolDate || '—'}<br>${expiryBadge}</td>`;
+            }
+            row += `<td>
+                        <button class="btn btn-outline-primary btn-sm action-btn" onclick="openEditModal('${type}','${item.uuid}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-outline-danger btn-sm action-btn" onclick="deleteAsset('${type}','${item.uuid}')"><i class="fas fa-trash"></i></button>
+                    </td>`;
+            row += `</tr>`;
+            html += row;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function renderAll() {
+        renderTable('domains');
+        renderTable('websites');
+        renderTable('servers');
+        renderTable('software');
+        refreshStats();
+    }
+
+    // ============================================================
+    //  MODAL FORM BUILD
+    // ============================================================
+    function buildForm(type, data = null) {
+        const schema = SCHEMAS[type];
+        if (!schema) return '<p>Error: unknown type</p>';
+
+        let html = `<form id="assetForm" novalidate>`;
+        html += `<input type="hidden" name="uuid" value="${data?.uuid || generateUUID()}" />`;
+
+        const groups = {};
+        schema.fields.forEach(f => {
+            if (f.key === 'uuid') return;
+            const sec = f.section || 'General';
+            if (!groups[sec]) groups[sec] = [];
+            groups[sec].push(f);
+        });
+
+        for (const [section, fields] of Object.entries(groups)) {
+            html += `<div class="form-section-title"><i class="fas fa-chevron-right me-2"></i>${section}</div>`;
+            html += `<div class="row g-3">`;
+            fields.forEach(f => {
+                const val = data?.[f.key] !== undefined && data?.[f.key] !== null ? data[f.key] : '';
+                const required = f.required ? 'required' : '';
+                const colSize = f.type === 'textarea' || f.type === 'select_fk_multi' ? 'col-12' : 'col-md-6';
+                html += `<div class="${colSize}">`;
+                html += `<label class="form-label fw-semibold small">${f.label}${f.required ? ' <span class="text-danger">*</span>' : ''}</label>`;
+
+                if (f.type === 'select') {
+                    html += `<select class="form-select" name="${f.key}" ${required}>`;
+                    html += `<option value="">Select...</option>`;
+                    (f.options || []).forEach(opt => {
+                        const sel = val === opt ? 'selected' : '';
+                        html += `<option value="${opt}" ${sel}>${opt}</option>`;
+                    });
+                    html += `</select>`;
+                } else if (f.type === 'select_fk') {
+                    const options = getFkOptions(f.fkType);
+                    const display = f.displayKey || 'name';
+                    html += `<select class="form-select" name="${f.key}" ${required}>`;
+                    html += `<option value="">Select ${f.fkType}...</option>`;
+                    options.forEach(opt => {
+                        const label = opt[display] || opt.hostname || opt.fqdn || opt.title || '?';
+                        const sel = val === opt.uuid ? 'selected' : '';
+                        html += `<option value="${opt.uuid}" ${sel}>${label}</option>`;
+                    });
+                    html += `</select>`;
+                } else if (f.type === 'select_fk_multi') {
+                    const options = getFkOptions(f.fkType);
+                    const display = f.displayKey || 'name';
+                    const selectedVals = Array.isArray(val) ? val : [];
+                    html += `<select class="form-select" name="${f.key}" multiple style="min-height:80px;">`;
+                    options.forEach(opt => {
+                        const label = opt[display] || opt.hostname || opt.fqdn || opt.title || '?';
+                        const sel = selectedVals.includes(opt.uuid) ? 'selected' : '';
+                        html += `<option value="${opt.uuid}" ${sel}>${label}</option>`;
+                    });
+                    html += `</select><small class="text-muted">Hold Ctrl/Cmd to multi-select</small>`;
+                } else if (f.type === 'checkbox') {
+                    const checked = val ? 'checked' : '';
+                    html += `<div class="form-check"><input class="form-check-input" type="checkbox" name="${f.key}" ${checked} /><label class="form-check-label small">Enabled</label></div>`;
+                } else if (f.type === 'textarea') {
+                    html += `<textarea class="form-control" name="${f.key}" rows="2" ${required} placeholder="${f.placeholder || ''}">${val}</textarea>`;
+                } else {
+                    const inputType = f.type || 'text';
+                    html += `<input class="form-control" type="${inputType}" name="${f.key}" value="${val}" ${required} step="${f.step || 'any'}" min="${f.min || ''}" placeholder="${f.placeholder || ''}" />`;
+                }
+                html += `</div>`;
+            });
+            html += `</div>`;
+        }
+        html += `</form>`;
+        return html;
+    }
+
+    // ============================================================
+    //  CRUD
+    // ============================================================
+    let currentModalType = null;
+    let currentEditUuid = null;
+
+    function openCreateModal(type) {
+        currentModalType = type;
+        currentEditUuid = null;
+        document.getElementById('modalTitleText').textContent = `Add New ${SCHEMAS[type].label}`;
+        document.getElementById('modalBody').innerHTML = buildForm(type);
+        const modal = new bootstrap.Modal(document.getElementById('assetModal'));
+        modal.show();
+    }
+
+    function openEditModal(type, uuid) {
+        currentModalType = type;
+        currentEditUuid = uuid;
+        const item = (appData[type] || []).find(x => x.uuid === uuid);
+        if (!item) { alert('Asset not found'); return; }
+        document.getElementById('modalTitleText').textContent = `Edit ${SCHEMAS[type].label}`;
+        document.getElementById('modalBody').innerHTML = buildForm(type, item);
+        const modal = new bootstrap.Modal(document.getElementById('assetModal'));
+        modal.show();
+    }
+
+    async function deleteAsset(type, uuid) {
+        let msg = `Delete this ${SCHEMAS[type].label}?`;
+        if (type === 'domains') {
+            const linked = (appData.websites || []).filter(w => w.primaryDomainFk === uuid).length;
+            if (linked) msg = `⚠️ This domain is linked to ${linked} website(s). Continue?`;
+        }
+        if (type === 'servers') {
+            const web = (appData.websites || []).filter(w => w.hostingServerFk === uuid).length;
+            const sw = (appData.software || []).filter(s => (s.installedOnServers || []).includes(uuid)).length;
+            if (web + sw) msg = `⚠️ This server is linked to ${web} website(s) and ${sw} software(s). Continue?`;
+        }
+        if (!confirm(msg)) return;
+
+        // Clean orphaned references
+        if (type === 'domains') {
+            appData.websites = (appData.websites || []).filter(w => w.primaryDomainFk !== uuid);
+        }
+        if (type === 'servers') {
+            appData.websites = (appData.websites || []).filter(w => w.hostingServerFk !== uuid);
+            appData.software = (appData.software || []).map(s => {
+                if (s.installedOnServers) {
+                    s.installedOnServers = s.installedOnServers.filter(id => id !== uuid);
+                }
+                return s;
+            });
+        }
+        appData[type] = (appData[type] || []).filter(x => x.uuid !== uuid);
+        await saveData(appData);
+        renderAll();
+    }
+
+    async function handleFormSubmit() {
+        const type = currentModalType;
+        const schema = SCHEMAS[type];
+        const form = document.getElementById('assetForm');
+        if (!form) { alert('Form not found'); return; }
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(form);
+        const payload = {};
+        for (const [key, value] of formData.entries()) {
+            payload[key] = value;
+        }
+
+        schema.fields.forEach(f => {
+            if (f.type === 'checkbox') {
+                payload[f.key] = formData.has(f.key);
+            }
+            if (f.type === 'select_fk_multi') {
+                const values = formData.getAll(f.key);
+                payload[f.key] = values.filter(v => v !== '');
+            }
+            if (f.type === 'number') {
+                const val = payload[f.key];
+                payload[f.key] = val && val !== '' ? parseFloat(val) : 0;
+            }
+        });
+
+        if (!payload.uuid) payload.uuid = generateUUID();
+
+        // Validate required
+        for (const f of schema.fields) {
+            if (f.required && !payload[f.key]) {
+                alert(`Please fill in "${f.label}"`);
+                return;
+            }
+        }
+
+        if (currentEditUuid) {
+            const idx = (appData[type] || []).findIndex(x => x.uuid === currentEditUuid);
+            if (idx !== -1) {
+                appData[type][idx] = { ...appData[type][idx], ...payload };
+            } else {
+                appData[type].push(payload);
+            }
+        } else {
+            if (!appData[type]) appData[type] = [];
+            appData[type].push(payload);
+        }
+
+        await saveData(appData);
+        renderAll();
+        bootstrap.Modal.getInstance(document.getElementById('assetModal')).hide();
+    }
+
+    // ============================================================
+    //  RESET
+    // ============================================================
+    async function resetData() {
+        if (confirm('⚠️ This will reload the demo data. Any unsaved changes will be lost.')) {
+            await fetch('/digital-asset-register/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            location.reload();
+        }
+    }
+
+    // ============================================================
+    //  SAFE INIT – always seeds, uses in-memory fallback
+    // ============================================================
+    async function safeInit() {
+        try {
+            // Try to load from database
+            const saved = await loadData();
+            if (saved) {
+                appData = saved;
+                document.getElementById('debugStatus').textContent =
+                    'Loaded from PostgreSQL (D:'+(appData.domains?.length||0)+
+                    ' W:'+(appData.websites?.length||0)+
+                    ' S:'+(appData.servers?.length||0)+
+                    ' SW:'+(appData.software?.length||0)+')';
+            } else {
+                // No saved data: seed fresh
+                const seed = buildSeed();
+                appData = seed;
+                await saveData(appData); // will use PostgreSQL
+                document.getElementById('debugStatus').textContent =
+                    'Seeded fresh (D:2 W:2 S:2 SW:2)';
+            }
+
+            // Double-check that data is not empty; if it is, force seed
+            if ((appData.domains?.length || 0) === 0 &&
+                (appData.websites?.length || 0) === 0 &&
+                (appData.servers?.length || 0) === 0 &&
+                (appData.software?.length || 0) === 0) {
+                console.warn('Data was empty, forcing seed.');
+                const seed = buildSeed();
+                appData = seed;
+                await saveData(appData);
+                document.getElementById('debugStatus').textContent = 'Force-seeded (D:2 W:2 S:2 SW:2)';
+            }
+
+            // Render
+            renderAll();
+
+            // Attach save button handler
+            const saveBtn = document.getElementById('modalSaveBtn');
+            if (saveBtn) {
+                saveBtn.onclick = handleFormSubmit;
+            }
+
+            console.log('✅ App initialized. Data:', appData);
+        } catch (err) {
+            document.getElementById('debugStatus').textContent =
+                'ERROR: ' + err.message;
+            console.error('Init error:', err);
+        }
+    }
+
+    // Run after DOM is fully loaded
+    window.addEventListener('load', safeInit);
+
+    // Re-render on tab switch
+    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(btn => {
+        btn.addEventListener('shown.bs.tab', () => renderAll());
+    });
+
+    // Clock
+    function updateClock() {
+        document.getElementById('currentTime').textContent = new Date().toLocaleString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+</body>
+</html>

@@ -8,7 +8,7 @@ spec:
     app: mode-control
   ports:
   - port: 8006
-    targetPort: 8006
+    targetPort: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -42,11 +42,4 @@ spec:
               name: financial-system-secrets
               key: postgres-password
         ports:
-        - containerPort: 8006
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "400m"
+        - containerPort: 8000

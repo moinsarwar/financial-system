@@ -33,16 +33,9 @@ spec:
         - name: discovery.type
           value: single-node
         - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-          value: "Admin123!"
+          value: Admin123!
         - name: plugins.security.disabled
-          value: "true"
+          value: 'true'
         ports:
         - containerPort: 9200
         - containerPort: 9300
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"

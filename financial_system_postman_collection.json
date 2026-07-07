@@ -1,0 +1,221 @@
+{
+  "info": {
+    "name": "Financial System API (v5.2)",
+    "description": "Postman collection for the Agentic Financial System v5.2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Policy Service",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "api.financial-system.com",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"sess_123456\",\n  \"filters\": {\n    \"product_type\": \"health_insurance\",\n    \"jurisdiction\": \"PK\"\n  },\n  \"mode\": \"marketplace\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://163.245.222.160/products/query",
+          "protocol": "http",
+          "host": [
+            "163",
+            "245",
+            "222",
+            "160"
+          ],
+          "path": [
+            "products",
+            "query"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Agent Service",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "api.financial-system.com",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"sess_123456\",\n  \"user_input\": \"I am looking for a health insurance under 5000 PKR\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://163.245.222.160/parse_intent",
+          "protocol": "http",
+          "host": [
+            "163",
+            "245",
+            "222",
+            "160"
+          ],
+          "path": [
+            "parse_intent"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. PIL Service (Execute Tools)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "api.financial-system.com",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"sess_123456\",\n  \"mode\": \"advisory\",\n  \"steps\": [\n    {\n      \"tool\": \"query_products\",\n      \"params\": {\n        \"product_type\": \"health_insurance\"\n      }\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://163.245.222.160/execute_tools",
+          "protocol": "http",
+          "host": [
+            "163",
+            "245",
+            "222",
+            "160"
+          ],
+          "path": [
+            "execute_tools"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Journey Service",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "api.financial-system.com",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mode\": \"marketplace\",\n  \"primary_jurisdiction\": \"PK\",\n  \"user_id\": \"user_789\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://163.245.222.160/sessions",
+          "protocol": "http",
+          "host": [
+            "163",
+            "245",
+            "222",
+            "160"
+          ],
+          "path": [
+            "sessions"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Audit Service",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "api.financial-system.com",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"session_id\": \"sess_123456\",\n  \"start_time\": \"2026-05-01T00:00:00Z\",\n  \"end_time\": \"2026-05-05T00:00:00Z\",\n  \"event_types\": [\"COMPARISON_BUILT\"],\n  \"limit\": 100\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://163.245.222.160/query_audit",
+          "protocol": "http",
+          "host": [
+            "163",
+            "245",
+            "222",
+            "160"
+          ],
+          "path": [
+            "query_audit"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Ingestion Worker",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Host",
+            "value": "api.financial-system.com",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"provider_id\": \"HBL\",\n  \"schema_hash\": \"abc123hash\",\n  \"products\": [\n    {\n      \"product_type\": \"savings_account\",\n      \"jurisdiction\": [\"PK\"],\n      \"status\": \"active\",\n      \"version\": \"1\",\n      \"last_updated\": \"2026-05-05T00:00:00Z\",\n      \"pricing\": {},\n      \"eligibility_rules\": {},\n      \"features\": [],\n      \"compliance\": {}\n    }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://163.245.222.160/provider/ingest",
+          "protocol": "http",
+          "host": [
+            "163",
+            "245",
+            "222",
+            "160"
+          ],
+          "path": [
+            "provider",
+            "ingest"
+          ]
+        }
+      }
+    }
+  ]
+}

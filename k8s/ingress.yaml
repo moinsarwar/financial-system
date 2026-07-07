@@ -8,8 +8,7 @@ metadata:
     nginx.ingress.kubernetes.io/limit-rps: "100"
 spec:
   rules:
-  - host: api.financial-system.com
-    http:
+  - http:
       paths:
       - path: /products
         pathType: Prefix
@@ -17,21 +16,21 @@ spec:
           service:
             name: policy-service
             port:
-              number: 8001
+              number: 8002
       - path: /sessions
         pathType: Prefix
         backend:
           service:
             name: journey-service
             port:
-              number: 8003
+              number: 8004
       - path: /parse_intent
         pathType: Prefix
         backend:
           service:
             name: agent-service
             port:
-              number: 8002
+              number: 8003
       - path: /execute_tools
         pathType: Prefix
         backend:
@@ -45,11 +44,18 @@ spec:
           service:
             name: audit-service
             port:
-              number: 8005
+              number: 8007
       - path: /provider/ingest
         pathType: Prefix
         backend:
           service:
             name: ingestion-worker
             port:
-              number: 8006
+              number: 8008
+      - path: /digital-asset-register
+        pathType: Prefix
+        backend:
+          service:
+            name: database-service
+            port:
+              number: 8000

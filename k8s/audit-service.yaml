@@ -8,7 +8,7 @@ spec:
     app: audit-service
   ports:
   - port: 8007
-    targetPort: 8007
+    targetPort: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -47,11 +47,4 @@ spec:
               name: financial-system-secrets
               key: s3-bucket
         ports:
-        - containerPort: 8007
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "400m"
+        - containerPort: 8000

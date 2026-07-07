@@ -8,7 +8,7 @@ spec:
     app: pil-service
   ports:
   - port: 8001
-    targetPort: 8001
+    targetPort: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -42,23 +42,16 @@ spec:
               name: financial-system-secrets
               key: postgres-password
         ports:
-        - containerPort: 8001
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "400m"
+        - containerPort: 8000
         readinessProbe:
           httpGet:
             path: /health
-            port: 8001
+            port: 8000
           initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
           httpGet:
             path: /health
-            port: 8001
+            port: 8000
           initialDelaySeconds: 30
           periodSeconds: 10

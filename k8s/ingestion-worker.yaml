@@ -8,7 +8,7 @@ spec:
     app: ingestion-worker
   ports:
   - port: 8008
-    targetPort: 8008
+    targetPort: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -40,11 +40,4 @@ spec:
               name: financial-system-secrets
               key: postgres-password
         ports:
-        - containerPort: 8008
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "400m"
+        - containerPort: 8000

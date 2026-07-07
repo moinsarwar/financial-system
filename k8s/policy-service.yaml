@@ -8,7 +8,7 @@ spec:
     app: policy-service
   ports:
   - port: 8002
-    targetPort: 8002
+    targetPort: 8000
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -44,11 +44,4 @@ spec:
         - name: MODE_CONTROL_URL
           value: http://mode-control:8004
         ports:
-        - containerPort: 8002
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "400m"
+        - containerPort: 8000

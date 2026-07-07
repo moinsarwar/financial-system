@@ -7,7 +7,7 @@ import os
 import uuid
 import time
 
-app = FastAPI(title="Journey Service", version="5.2")
+app = FastAPI(title="Audit Service", version="5.2")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ redis_client = get_redis_connection()
 async def health_check():
     return {"status": "ok", "service": "audit-service", "version": "5.2", "timestamp": time.time()}
 
-@app.post("/sessions")
+@app.post("/query_audit")
 async def create_session():
     session_id = f"sess_{uuid.uuid4().hex[:8]}"
     return {"session_id": session_id, "stage": "entry"}
