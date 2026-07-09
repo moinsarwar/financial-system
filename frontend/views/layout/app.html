@@ -553,6 +553,23 @@
                 const countEl = document.getElementById('total-products-count');
                 if(countEl) countEl.innerText = data.products.length;
 
+                const ccCountEl = document.getElementById('cc-products-count');
+                const hiCountEl = document.getElementById('hi-products-count');
+                const svCountEl = document.getElementById('sv-products-count');
+
+                if (ccCountEl || hiCountEl || svCountEl) {
+                    let cc = 0, hi = 0, sv = 0;
+                    data.products.forEach(p => {
+                        const t = (p.product_type || '').toLowerCase();
+                        if(t.includes('credit') || t.includes('card')) cc++;
+                        if(t.includes('health') || t.includes('insurance') || t.includes('medical')) hi++;
+                        if(t.includes('saving') || t.includes('deposit') || t.includes('bank')) sv++;
+                    });
+                    if(ccCountEl) ccCountEl.innerText = cc;
+                    if(hiCountEl) hiCountEl.innerText = hi;
+                    if(svCountEl) svCountEl.innerText = sv;
+                }
+
                 if (onlyCount || !renderTable) return;
                 
                 if ($.fn.DataTable.isDataTable('#productsTable')) {

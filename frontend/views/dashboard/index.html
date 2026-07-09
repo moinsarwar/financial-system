@@ -1,15 +1,49 @@
-<div class="container"><div class="header-action">
-<div class="container">    <h2 class="title"><i class="fa-solid fa-house"></i> Overview</h2>
-<div class="container"></div>
-<div class="container"><div class="form-grid">
-<div class="container">    <div style="background: var(--surface); border: 1px solid var(--border); padding: 2rem; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 1.5rem; box-shadow: var(--shadow-sm);">
-<div class="container">        <div style="background: var(--gold-bg); padding: 1.2rem; border-radius: 50%; color: var(--gold); font-size: 2rem;">
-<div class="container">            <i class="fa-solid fa-box-open"></i>
-<div class="container">        </div>
-<div class="container">        <div>
-<div class="container">            <h3 style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 600; margin-bottom: 0.2rem;">Total Products</h3>
-<div class="container">            <p id="total-products-count" style="font-size: 2.2rem; font-weight: 800; color: var(--text);">...</p>
-<div class="container">        </div>
-<div class="container">    </div>
-<div class="container"></div>
-<div class="container"></div>
+<div class="header-action">
+    <h2 class="title"><i class="fa-solid fa-house"></i> Overview</h2>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+    <!-- Total Products -->
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm);">
+        <div style="background: var(--gold-bg); padding: 1rem; border-radius: 50%; color: var(--gold); font-size: 1.5rem; display:flex; justify-content:center; align-items:center; width:50px; height:50px;">
+            <i class="fa-solid fa-box-open"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem;">Total Products</h3>
+            <p id="total-products-count" style="font-size: 1.8rem; font-weight: 800; color: var(--text);">0</p>
+        </div>
+    </div>
+    
+    <!-- Credit Cards -->
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm);">
+        <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 50%; color: #3b82f6; font-size: 1.5rem; display:flex; justify-content:center; align-items:center; width:50px; height:50px;">
+            <i class="fa-regular fa-credit-card"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem;">Credit Cards</h3>
+            <p id="cc-products-count" style="font-size: 1.8rem; font-weight: 800; color: var(--text);">0</p>
+        </div>
+    </div>
+
+    <!-- Health Insurance -->
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm);">
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 50%; color: #10b981; font-size: 1.5rem; display:flex; justify-content:center; align-items:center; width:50px; height:50px;">
+            <i class="fa-solid fa-notes-medical"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem;">Health Insurance</h3>
+            <p id="hi-products-count" style="font-size: 1.8rem; font-weight: 800; color: var(--text);">0</p>
+        </div>
+    </div>
+
+    <!-- Saving Products -->
+    <div style="background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-sm);">
+        <div style="background: rgba(139, 92, 246, 0.1); padding: 1rem; border-radius: 50%; color: #8b5cf6; font-size: 1.5rem; display:flex; justify-content:center; align-items:center; width:50px; height:50px;">
+            <i class="fa-solid fa-piggy-bank"></i>
+        </div>
+        <div>
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem;">Saving Products</h3>
+            <p id="sv-products-count" style="font-size: 1.8rem; font-weight: 800; color: var(--text);">0</p>
+        </div>
+    </div>
+</div>
