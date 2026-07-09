@@ -156,6 +156,52 @@ async def delete_product(product_id: str):
     finally:
         conn.close()
 
+@app.put("/products/{product_id}")
+async def update_product(product_id: str, product: ProductSchema):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Check if product exists
+            cur.execute("SELECT 1 FROM products WHERE product_id = %s", (product_id,))
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail="Product not found")
+                
+            cur.execute("""
+                UPDATE products SET
+                    provider_id = %s,
+                    product_type = %s,
+                    jurisdiction = %s,
+                    status = %s,
+                    version = %s,
+                    pricing = %s,
+                    eligibility_rules = %s,
+                    features = %s,
+                    compliance = %s,
+                    last_updated = NOW()
+                WHERE product_id = %s
+            """, (
+                product.provider_id,
+                product.product_type,
+                json.dumps(product.jurisdiction),
+                product.status,
+                product.version,
+                json.dumps(product.pricing),
+                json.dumps(product.eligibility_rules),
+                json.dumps(product.features),
+                json.dumps(product.compliance),
+                product_id
+            ))
+            conn.commit()
+            return {"status": "success", "message": f"Product {product_id} updated"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error updating product: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 @app.post("/provider/ingest")
 async def ingest_product_feed(feed: ProductFeed):
     conn = get_db_connection()

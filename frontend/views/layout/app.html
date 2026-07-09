@@ -711,38 +711,65 @@
             const editId = document.getElementById('edit_product_id').value;
             if(editId) {
                 productObj.product_id = editId;
-            }
-
-            const payload = {
-                provider_id: document.getElementById('provider_id').value,
-                schema_hash: document.getElementById('schema_hash').value,
-                products: [productObj]
-            };
-
-            const submitBtn = document.getElementById('submit-btn');
-            const originalHtml = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
-
-            try {
-                const res = await fetch('/provider/ingest', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                productObj.provider_id = document.getElementById('provider_id').value;
                 
-                if(res.ok) {
-                    showToast(editId ? "Product updated successfully!" : "Product successfully ingested!", false);
-                    routeTo('/dashboard/product');
-                } else {
-                    const errText = await res.text();
-                    showToast("Failed to process product: " + errText, true);
+                const submitBtn = document.getElementById('submit-btn');
+                const originalHtml = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+
+                try {
+                    const res = await fetch(`/products/${editId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(productObj)
+                    });
+                    
+                    if(res.ok) {
+                        showToast("Product updated successfully!", false);
+                        routeTo('/dashboard/product');
+                    } else {
+                        const errText = await res.text();
+                        showToast("Failed to process product: " + errText, true);
+                    }
+                } catch(err) {
+                    showToast("Network error occurred.", true);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
                 }
-            } catch(err) {
-                showToast("Network error occurred.", true);
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalHtml;
+            } else {
+                const payload = {
+                    provider_id: document.getElementById('provider_id').value,
+                    schema_hash: document.getElementById('schema_hash').value,
+                    products: [productObj]
+                };
+
+                const submitBtn = document.getElementById('submit-btn');
+                const originalHtml = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+
+                try {
+                    const res = await fetch('/provider/ingest', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if(res.ok) {
+                        showToast("Product successfully ingested!", false);
+                        routeTo('/dashboard/product');
+                    } else {
+                        const errText = await res.text();
+                        showToast("Failed to process product: " + errText, true);
+                    }
+                } catch(err) {
+                    showToast("Network error occurred.", true);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
             }
         }
 
