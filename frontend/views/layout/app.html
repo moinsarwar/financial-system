@@ -423,188 +423,12 @@
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <i class="fa-solid fa-chart-pie"></i>
-            <h2>Fin<span>Compare</span></h2>
-        </div>
-        <div class="nav-links">
-            <a class="nav-link" id="nav-home" onclick="showView('home')">
-                <i class="fa-solid fa-house"></i> Dashboard
-            </a>
-            <a class="nav-link" id="nav-list" onclick="showView('list')">
-                <i class="fa-solid fa-layer-group"></i> Product List
-            </a>
-            <a class="nav-link logout" onclick="logout()">
-                <i class="fa-solid fa-right-from-bracket"></i> Logout
-            </a>
-        </div>
+    <div class="sidebar" id="app-sidebar">
+        <!-- Sidebar loads here -->
     </div>
 
-    <div class="main-content">
-        <!-- HOME / SUMMARY VIEW -->
-        <div id="view-home" class="container" style="display: none;">
-            <div class="header-action">
-                <h2 class="title"><i class="fa-solid fa-house"></i> Overview</h2>
-            </div>
-            <div class="form-grid">
-                <div style="background: var(--surface); border: 1px solid var(--border); padding: 2rem; border-radius: var(--radius-lg); display: flex; align-items: center; gap: 1.5rem; box-shadow: var(--shadow-sm);">
-                    <div style="background: var(--gold-bg); padding: 1.2rem; border-radius: 50%; color: var(--gold); font-size: 2rem;">
-                        <i class="fa-solid fa-box-open"></i>
-                    </div>
-                    <div>
-                        <h3 style="color: var(--text-secondary); font-size: 0.95rem; font-weight: 600; margin-bottom: 0.2rem;">Total Products</h3>
-                        <p id="total-products-count" style="font-size: 2.2rem; font-weight: 800; color: var(--text);">...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ADD / EDIT VIEW -->
-        <div id="view-add" class="container" style="display: none;">
-            <div class="header-action">
-                <h2 class="title" id="form-title"><i class="fa-solid fa-plus-circle"></i> Add New Product</h2>
-                <button type="button" class="add-btn" onclick="showView('list')"><i class="fa-solid fa-arrow-left"></i> Back to List</button>
-            </div>
-            
-            <form id="productForm" onsubmit="submitProduct(event)">
-                <input type="hidden" id="edit_product_id" value="">
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Provider ID</label>
-                        <input type="text" id="provider_id" required placeholder="e.g., UBL, Meezan">
-                    </div>
-                    <div class="form-group">
-                        <label>Product Type</label>
-                        <input list="product_types_list" id="product_type" required placeholder="Select or type new...">
-                        <datalist id="product_types_list">
-                            <option value="account">Bank Account</option>
-                            <option value="card">Credit Card</option>
-                            <option value="loan">Loan</option>
-                            <option value="insurance">Insurance</option>
-                            <option value="Premium Saving">Premium Saving</option>
-                        </datalist>
-                    </div>
-                    <div class="form-group">
-                        <label>Schema Hash</label>
-                        <input type="text" id="schema_hash" required value="sha256:abc1234567890abcdef">
-                    </div>
-                    <div class="form-group">
-                        <label>Status</label>
-                        <select id="status" required>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Version</label>
-                        <input type="text" id="version" required value="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Last Updated</label>
-                        <input type="datetime-local" id="last_updated" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Min Age</label>
-                        <input type="number" id="minAge" placeholder="e.g. 18">
-                    </div>
-                    <div class="form-group">
-                        <label>Max Age</label>
-                        <input type="number" id="maxAge" placeholder="e.g. 65">
-                    </div>
-                    <div class="form-group">
-                        <label>Sharia Certified</label>
-                        <select id="sharia_certified">
-                            <option value="false">No</option>
-                            <option value="true">Yes</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Jurisdiction</label>
-                        <input type="text" id="jurisdiction" required value='["PK"]' placeholder='["PK"]'>
-                    </div>
-                    <div class="form-group">
-                        <label>Effective Date</label>
-                        <input type="date" id="effective_date">
-                    </div>
-                    <div class="form-group">
-                        <label>Published By</label>
-                        <input type="text" id="published_by" value="System Admin">
-                    </div>
-                    <div class="form-group">
-                        <label>Approved By</label>
-                        <input type="text" id="approved_by" value="Compliance Team">
-                    </div>
-                    <div class="form-group">
-                        <label>Change Request</label>
-                        <input type="text" id="change_request" value="CR-1001">
-                    </div>
-                    <div class="form-group full-width">
-                        <label>Previous Version</label>
-                        <input type="text" id="previous_version" value="v0.9">
-                    </div>
-
-                    <div class="form-group full-width" id="pricing-container">
-                        <label>Pricing Items</label>
-                        <div class="dynamic-section">
-                            <div id="pricing-rows">
-                                <div class="row">
-                                    <input type="text" placeholder="Key (e.g. monthly_fee)" class="price-key">
-                                    <input type="text" placeholder="Value (e.g. 0)" class="price-value">
-                                    <button type="button" class="remove-btn" title="Remove" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            </div>
-                            <button type="button" onclick="addPricingRow()" class="add-btn"><i class="fa-solid fa-plus"></i> Add Pricing Item</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group full-width" id="features-container">
-                        <label>Features List</label>
-                        <div class="dynamic-section">
-                            <div id="features-rows">
-                                <div class="row">
-                                    <input type="text" placeholder="Feature Name" class="feat-name">
-                                    <input type="text" placeholder="Feature Details" class="feat-details">
-                                    <button type="button" class="remove-btn" title="Remove" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            </div>
-                            <button type="button" onclick="addFeatureRow()" class="add-btn"><i class="fa-solid fa-plus"></i> Add Feature</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1.5rem; text-align: right;">
-                    <button type="submit" class="submit-btn" id="submit-btn"><i class="fa-solid fa-save"></i> Ingest Product</button>
-                </div>
-            </form>
-        </div>
-
-        <!-- LIST VIEW -->
-        <div id="view-list" class="container">
-            <div class="header-action">
-                <h2 class="title"><i class="fa-solid fa-list"></i> Product Registry</h2>
-                <button class="submit-btn" onclick="showView('add')"><i class="fa-solid fa-plus"></i> Add Product</button>
-            </div>
-            
-            <div style="overflow-x: auto;">
-                <table id="productsTable" class="display">
-                    <thead>
-                        <tr>
-                            <th>Product ID</th>
-                            <th>Provider</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Last Updated</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="products-tbody">
-                        <tr><td colspan="6" style="text-align:center; padding: 2rem !important; color: #64748b;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading data...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="main-content" id="app-content">
+        <!-- Content loads here -->
     </div>
 
     <!-- TOAST NOTIFICATION -->
@@ -621,29 +445,62 @@
             window.location.href = '/login';
         }
 
-        document.getElementById('last_updated').value = new Date().toISOString().slice(0, 16);
-        
+        window.productsData = [];
+
+        async function loadFragment(url, containerId) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Failed to load fragment');
+                const html = await res.text();
+                document.getElementById(containerId).innerHTML = html;
+            } catch (e) {
+                console.error("Error loading fragment:", e);
+                showToast("Error loading view", true);
+            }
+        }
+
+        async function initApp() {
+            await loadFragment('/layout/sidebar.html', 'app-sidebar');
+            route();
+        }
+
         async function route() {
             const path = window.location.pathname;
             if (path.startsWith('/dashboard/product/edit/')) {
                 const id = path.split('/').pop();
-                await fetchProducts(); 
+                await loadFragment('/product/edit.html', 'app-content');
+                await fetchProducts(false, false); 
                 editProduct(id, false);
             } else if (path === '/dashboard/product/new') {
+                await loadFragment('/product/create.html', 'app-content');
                 document.getElementById('productForm').reset();
                 document.getElementById('edit_product_id').value = '';
-                showView('add', false);
+                document.getElementById('last_updated').value = new Date().toISOString().slice(0, 16);
+                updateSidebarNav('list');
             } else if (path === '/dashboard/product') {
-                showView('list', false);
+                await loadFragment('/product/list.html', 'app-content');
+                updateSidebarNav('list');
+                fetchProducts(false, true);
             } else {
-                showView('home', false);
+                // Default to overview dashboard
+                await loadFragment('/dashboard/index.html', 'app-content');
+                updateSidebarNav('home');
+                fetchProducts(true, false);
             }
+        }
+
+        function routeTo(path) {
+            history.pushState(null, '', path);
+            route();
         }
 
         window.onpopstate = () => route();
 
-        // Initial load
-        route();
+        function updateSidebarNav(view) {
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            if(view === 'home' && document.getElementById('nav-home')) document.getElementById('nav-home').classList.add('active');
+            if(view === 'list' && document.getElementById('nav-list')) document.getElementById('nav-list').classList.add('active');
+        }
 
         function logout() {
             localStorage.removeItem('auth_token');
@@ -659,38 +516,13 @@
             toast.style.backgroundColor = isError ? '#ef4444' : '#10b981';
             toastIcon.className = isError ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check';
             
-            // Force reflow for animation
             toast.style.display = 'none';
-            toast.offsetHeight;
+            toast.offsetHeight; // reflow
             toast.style.display = 'flex';
             
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 3000);
-        }
-
-        function showView(view, updateUrl = true) {
-            document.getElementById('view-home').style.display = view === 'home' ? 'block' : 'none';
-            document.getElementById('view-add').style.display = view === 'add' ? 'block' : 'none';
-            document.getElementById('view-list').style.display = view === 'list' ? 'block' : 'none';
-            
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            if(view === 'home') document.getElementById('nav-home').classList.add('active');
-            if(view === 'list') document.getElementById('nav-list').classList.add('active');
-            
-            if(view === 'home') {
-                if(updateUrl) history.pushState(null, '', '/dashboard');
-                fetchProducts(true); // Fetch for count
-            } else if(view === 'list') {
-                if(updateUrl) history.pushState(null, '', '/dashboard/product');
-                fetchProducts();
-            } else if(view === 'add') {
-                if(!document.getElementById('edit_product_id').value) {
-                    document.getElementById('form-title').innerHTML = '<i class="fa-solid fa-plus-circle"></i> Add New Product';
-                    document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-save"></i> Ingest Product';
-                    if(updateUrl) history.pushState(null, '', '/dashboard/product/new');
-                }
-            }
         }
 
         function addPricingRow(key='', val='') {
@@ -709,7 +541,7 @@
             btn.parentElement.remove();
         }
 
-        async function fetchProducts(onlyCount = false) {
+        async function fetchProducts(onlyCount = false, renderTable = true) {
             try {
                 const res = await fetch('/products');
                 const data = await res.json();
@@ -721,21 +553,21 @@
                 const countEl = document.getElementById('total-products-count');
                 if(countEl) countEl.innerText = data.products.length;
 
-                if (onlyCount) return; // Stop here if we only needed the count for home view
+                if (onlyCount || !renderTable) return;
                 
                 if ($.fn.DataTable.isDataTable('#productsTable')) {
                     $('#productsTable').DataTable().destroy();
                 }
 
                 const tbody = document.getElementById('products-tbody');
+                if (!tbody) return;
+
                 tbody.innerHTML = '';
                 
                 if(data.products.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem !important; color:#64748b;">No products found in registry.</td></tr>';
                     return;
                 }
-
-                window.productsData = data.products; // save for edit
                 
                 data.products.forEach(p => {
                     const tr = document.createElement('tr');
@@ -748,7 +580,7 @@
                         <td><span class="${statusClass}">${p.status}</span></td>
                         <td>${new Date(p.last_updated).toLocaleString()}</td>
                         <td>
-                            <button class="action-btn btn-edit" onclick="editProduct('${p.product_id}')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="action-btn btn-edit" onclick="routeTo('/dashboard/product/edit/${p.product_id}')"><i class="fa-solid fa-pen"></i></button>
                             <button class="action-btn btn-delete" onclick="deleteProduct('${p.product_id}')"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     `;
@@ -769,10 +601,15 @@
             }
         }
 
-        function editProduct(productId, updateUrl = true) {
+        function editProduct(productId) {
             const p = window.productsData.find(x => x.product_id === productId);
-            if(!p) return;
+            if(!p) {
+                showToast("Product not found!", true);
+                routeTo('/dashboard/product');
+                return;
+            }
 
+            updateSidebarNav('list');
             document.getElementById('form-title').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Edit Product: ' + productId;
             document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-save"></i> Update Product';
             document.getElementById('edit_product_id').value = productId;
@@ -805,9 +642,6 @@
                 p.features.forEach(f => addFeatureRow(f.name, f.details));
             }
             if(document.getElementById('features-rows').children.length === 0) addFeatureRow();
-
-            showView('add', false);
-            if(updateUrl) history.pushState(null, '', '/dashboard/product/edit/' + productId);
         }
 
         async function deleteProduct(productId) {
@@ -816,7 +650,7 @@
                 const res = await fetch(`/products/${productId}`, { method: 'DELETE' });
                 if(res.ok) {
                     showToast("Product deleted successfully", false);
-                    fetchProducts();
+                    fetchProducts(false, true);
                 } else {
                     showToast("Failed to delete product", true);
                 }
@@ -899,14 +733,7 @@
                 
                 if(res.ok) {
                     showToast(editId ? "Product updated successfully!" : "Product successfully ingested!", false);
-                    document.getElementById('productForm').reset();
-                    document.getElementById('edit_product_id').value = '';
-                    document.getElementById('form-title').innerHTML = '<i class="fa-solid fa-plus-circle"></i> Add New Product';
-                    document.getElementById('submit-btn').innerHTML = '<i class="fa-solid fa-save"></i> Ingest Product';
-                    document.getElementById('jurisdiction').value = '["PK"]';
-                    document.getElementById('pricing-rows').innerHTML = '<div class="row"><input type="text" placeholder="Key" class="price-key"><input type="text" placeholder="Value" class="price-value"><button type="button" class="remove-btn" title="Remove" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button></div>';
-                    document.getElementById('features-rows').innerHTML = '<div class="row"><input type="text" placeholder="Feature Name" class="feat-name"><input type="text" placeholder="Feature Details" class="feat-details"><button type="button" class="remove-btn" title="Remove" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button></div>';
-                    showView('list');
+                    routeTo('/dashboard/product');
                 } else {
                     const errText = await res.text();
                     showToast("Failed to process product: " + errText, true);
@@ -918,6 +745,9 @@
                 submitBtn.innerHTML = originalHtml;
             }
         }
+
+        // Boot
+        initApp();
     </script>
 </body>
 </html>

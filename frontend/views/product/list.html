@@ -1,0 +1,22 @@
+<div class="header-action">
+    <h2 class="title"><i class="fa-solid fa-list"></i> Product Registry</h2>
+    <button class="submit-btn" onclick="routeTo('/dashboard/product/new')"><i class="fa-solid fa-plus"></i> Add Product</button>
+</div>
+
+<div style="overflow-x: auto;">
+    <table id="productsTable" class="display">
+        <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Provider</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="products-tbody">
+            <tr><td colspan="6" style="text-align:center; padding: 2rem !important; color: #64748b;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading data...</td></tr>
+        </tbody>
+    </table>
+</div>
