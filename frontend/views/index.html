@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>FinOS v7.1 – Board-Ready Decision OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <!-- jQuery and DataTables JS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <style>
+        /* ===== RESET & VARIABLES (same as before) ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0a1e2f;
+            --primary-light: #1a3a5c;
+            --accent: #0088cc;
+            --accent-soft: #e6f2fa;
+            --gold: #f5a623;
+            --green: #00a86b;
+            --red: #dc3545;
+            --gray-50: #f7f9fc;
+            --gray-100: #edf1f7;
+            --gray-200: #dce2ec;
+            --gray-400: #8a9bb5;
+            --gray-600: #4a5a72;
+            --gray-800: #1a2634;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #eef2f6;
+            color: var(--gray-800);
+            padding: 12px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .app {
+            max-width: 1440px;
+            width: 100%;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            border-top: 4px solid var(--accent);
+        }
+
+        .app.mode-advisory {
+            border-top-color: var(--gold);
+        }
+
+        .app.mode-white_label {
+            border-top-color: var(--gray-400);
+        }
+
+        /* ===== BANNER ===== */
+        .demo-banner {
+            background: #fef3c7;
+            color: #78350f;
+            text-align: center;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 1px solid #fcd34d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .demo-banner .badge {
+            background: #78350f;
+            color: #fef3c7;
+            padding: 1px 14px;
+            border-radius: 40px;
+            font-size: 11px;
+        }
+
+        .demo-banner .source {
+            font-weight: 400;
+            font-size: 12px;
+            color: #78350f;
+        }
+
+        /* ===== HEADER ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 28px;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .app-header .brand {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--primary);
+        }
+
+        .app-header .brand small {
+            font-weight: 400;
+            color: var(--gray-400);
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 4px;
+            background: white;
+            padding: 4px;
+            border-radius: 40px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .mode-toggle button {
+            border: none;
+            background: transparent;
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-600);
+            cursor: pointer;
+        }
+
+        .mode-toggle button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ===== WORKFLOW BAR ===== */
+        .workflow-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 10px;
+            padding: 10px 28px;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 12px;
+        }
+
+        .wf-step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: var(--gray-400);
+            background: var(--gray-50);
+            transition: 0.2s;
+        }
+
+        .wf-step .num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 10px;
+            color: var(--gray-600);
+        }
+
+        .wf-step.active {
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .wf-step.active .num {
+            background: var(--accent);
+            color: white;
+        }
+
+        .wf-step.done {
+            background: #e6f9f0;
+            color: var(--green);
+        }
+
+        .wf-step.done .num {
+            background: var(--green);
+            color: white;
+        }
+
+        .wf-arrow {
+            color: var(--gray-400);
+            font-size: 14px;
+        }
+
+        /* ===== SCREENS ===== */
+        .screen {
+            display: none;
+            animation: fadeUp 0.3s ease;
+            padding: 24px 28px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h2 {
+            font-size: 26px;
+            font-weight: 800;
+        }
+
+        .hero p {
+            color: var(--gray-600);
+            margin-top: 4px;
+            max-width: 600px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 14px;
+            margin: 16px 0;
+        }
+
+        .category-card {
+            background: var(--gray-50);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .category-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .category-card .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .category-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: var(--gray-50);
+            padding: 24px;
+            border-radius: var(--radius-md);
+            margin: 16px 0;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group.full {
+            grid-column: 1/-1;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            background: white;
+        }
+
+        .sharia-toggle {
+            display: flex;
+            gap: 8px;
+            background: white;
+            padding: 4px;
+            border-radius: 40px;
+            border: 1px solid var(--gray-200);
+            width: fit-content;
+        }
+
+        .sharia-toggle button {
+            border: none;
+            background: transparent;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--gray-600);
+        }
+
+        .sharia-toggle button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn {
+            padding: 10px 28px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-800);
+            border: 1px solid var(--gray-200);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 168, 107, 0.3);
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: #78350f;
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 166, 35, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+        }
+
+        /* ===== OPS BAR ===== */
+        .ops-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            background: var(--gray-50);
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+
+        .ops-bar .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 4px;
+        }
+
+        .ops-bar .dot.online {
+            background: var(--green);
+        }
+
+        .simulated-badge {
+            background: var(--gray-200);
+            color: var(--gray-600);
+            font-size: 9px;
+            font-weight: 700;
+            padding: 1px 8px;
+            border-radius: 40px;
+            text-transform: uppercase;
+            margin-left: 6px;
+        }
+
+        .decision-summary-card {
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            padding: 20px 24px;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .decision-summary-card .block h4 {
+            font-size: 13px;
+            color: var(--gray-400);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .decision-summary-card .block .value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .decision-summary-card .block .value small {
+            font-weight: 400;
+            font-size: 14px;
+            color: var(--gray-600);
+            margin-left: 8px;
+        }
+
+        /* ===== TABS ===== */
+        .workspace-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--gray-100);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            border: 1px solid var(--gray-200);
+            flex-wrap: wrap;
+        }
+
+        .workspace-tabs button {
+            border: none;
+            background: transparent;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .workspace-tabs button.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeUp 0.2s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== TABLES ===== */
+        .enterprise-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--gray-200);
+        }
+
+        .enterprise-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .enterprise-table th {
+            background: var(--gray-50);
+            text-align: left;
+            padding: 10px 14px;
+            font-weight: 600;
+            color: var(--gray-600);
+            border-bottom: 2px solid var(--gray-200);
+            white-space: nowrap;
+        }
+
+        .enterprise-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: middle;
+        }
+
+        .enterprise-table .main-row {
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .enterprise-table .main-row:hover {
+            background: var(--gray-50);
+        }
+
+        .enterprise-table .detail-row td {
+            padding: 0 14px 16px;
+            background: var(--gray-50);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 400px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        .modal-content-large {
+            width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .enterprise-table .detail-content {
+            background: white;
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            border: 1px solid var(--gray-200);
+            margin-top: 4px;
+        }
+
+        .trust-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 10px;
+            border-radius: 40px;
+            white-space: nowrap;
+        }
+
+        .trust-badge.verified {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .stars {
+            color: var(--gold);
+            letter-spacing: 2px;
+        }
+
+        .eligibility-check-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .eligibility-check-grid .item {
+            font-size: 12px;
+            background: var(--gray-100);
+            padding: 2px 12px;
+            border-radius: 40px;
+        }
+
+        .eligibility-check-grid .item.pass {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .eligibility-check-grid .item.fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge {
+            padding: 1px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge.green {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.gold {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.red {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge.gray {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        /* ===== RULE BUILDER ===== */
+        .rule-builder {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin: 12px 0;
+        }
+
+        .rule-group {
+            background: var(--gray-50);
+            border-left: 3px solid var(--accent);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 4px;
+        }
+
+        .rule-condition {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 4px 0;
+            border: 1px solid var(--gray-200);
+        }
+
+        .rule-condition select,
+        .rule-condition input {
+            padding: 4px 8px;
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* ===== FRAUD PANEL ===== */
+        .fraud-check {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .fraud-item {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 10px 16px;
+            flex: 1 1 200px;
+        }
+
+        .fraud-item .status {
+            font-weight: 700;
+        }
+
+        .fraud-item.pass {
+            border-left: 4px solid var(--green);
+        }
+
+        .fraud-item.fail {
+            border-left: 4px solid var(--red);
+        }
+
+        /* ===== ADMIN SUB-TABS ===== */
+        .admin-subtabs {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 8px;
+        }
+
+        .admin-subtabs button {
+            border: none;
+            background: transparent;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--gray-600);
+            cursor: pointer;
+        }
+
+        .admin-subtabs button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ===== MISC ===== */
+        .trace-container {
+            background: var(--gray-800);
+            color: #e2e8f0;
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trace-line {
+            display: flex;
+            gap: 16px;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            flex-wrap: wrap;
+        }
+
+        .trace-line .step {
+            color: var(--gray-400);
+            min-width: 60px;
+        }
+
+        .trace-line .detail {
+            color: #a0c4e8;
+        }
+
+        .trace-line .evidence {
+            color: #fbbf24;
+            font-size: 11px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: var(--radius-lg);
+            max-width: 720px;
+            width: 100%;
+            padding: 32px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: fadeUp 0.2s ease;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+            max-width: 380px;
+        }
+
+        .toast {
+            background: var(--gray-800);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            font-size: 13px;
+            animation: slideUp 0.3s ease;
+        }
+
+        .toast.success {
+            background: var(--green);
+        }
+
+        .toast.error {
+            background: var(--red);
+        }
+
+        .tracking-step {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            margin: 4px 0;
+        }
+
+        .tracking-step.done {
+            background: #f0fdf4;
+            border-left: 4px solid var(--green);
+        }
+
+        .tracking-step.pending {
+            background: var(--gray-50);
+            border-left: 4px solid var(--gray-200);
+        }
+
+        /* Responsive */
+        @media (max-width:700px) {
+            .app-header {
+                padding: 12px 16px;
+            }
+
+            .workflow-bar {
+                padding: 8px 16px;
+            }
+
+            .screen {
+                padding: 16px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .decision-summary-card {
+                grid-template-columns: 1fr;
+            }
+
+            .workspace-tabs {
+                flex-wrap: wrap;
+            }
+
+            .workspace-tabs button {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+
+            .admin-subtabs button {
+                padding: 4px 10px;
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width:430px) {
+            .category-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-400);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app mode-marketplace" id="app">
+
+        <!-- ===== BANNER ===== -->
+        <div class="demo-banner">
+            <span class="badge">REPRESENTATIVE MARKET DATA</span>
+            <span>As of Jul 2026 · Sources: SBP, SECP, provider websites</span>
+            <span class="source">KIBOR 6M: <span id="kiborDisplay">19.8</span>%</span>
+            <span class="source" id="totalProductsCount">· v7.1 · Board‑Ready · ... Products</span>
+        </div>
+
+        <!-- ===== HEADER ===== -->
+        <div class="app-header">
+            <div class="brand">FinOS <small>v7.1 – Enterprise OS</small></div>
+            <div class="mode-toggle" id="modeToggle">
+                <button class="active" data-mode="marketplace" onclick="setMode('marketplace')">Marketplace</button>
+                <button data-mode="advisory" onclick="setMode('advisory')">Advisory</button>
+                <button data-mode="white_label" onclick="setMode('white_label')">White-label</button>
+            </div>
+        </div>
+
+        <!-- ===== WORKFLOW ===== -->
+        <div class="workflow-bar" id="workflowBar">
+            <div class="wf-step active" data-step="requirements"><span class="num">1</span> Requirements</div>
+            <span class="wf-arrow">›</span>
+            <div class="wf-step" data-step="eligibility"><span class="num">2</span> Eligibility</div>
+            <span class="wf-arrow">›</span>
+            <div class="wf-step" data-step="workspace"><span class="num">3</span> Decision Workspace</div>
+            <span class="wf-arrow">›</span>
+            <div class="wf-step" data-step="consent"><span class="num">4</span> Consent</div>
+            <span class="wf-arrow">›</span>
+            <div class="wf-step" data-step="application"><span class="num">5</span> Application</div>
+            <span class="wf-arrow">›</span>
+            <div class="wf-step" data-step="tracking"><span class="num">6</span> Tracking</div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 1: REQUIREMENTS -->
+        <!-- ============================================================ -->
+        <div class="screen active" id="screen-requirements">
+            <div class="hero">
+                <h2>🇵🇰 Choose a financial product</h2>
+                <p>We’ll show you representative offers from banks and insurers operating in Pakistan.</p>
+            </div>
+            <div class="category-grid">
+                <div class="category-card" onclick="setIntent('savings')"><span class="icon">🏦</span>
+                    <h4>Savings</h4>
+                </div>
+                <div class="category-card" onclick="setIntent('credit_card')"><span class="icon">💳</span>
+                    <h4>Credit Cards</h4>
+                </div>
+                <div class="category-card" onclick="setIntent('personal_loan')"><span class="icon">💰</span>
+                    <h4>Personal Loans</h4>
+                </div>
+                <div class="category-card" onclick="setIntent('health_insurance')"><span class="icon">❤️</span>
+                    <h4>Health Insurance</h4>
+                </div>
+                <div class="category-card" onclick="setIntent('motor_insurance')"><span class="icon">🚗</span>
+                    <h4>Motor Insurance</h4>
+                </div>
+                <div class="category-card" onclick="setIntent('life_insurance')"><span class="icon">👨‍👩‍👧</span>
+                    <h4>Life / Takaful</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 2: ELIGIBILITY -->
+        <!-- ============================================================ -->
+        <div class="screen" id="screen-eligibility">
+            <div class="hero">
+                <h2>Eligibility Assessment</h2>
+                <p>Enter your profile to filter products using representative market criteria.</p>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label>Age</label><input type="number" id="ageInput" value="32" min="1"
+                        max="120"></div>
+                <div class="form-group"><label>Monthly Income Band</label>
+                    <select id="incomeSelect">
+                        <option value="<50k">Under PKR 50,000</option>
+                        <option value="50k-100k" selected>PKR 50,000 – 100,000</option>
+                        <option value="100k-250k">PKR 100,000 – 250,000</option>
+                        <option value=">250k">Over PKR 250,000</option>
+                    </select>
+                </div>
+                <div class="form-group full"><label>Jurisdiction</label><select id="jurisdictionSelect">
+                        <option value="PK">Pakistan (SBP)</option>
+                        <option value="UAE">UAE (DFSA/VARA)</option>
+                        <option value="KSA">KSA (SAMA)</option>
+                    </select></div>
+                <div class="form-group full"><label>Compliance Preference</label>
+                    <div class="sharia-toggle" id="shariaToggle">
+                        <button class="active" data-value="any" onclick="setSharia('any')">Any</button>
+                        <button data-value="sharia" onclick="setSharia('sharia')">🕋 Sharia</button>
+                        <button data-value="conventional" onclick="setSharia('conventional')">Conventional</button>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="runEligibility()">🚀 Run Eligibility Rules</button>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 3: DECISION WORKSPACE -->
+        <!-- ============================================================ -->
+        <div class="screen" id="screen-workspace">
+            <!-- Ops Bar -->
+            <div class="ops-bar">
+                <span><span class="dot online"></span> API Status: Online</span>
+                <span>📅 Catalogue Updated <span id="catalogTime">Today</span></span>
+                <span>⏱️ Pricing Verified <span id="pricingTime">09:42</span></span>
+                <span>📋 Rules v<span id="ruleVersion">4.3</span></span>
+                <span>✅ Fees Verified <span id="feesDate">6 Jul</span></span>
+                <span>📊 Provider Uptime: 99.97%</span>
+            </div>
+
+            <!-- Decision Summary -->
+            <div class="decision-summary-card" id="decisionSummaryCard">
+                <div class="block">
+                    <h4>Requirements</h4>
+                    <div style="font-size:13px;color:var(--gray-600);">
+                        <div>✓ Product: <span id="reqProduct">-</span></div>
+                        <div>✓ Jurisdiction: <span id="reqJurisdiction">-</span></div>
+                        <div>✓ Income: <span id="reqIncome">-</span></div>
+                        <div>✓ Age: <span id="reqAge">-</span></div>
+                    </div>
+                </div>
+                <div class="block">
+                    <h4>Outcome</h4>
+                    <div class="value"><span id="outcomeCount">0</span> eligible <small>from <span
+                                id="outcomeTotal">0</span> searched</small></div>
+                    <div style="font-size:13px;color:var(--gray-600);margin-top:4px;">
+                        <span id="outcomeExcluded">0 excluded</span> · <span id="outcomeProviders">0 providers</span>
+                    </div>
+                    <div style="font-size:13px;margin-top:4px;">
+                        <span style="background:#d1fae5;padding:1px 12px;border-radius:40px;color:#065f46;"
+                            id="confidenceBadge">Evidence confidence: <span id="confidenceLevel">High</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== WORKSPACE TABS ===== -->
+            <div class="workspace-tabs" id="workspaceTabs">
+                <button class="active" data-tab="overview" onclick="switchTab('overview')">📊 Overview</button>
+                <button data-tab="products" onclick="switchTab('products')">📋 Products</button>
+                <button data-tab="matrix" onclick="switchTab('matrix')">📈 Matrix</button>
+                <button data-tab="rules_builder" onclick="switchTab('rules_builder')">⚙️ Rule Builder</button>
+                <button data-tab="catalogue" onclick="switchTab('catalogue')">📂 Catalogue</button>
+                <button data-tab="ai_explain" onclick="switchTab('ai_explain')">🧠 AI Explain</button>
+                <button data-tab="decision_trace" onclick="switchTab('decision_trace')">📐 Trace</button>
+                <button data-tab="fraud" onclick="switchTab('fraud')">🛡️ Fraud</button>
+                <button data-tab="lender_compare" onclick="switchTab('lender_compare')">🔍 Lender</button>
+                <button data-tab="audit" onclick="switchTab('audit')">🔍 Audit</button>
+                <button data-tab="admin" onclick="switchTab('admin')">⚙️ Admin <span
+                        class="simulated-badge">sim</span></button>
+            </div>
+
+            <!-- ===== TAB: OVERVIEW ===== -->
+            <div class="tab-content active" id="tab-overview">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                    <div
+                        style="background:var(--gray-50);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);">
+                        <h4 style="font-size:14px;color:var(--gray-600);margin-bottom:8px;">📌 Quick Summary</h4>
+                        <div id="overviewSummary">Loading...</div>
+                    </div>
+                    <div
+                        style="background:var(--gray-50);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);">
+                        <h4 style="font-size:14px;color:var(--gray-600);margin-bottom:8px;">🔔 Recent Audit</h4>
+                        <div id="overviewAuditPreview"
+                            style="font-size:12px;font-family:var(--font-mono);color:var(--gray-600);">No events yet.
+                        </div>
+                    </div>
+                </div>
+                <div
+                    style="margin-top:16px;background:var(--gray-50);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);">
+                    <h4 style="font-size:14px;color:var(--gray-600);margin-bottom:8px;">📂 Document Vault Preview</h4>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;" id="documentPreview"></div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: PRODUCTS ===== -->
+            <div class="tab-content" id="tab-products">
+                <div class="enterprise-table-wrap">
+                    <table class="enterprise-table" id="productTable">
+                        <thead>
+                            <tr>
+                                <th>Provider</th>
+                                <th>Product</th>
+                                <th>Eligibility</th>
+                                <th>Cost</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ===== TAB: MATRIX ===== -->
+            <div class="tab-content" id="tab-matrix">
+                <div id="matrixContainer">Select products to compare.</div>
+            </div>
+
+            <!-- ===== TAB: RULE BUILDER ===== -->
+            <div class="tab-content" id="tab-rules_builder">
+                <div class="admin-panel">
+                    <h3>⚙️ Dynamic Rule Builder</h3>
+                    <p style="font-size:13px;color:var(--gray-600);">Create and test rules without touching code. Rules
+                        are evaluated against your profile.</p>
+                    <div class="rule-builder" id="ruleBuilderContainer">
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                            <button class="btn btn-secondary" onclick="addRuleCondition()">+ Add Condition</button>
+                            <button class="btn btn-primary" onclick="saveRules()">💾 Save Rules</button>
+                            <button class="btn btn-gold" onclick="testRules()">🧪 Test Against Profile</button>
+                        </div>
+                        <div id="ruleConditionsList">
+                            <!-- Conditions will be inserted here -->
+                        </div>
+                        <div id="ruleTestResult"
+                            style="margin-top:12px;background:var(--gray-50);padding:12px;border-radius:4px;border:1px solid var(--gray-200);">
+                            <strong>Test Result:</strong> <span id="ruleTestOutput">Run test to see results.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: CATALOGUE MANAGEMENT ===== -->
+            <div class="tab-content" id="tab-catalogue">
+                <div class="admin-panel">
+                    <h3>📂 Product Catalogue Management</h3>
+                    <p style="font-size:13px;color:var(--gray-600);">Manage product lifecycle and edit product details.
+                    </p>
+                    <div class="enterprise-table-wrap">
+                        <table class="enterprise-table" id="catalogueTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Provider</th>
+                                    <th>Status</th>
+                                    <th>Version</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="catalogueTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: AI EXPLAIN ===== -->
+            <div class="tab-content" id="tab-ai_explain">
+                <div class="admin-panel">
+                    <h3>🧠 AI‑Powered Explanation</h3>
+                    <p style="font-size:13px;color:var(--gray-600);">Natural language reasoning for product
+                        recommendations and exclusions.</p>
+                    <div id="aiExplanation"
+                        style="background:var(--gray-50);padding:20px;border-radius:var(--radius-sm);border-left:4px solid var(--accent);margin-top:12px;">
+                        <p>Run eligibility to see AI explanations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: DECISION TRACE (White‑Box) ===== -->
+            <div class="tab-content" id="tab-decision_trace">
+                <div class="admin-panel">
+                    <h3>📐 White‑Box Decision Trace</h3>
+                    <div id="traceDynamicSummary"
+                        style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+                    <div class="trace-container" id="traceLogContainer"></div>
+                    <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;">
+                        <button class="btn btn-gold" onclick="generateDecisionPack()">📦 Download Decision Pack</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: FRAUD DETECTION ===== -->
+            <div class="tab-content" id="tab-fraud">
+                <div class="admin-panel">
+                    <h3>🛡️ Fraud Detection Suite <span class="simulated-badge">simulated</span></h3>
+                    <p style="font-size:13px;color:var(--gray-600);">Automated checks (deterministic demo) to flag
+                        suspicious activities.</p>
+                    <div id="fraudResults" class="fraud-check">
+                        <!-- Rendered by JS -->
+                    </div>
+                    <div style="margin-top:16px;">
+                        <button class="btn btn-primary" onclick="runFraudChecks()">🔄 Run Fraud Checks</button>
+                        <span style="margin-left:12px;font-size:13px;color:var(--gray-600);">Fraud Score: <span
+                                id="fraudScore">-</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TAB: LENDER COMPARE ===== -->
+            <div class="tab-content" id="tab-lender_compare">
+                <div class="lender-grid" id="lenderCompareGrid"></div>
+            </div>
+
+            <!-- ===== TAB: AUDIT ===== -->
+            <div class="tab-content" id="tab-audit">
+                <div class="audit-log" id="auditLogContainer"></div>
+            </div>
+
+            <!-- ===== TAB: ADMIN ===== -->
+            <div class="tab-content" id="tab-admin">
+                <div class="admin-subtabs">
+                    <button class="active" data-subtab="tenant" onclick="switchAdminSubtab('tenant')">Tenant</button>
+                    <button data-subtab="users" onclick="switchAdminSubtab('users')">Users & RBAC</button>
+                    <button data-subtab="providers" onclick="switchAdminSubtab('providers')">Provider Config</button>
+                    <button data-subtab="product_management" onclick="switchAdminSubtab('product_management')">Product Management</button>
+                    <button data-subtab="decision_engine" onclick="switchAdminSubtab('decision_engine')">Decision
+                        Engine</button>
+                    <button data-subtab="workflow" onclick="switchAdminSubtab('workflow')">Workflow Designer</button>
+                    <button data-subtab="change" onclick="switchAdminSubtab('change')">Change Management</button>
+                    <button data-subtab="health" onclick="switchAdminSubtab('health')">Health Dashboard</button>
+                    <button data-subtab="feature_flags" onclick="switchAdminSubtab('feature_flags')">Feature
+                        Flags</button>
+                </div>
+                <div id="adminContent">
+                    <!-- Sub-tab content rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Bottom Actions -->
+            <div style="margin-top:24px;display:flex;gap:14px;flex-wrap:wrap;">
+                <button class="btn btn-success" onclick="goToConsent()">Continue to Consent →</button>
+                <button class="btn btn-secondary" onclick="resetJourney()">🔄 Reset</button>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 4: CONSENT -->
+        <!-- ============================================================ -->
+        <div class="screen" id="screen-consent">
+            <div class="hero">
+                <h2>Digital Consent</h2>
+                <p>Review your selected provider(s) and consent to data sharing.</p>
+            </div>
+            <div style="background:var(--gray-50);padding:24px;border-radius:var(--radius-md);max-width:680px;">
+                <div style="margin-bottom:16px;"><strong>Selected products:</strong> <span id="consentProducts">-</span>
+                </div>
+                <div
+                    style="font-size:13px;color:var(--gray-600);background:white;padding:12px 16px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);margin-bottom:16px;">
+                    <div><strong>Purpose:</strong> To process your application and facilitate provider onboarding.</div>
+                    <div><strong>Retention:</strong> 7 years (regulatory requirement).</div>
+                    <div><strong>Withdrawal:</strong> You may withdraw consent at any time by contacting support.</div>
+                    <div><strong>Privacy notice:</strong> <a href="#"
+                            onclick="alert('Privacy notice displayed here.');return false;">View full privacy notice</a>
+                    </div>
+                </div>
+                <label style="display:flex;align-items:center;gap:12px;font-weight:400;">
+                    <input type="checkbox" id="consentCheck"> I agree to share my data with the selected provider(s) for
+                    the purpose of application processing.
+                </label>
+                <div style="font-size:12px;color:var(--gray-400);margin-top:8px;">Consent timestamp: <span
+                        id="consentTimestamp">—</span></div>
+                <button class="btn btn-success" style="margin-top:16px;" onclick="goToApplication()">Confirm Consent
+                    →</button>
+                <button class="btn btn-secondary" style="margin-top:8px;" onclick="goToWorkspace()">← Back</button>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 5: APPLICATION -->
+        <!-- ============================================================ -->
+        <div class="screen" id="screen-application">
+            <div class="hero">
+                <h2>Application Submission</h2>
+                <p>Provide identification to finalise.</p>
+            </div>
+            <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);max-width:600px;">
+                <div class="form-group"><label>CNIC / National ID</label><input type="text" id="nationalId"
+                        placeholder="e.g. 12345-6789012-3"></div>
+                <div class="form-group"><label>IBAN</label><input type="text" id="ibanInput"
+                        placeholder="e.g. PK36HBL..."></div>
+                <button class="btn btn-success" onclick="submitApplication()">📨 Submit Application</button>
+                <div id="executionResult" style="margin-top:12px;"></div>
+                <button class="btn btn-secondary" style="margin-top:8px;" onclick="goToConsent()">← Back</button>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SCREEN 6: TRACKING -->
+        <!-- ============================================================ -->
+        <div class="screen" id="screen-tracking">
+            <div class="hero">
+                <h2>Live Status Tracking</h2>
+                <p>Real‑time application progress.</p>
+            </div>
+            <div class="tracking-progress" id="trackingProgress"></div>
+            <button class="btn btn-secondary" onclick="resetJourney()">Start new search</button>
+        </div>
+
+        <!-- ===== MODALS ===== -->
+        <div class="modal-overlay" id="advisoryModal">
+            <div class="modal-box">
+                <h3>🧑‍⚖️ Advisory Recommendation</h3>
+                <div id="advisoryContent"></div><button class="btn btn-primary"
+                    onclick="closeModal('advisoryModal')">Close</button>
+            </div>
+        </div>
+        <div class="modal-overlay" id="escalationModal">
+            <div class="modal-box">
+                <h3>Licensed Advisory Service</h3>
+                <p style="margin:12px 0;">By switching to <strong>Advisory mode</strong>, you consent to receive
+                    personalised product recommendations.</p>
+                <div style="margin-top:16px;display:flex;gap:12px;">
+                    <button class="btn btn-primary" onclick="confirmEscalation()">Yes, I consent</button>
+                    <button class="btn btn-secondary" onclick="closeModal('escalationModal')">No, stay in
+                        Marketplace</button>
+                </div>
+            </div>
+        </div>
+        <!-- Product Edit Modal -->
+        <div class="modal-overlay" id="productEditModal">
+            <div class="modal-box">
+                <h3>✏️ Edit Product</h3>
+                <form id="productEditForm" style="margin:16px 0;">
+                    <div class="form-group"><label>Name</label><input type="text" id="editName" class="form-control">
+                    </div>
+                    <div class="form-group"><label>Provider</label><input type="text" id="editProvider"
+                            class="form-control"></div>
+                    <div class="form-group"><label>Profit Rate / APR</label><input type="text" id="editRate"
+                            class="form-control"></div>
+                    <!-- Add other fields as needed -->
+                </form>
+                <div style="display:flex;gap:12px;">
+                    <button class="btn btn-success" onclick="saveProductEdit()">Save</button>
+                    <button class="btn btn-secondary" onclick="closeModal('productEditModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. CONFIGURATION (Single Source of Truth)
+        // ============================================================
+        const CONFIG = {
+            WHITE_LABEL_PROVIDER: 'HBL',
+            ENGINE_VERSION: '7.1-Enterprise',
+            SESSION_ID: sessionStorage.getItem('finos_session') || 'sess_' + Math.random().toString(36).substring(2, 10),
+            CORRELATION_ID: 'corr_' + Math.random().toString(36).substring(2, 10),
+            OPERATOR: 'admin@finos',
+            KIBOR_6M: 19.8
+        };
+        document.getElementById('kiborDisplay').textContent = CONFIG.KIBOR_6M;
+
+        const INCOME_MAP = { '<50k': 40000, '50k-100k': 75000, '100k-250k': 175000, '>250k': 300000 };
+        const INCOME_RANK = { '<50k': 0, '50k-100k': 1, '100k-250k': 2, '>250k': 3 };
+
+        // ============================================================
+        // 2. EXTERNAL JSON‑LIKE DATA
+        // ============================================================
+        function loadConfig() {
+            return {
+                catalogue: getCatalogueData(),
+                rules: getRulesData(),
+                providers: getProvidersData(),
+                governance: getGovernanceData()
+            };
+        }
+
+        function getCatalogueData() {
+            return [
+                // ---- SAVINGS (6 products) ----
+                {
+                    id: 'PK_HBL_SAV_001', provider: 'HBL', name: 'Super Saver Account', type: 'savings', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['Digital App', 'Free ATM', 'Cashback'],
+                    compliance: { sharia: false }, eligibility: { minAge: 18, maxAge: 65, minIncome: '<50k' },
+                    monthlyCost: 500, annualCost: 6000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 5,
+                    completeness: 98, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'a3f8c9d1e2b4', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-001', previousVersion: 'v2.9', profitRate: '7.5%', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                {
+                    id: 'PK_MEEZAN_SAV_002', provider: 'Meezan Bank', name: 'Mudarabah Savings', type: 'savings', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['Islamic Banking', 'Profit sharing', 'Mobile App'],
+                    compliance: { sharia: true }, eligibility: { minAge: 18, maxAge: 70, minIncome: '<50k' },
+                    monthlyCost: 300, annualCost: 3600, trustBadges: ['Licensed Institution', 'Islamic Banking'], rating: 5,
+                    completeness: 100, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'b5e0d3f1a2c7', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-001', previousVersion: 'v2.9', profitRate: '8.5%', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                {
+                    id: 'PK_UBL_SAV_003', provider: 'UBL', name: 'UBL Savings Account', type: 'savings', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['Free Online Transfers', 'Mobile App'],
+                    compliance: { sharia: false }, eligibility: { minAge: 18, maxAge: 65, minIncome: '<50k' },
+                    monthlyCost: 250, annualCost: 3000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 4,
+                    completeness: 95, catalogueVersion: 'v3.0', effectiveDate: '2026-06-20', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'c6f1e4a2b3d8', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-06-012', previousVersion: 'v2.8', profitRate: '6.5%', status: 'Published',
+                    dataFreshness: '2 days ago'
+                },
+                {
+                    id: 'PK_ALFALAH_SAV_004', provider: 'Bank Alfalah', name: 'Alfalah Savings', type: 'savings', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['Free Online Transfers', 'Mobile App'],
+                    compliance: { sharia: false }, eligibility: { minAge: 18, maxAge: 65, minIncome: '<50k' },
+                    monthlyCost: 350, annualCost: 4200, trustBadges: ['Licensed Institution', 'Regulated'], rating: 4,
+                    completeness: 96, catalogueVersion: 'v3.0', effectiveDate: '2026-06-25', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'd7g2f5b3c4e9', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-06-018', previousVersion: 'v2.9', profitRate: '7.0%', status: 'Published',
+                    dataFreshness: 'Yesterday'
+                },
+                {
+                    id: 'PK_ISLAMI_SAV_005', provider: 'Bank Islami', name: 'Bank Islami Savings', type: 'savings', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['100% Sharia', 'Mobile App'],
+                    compliance: { sharia: true }, eligibility: { minAge: 18, maxAge: 70, minIncome: '<50k' },
+                    monthlyCost: 300, annualCost: 3600, trustBadges: ['Licensed Institution', 'Islamic Banking'], rating: 5,
+                    completeness: 98, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'e8h3g6c4d5f0', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-002', previousVersion: 'v2.9', profitRate: '8.0%', status: 'Draft',
+                    dataFreshness: 'Today'
+                },
+                // ---- CREDIT CARDS (3 products) ----
+                {
+                    id: 'PK_HBL_CC_006', provider: 'HBL', name: 'HBL Gold Card', type: 'credit_card', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'annual' }, features: ['1% cashback', 'Lounge Access'],
+                    compliance: { sharia: false }, eligibility: { minAge: 21, maxAge: 60, minIncome: '100k-250k' },
+                    monthlyCost: 0, annualCost: 5000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 4,
+                    completeness: 95, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'f9i4h7d5e6g1', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-003', previousVersion: 'v2.9', apr: '24%', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                {
+                    id: 'PK_MEEZAN_CC_007', provider: 'Meezan Bank', name: 'Meezan Gold Card', type: 'credit_card', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'annual' }, features: ['1% cashback', 'Travel Insurance'],
+                    compliance: { sharia: true }, eligibility: { minAge: 21, maxAge: 60, minIncome: '100k-250k' },
+                    monthlyCost: 0, annualCost: 5000, trustBadges: ['Licensed Institution', 'Islamic Banking'], rating: 4,
+                    completeness: 97, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'g0j5i8e6f7h2', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-003', previousVersion: 'v2.9', apr: '22% (flat)', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                {
+                    id: 'PK_UBL_CC_008', provider: 'UBL', name: 'UBL Platinum Card', type: 'credit_card', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'annual' }, features: ['2% cashback', 'Concierge', 'Lounge'],
+                    compliance: { sharia: false }, eligibility: { minAge: 21, maxAge: 60, minIncome: '>250k' },
+                    monthlyCost: 0, annualCost: 10000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 5,
+                    completeness: 98, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'h1k6j9f7g8i3', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-004', previousVersion: 'v2.9', apr: '24%', status: 'Pending Approval',
+                    dataFreshness: 'Today'
+                },
+                // ---- PERSONAL LOANS (2 products) ----
+                {
+                    id: 'PK_HBL_LOAN_010', provider: 'HBL', name: 'HBL Personal Finance Pro', type: 'personal_loan', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['Quick approval', 'Flexible tenure'],
+                    compliance: { sharia: false }, eligibility: { minAge: 21, maxAge: 55, minIncome: '50k-100k' },
+                    monthlyCost: 2500, annualCost: 30000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 4,
+                    completeness: 95, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'j3m8l1h0i9k5', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-005', previousVersion: 'v2.9', markup: 'KIBOR+5%', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                {
+                    id: 'PK_MEEZAN_LOAN_011', provider: 'Meezan Bank', name: 'Meezan Car / Personal', type: 'personal_loan', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['Sharia compliant', 'Low markup'],
+                    compliance: { sharia: true }, eligibility: { minAge: 21, maxAge: 60, minIncome: '50k-100k' },
+                    monthlyCost: 2000, annualCost: 24000, trustBadges: ['Licensed Institution', 'Islamic Banking'], rating: 5,
+                    completeness: 100, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'k4n9m2i1j0l6', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-005', previousVersion: 'v2.9', markup: 'KIBOR+4%', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                // ---- HEALTH INSURANCE (2 products) ----
+                {
+                    id: 'PK_EFU_HEALTH_013', provider: 'EFU Health', name: 'EFU Family Health Plus', type: 'health_insurance', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'annual' }, features: ['500+ hospitals', 'Maternity'],
+                    compliance: { sharia: false }, eligibility: { minAge: 1, maxAge: 65, minIncome: '<50k' },
+                    monthlyCost: 0, annualCost: 150000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 5,
+                    completeness: 98, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'm6p1o4k3l2n8', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-006', previousVersion: 'v2.9', sumInsured: '1,000,000', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                {
+                    id: 'PK_SALAMA_HEALTH_015', provider: 'Salama Takaful', name: 'Salama Takaful Health', type: 'health_insurance', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'annual' }, features: ['400+ hospitals', 'Sharia compliant'],
+                    compliance: { sharia: true }, eligibility: { minAge: 1, maxAge: 65, minIncome: '<50k' },
+                    monthlyCost: 0, annualCost: 160000, trustBadges: ['Licensed Institution', 'Islamic Banking'], rating: 5,
+                    completeness: 100, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'o8r3q6m5n4p0', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-006', previousVersion: 'v2.9', sumInsured: '1,200,000', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                // ---- MOTOR INSURANCE (1 product) ----
+                {
+                    id: 'PK_EFU_MOTOR_016', provider: 'EFU General', name: 'EFU Motor Comprehensive', type: 'motor_insurance', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'annual' }, features: ['24/7 roadside', 'NCB up to 60%'],
+                    compliance: { sharia: false }, eligibility: { minAge: 18, maxAge: 70, minIncome: '<50k' },
+                    monthlyCost: 0, annualCost: 16000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 4,
+                    completeness: 96, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'p9s4r7n6o5q1', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-007', previousVersion: 'v2.9', vehicleValue: '1,000,000', status: 'Published',
+                    dataFreshness: 'Today'
+                },
+                // ---- LIFE / TAKAFUL (1 product) ----
+                {
+                    id: 'PK_EFU_LIFE_018', provider: 'EFU Life', name: 'EFU Endowment Plan', type: 'life_insurance', jurisdiction: ['PK'],
+                    pricing: { currency: 'PKR', frequency: 'monthly' }, features: ['Savings + Protection', 'Bonuses'],
+                    compliance: { sharia: false }, eligibility: { minAge: 18, maxAge: 60, minIncome: '<50k' },
+                    monthlyCost: 12000, annualCost: 144000, trustBadges: ['Licensed Institution', 'Regulated'], rating: 4,
+                    completeness: 95, catalogueVersion: 'v3.0', effectiveDate: '2026-07-01', retrieved: '2026-07-07T09:42:00',
+                    source: 'Provider Feed', hash: 'r1u6t9p8q7s3', publishedBy: 'Product Team', approvedBy: 'Compliance',
+                    changeRequest: 'CR-2026-07-008', previousVersion: 'v2.9', sumAssured: '1,000,000', status: 'Published',
+                    dataFreshness: 'Today'
+                }
+            ];
+        }
+
+        function getRulesData() {
+            return {
+                regulatory: [
+                    { name: 'Min Age', value: '18 (general), 21 (credit)', source: 'SBP' },
+                    { name: 'Max Age', value: '60 (loans), 65 (savings)', source: 'SBP' },
+                    { name: 'Min Income (loans)', value: 'PKR 50,000', source: 'SBP' }
+                ],
+                provider: [
+                    { name: 'HBL (loans)', value: 'Age 21‑55, Income ≥ 50k', source: 'Provider Policy' },
+                    { name: 'Meezan (savings)', value: 'Age 18‑70, any income', source: 'Provider Policy' }
+                ],
+                internal: [
+                    { name: 'Debt Ratio', value: '≤ 45%', source: 'Internal Credit Policy' },
+                    { name: 'Min Internal Score', value: '650', source: 'Risk Scoring' }
+                ]
+            };
+        }
+
+        function getProvidersData() {
+            return {
+                'HBL': { affordability: '≤45%', ageMin: 21, ageMax: 55, dti: 45, incomeMin: 50000, tenure: '12-60 mo', documentation: 'CNIC, Payslips, Bank Statement', riskAppetite: 'Medium' },
+                'Meezan Bank': { affordability: '≤40%', ageMin: 21, ageMax: 60, dti: 40, incomeMin: 50000, tenure: '12-60 mo', documentation: 'CNIC, Payslips, Bank Statement', riskAppetite: 'Low' },
+                'UBL': { affordability: '≤45%', ageMin: 21, ageMax: 55, dti: 45, incomeMin: 100000, tenure: '12-60 mo', documentation: 'CNIC, Payslips, Bank Statement', riskAppetite: 'High' },
+                'Bank Alfalah': { affordability: '≤45%', ageMin: 21, ageMax: 60, dti: 45, incomeMin: 50000, tenure: '12-48 mo', documentation: 'CNIC, Payslips', riskAppetite: 'Medium' },
+                'EFU Health': { affordability: 'N/A', ageMin: 1, ageMax: 65, dti: 100, incomeMin: 0, tenure: 'Annual', documentation: 'CNIC', riskAppetite: 'Low' },
+                'Salama Takaful': { affordability: 'N/A', ageMin: 1, ageMax: 65, dti: 100, incomeMin: 0, tenure: 'Annual', documentation: 'CNIC', riskAppetite: 'Low' },
+                'EFU General': { affordability: 'N/A', ageMin: 18, ageMax: 70, dti: 100, incomeMin: 0, tenure: 'Annual', documentation: 'CNIC', riskAppetite: 'Low' },
+                'EFU Life': { affordability: 'N/A', ageMin: 18, ageMax: 60, dti: 100, incomeMin: 0, tenure: 'Monthly', documentation: 'CNIC', riskAppetite: 'Low' },
+                'Bank Islami': { affordability: '≤40%', ageMin: 18, ageMax: 70, dti: 40, incomeMin: 0, tenure: '12-60 mo', documentation: 'CNIC, Payslips', riskAppetite: 'Low' }
+            };
+        }
+
+        function getGovernanceData() {
+            return {
+                version: 'v3.0',
+                lastUpdated: '2026-07-07T09:42:00',
+                approvers: ['Compliance', 'Legal', 'Risk']
+            };
+        }
+
+        let data = loadConfig();
+        let PRODUCTS = data.catalogue;
+        let providerConfig = JSON.parse(JSON.stringify(data.providers)); // mutable copy
+
+        // ============================================================
+        // 3. STATE
+        // ============================================================
+        const state = {
+            stage: 'requirements',
+            mode: 'marketplace',
+            jurisdiction: 'PK',
+            intent: null,
+            age: 32,
+            incomeBand: '50k-100k',
+            shariaPref: 'any',
+            filteredProducts: [],
+            excludedProducts: [],
+            selectedForApply: [],
+            escalated: false,
+            consentGiven: false,
+            consentTimestamp: null,
+            auditLog: [],
+            tab: 'overview',
+            rules: [],
+            decisionEngineMode: 'Balanced',
+            fraudResults: null,
+            editingProductId: null
+        };
+
+        // ============================================================
+        // 4. HELPERS
+        // ============================================================
+        function logAudit(action) {
+            const time = new Date().toISOString().replace('T', ' ').substring(0, 19);
+            state.auditLog.push({ time, action, sessionId: CONFIG.SESSION_ID, correlationId: CONFIG.CORRELATION_ID, operator: CONFIG.OPERATOR, engineVersion: CONFIG.ENGINE_VERSION });
+            renderAudit();
+        }
+
+        function showToast(msg, type = 'info') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(() => t.remove(), 4000);
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        function getIncomeValue(band) { return INCOME_MAP[band] || 75000; }
+
+        // Safe comparison function (replaces eval)
+        function compareValues(actual, operator, expected) {
+            const numActual = parseFloat(actual);
+            const numExpected = parseFloat(expected);
+            if (isNaN(numActual) || isNaN(numExpected)) {
+                // Fallback to string comparison
+                switch (operator) {
+                    case '==': return String(actual) === String(expected);
+                    case '!=': return String(actual) !== String(expected);
+                    default: return false;
+                }
+            }
+            switch (operator) {
+                case '>': return numActual > numExpected;
+                case '>=': return numActual >= numExpected;
+                case '<': return numActual < numExpected;
+                case '<=': return numActual <= numExpected;
+                case '==': return numActual === numExpected;
+                case '!=': return numActual !== numExpected;
+                default: return false;
+            }
+        }
+
+        // ============================================================
+        // 5. NAVIGATION
+        // ============================================================
+        function setIntent(intent) {
+            state.intent = intent;
+            logAudit(`Requirements set: ${intent}`);
+            transitionTo('eligibility');
+        }
+
+        function setSharia(val) {
+            state.shariaPref = val;
+            document.querySelectorAll('#shariaToggle button').forEach(b => b.classList.toggle('active', b.dataset.value === val));
+        }
+
+        function setMode(mode) {
+            if (mode === 'advisory' && state.stage === 'workspace' && !state.escalated) {
+                document.getElementById('escalationModal').classList.add('active');
+                return;
+            }
+            state.mode = mode;
+            document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+            document.getElementById('app').className = `app mode-${mode}`;
+            if (state.stage === 'workspace' || state.stage === 'consent' || state.stage === 'application') {
+                runEligibilityInternal();
+                renderWorkspace();
+            }
+        }
+
+        function transitionTo(stage) {
+            state.stage = stage;
+            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(`screen-${stage}`).classList.add('active');
+            const steps = ['requirements', 'eligibility', 'workspace', 'consent', 'application', 'tracking'];
+            const wfSteps = document.querySelectorAll('.wf-step');
+            const idx = steps.indexOf(stage);
+            wfSteps.forEach((el, i) => {
+                el.classList.remove('active', 'done');
+                if (i < idx) el.classList.add('done');
+                else if (i === idx) el.classList.add('active');
+            });
+        }
+
+        // ============================================================
+        // 6. ELIGIBILITY ENGINE (with Decision Engine mode)
+        // ============================================================
+        function runEligibility() {
+            const age = parseInt(document.getElementById('ageInput').value);
+            if (!age || age < 1 || age > 120) return showToast('Invalid age.', 'error');
+            state.age = age;
+            state.incomeBand = document.getElementById('incomeSelect').value;
+            state.jurisdiction = document.getElementById('jurisdictionSelect').value;
+            runEligibilityInternal();
+            transitionTo('workspace');
+            renderWorkspace();
+            showToast(`Eligibility complete: ${state.filteredProducts.length} products found.`, 'success');
+        }
+
+        function runEligibilityInternal() {
+            const mode = state.decisionEngineMode || 'Balanced';
+            let dtiLimit = 45;
+            let incomeMultiplier = 1;
+            if (mode === 'Conservative') { dtiLimit = 35; incomeMultiplier = 1.2; }
+            else if (mode === 'Growth') { dtiLimit = 50; incomeMultiplier = 0.8; }
+
+            const all = PRODUCTS.filter(p => p.type === state.intent || (state.intent === 'savings' && p.type === 'savings') ||
+                (state.intent === 'credit_card' && p.type === 'credit_card') ||
+                (state.intent === 'personal_loan' && p.type === 'personal_loan') ||
+                (state.intent === 'health_insurance' && p.type === 'health_insurance') ||
+                (state.intent === 'motor_insurance' && p.type === 'motor_insurance') ||
+                (state.intent === 'life_insurance' && p.type === 'life_insurance'));
+            const eligible = [], excluded = [];
+            const userRank = INCOME_RANK[state.incomeBand] ?? 0;
+            all.forEach(p => {
+                let reasons = [], pass = true;
+                if (state.age < p.eligibility.minAge || state.age > p.eligibility.maxAge) { pass = false; reasons.push(`Age ${state.age} outside ${p.eligibility.minAge}-${p.eligibility.maxAge}`); }
+                const reqIncome = p.eligibility.minIncome;
+                const reqRank = INCOME_RANK[reqIncome] ?? 0;
+                const effectiveRank = Math.min(3, Math.floor(reqRank * incomeMultiplier));
+                if (userRank < effectiveRank) { pass = false; reasons.push(`Income ${state.incomeBand} below adjusted threshold`); }
+                if (state.shariaPref === 'sharia' && !p.compliance.sharia) { pass = false; reasons.push('Not Sharia compliant'); }
+                if (state.shariaPref === 'conventional' && p.compliance.sharia) { pass = false; reasons.push('Not conventional'); }
+                if (!p.jurisdiction.includes(state.jurisdiction)) { pass = false; reasons.push(`Not in ${state.jurisdiction}`); }
+                if (state.mode === 'white_label' && p.provider !== CONFIG.WHITE_LABEL_PROVIDER) { pass = false; reasons.push(`White-label only ${CONFIG.WHITE_LABEL_PROVIDER}`); }
+                const incomeVal = getIncomeValue(state.incomeBand);
+                const dti = Math.round((incomeVal - incomeVal * 0.6) / incomeVal * 100);
+                if (dti > dtiLimit) { pass = false; reasons.push(`DTI ${dti}% exceeds ${dtiLimit}%`); }
+
+                if (pass) eligible.push(p);
+                else excluded.push({ product: p, reasons });
+            });
+            state.filteredProducts = eligible;
+            state.excludedProducts = excluded;
+            logAudit(`Eligibility executed: ${eligible.length} eligible, ${excluded.length} excluded (mode: ${mode})`);
+        }
+
+        // ============================================================
+        // 7. RENDER WORKSPACE
+        // ============================================================
+        function renderWorkspace() {
+            const eligible = state.filteredProducts;
+            const excluded = state.excludedProducts;
+            const total = eligible.length + excluded.length;
+
+            document.getElementById('reqProduct').textContent = state.intent?.replace('_', ' ').toUpperCase() || '-';
+            document.getElementById('reqJurisdiction').textContent = state.jurisdiction;
+            document.getElementById('reqIncome').textContent = state.incomeBand;
+            document.getElementById('reqAge').textContent = state.age;
+            document.getElementById('outcomeCount').textContent = eligible.length;
+            document.getElementById('outcomeTotal').textContent = total;
+            document.getElementById('outcomeExcluded').textContent = `${excluded.length} excluded`;
+            document.getElementById('outcomeProviders').textContent = `${new Set(eligible.map(p => p.provider)).size} providers`;
+
+            const confidence = calculateConfidence(eligible);
+            document.getElementById('confidenceLevel').textContent = confidence.label;
+            document.getElementById('confidenceBadge').style.background = confidence.bg;
+            document.getElementById('confidenceBadge').style.color = confidence.color;
+
+            renderProductTable(eligible, excluded);
+            renderMatrix(eligible);
+            renderOverview(eligible, excluded);
+            renderAudit();
+            renderDecisionTrace();
+            renderLenderCompare();
+            renderCatalogueTable();
+            renderAIExplanation(eligible, excluded);
+            renderFraudChecks();
+            renderAdminContent();
+        }
+
+        function calculateConfidence(eligible) {
+            if (eligible.length === 0) return { label: 'Low (no matches)', bg: '#fee2e2', color: '#991b1b' };
+            let totalComp = 0, totalFresh = 0;
+            eligible.forEach(p => {
+                totalComp += p.completeness || 0;
+                // Determine freshness: use dataFreshness if present, else derive from retrieved
+                let freshScore = 60;
+                if (p.dataFreshness) {
+                    if (p.dataFreshness === 'Today') freshScore = 100;
+                    else if (p.dataFreshness === 'Yesterday') freshScore = 80;
+                    else if (p.dataFreshness.includes('days ago')) freshScore = 60;
+                    else freshScore = 60;
+                } else if (p.retrieved) {
+                    const now = new Date();
+                    const retrieved = new Date(p.retrieved);
+                    const diffDays = (now - retrieved) / (1000 * 60 * 60 * 24);
+                    if (diffDays < 1) freshScore = 100;
+                    else if (diffDays < 2) freshScore = 80;
+                    else freshScore = 60;
+                }
+                totalFresh += freshScore;
+            });
+            const avgComp = totalComp / eligible.length;
+            const avgFresh = totalFresh / eligible.length;
+            const score = avgComp * 0.6 + avgFresh * 0.4;
+            if (score >= 85) return { label: 'High (verified data)', bg: '#d1fae5', color: '#065f46' };
+            if (score >= 65) return { label: 'Medium (some data recent)', bg: '#fef3c7', color: '#92400e' };
+            return { label: 'Low (outdated data)', bg: '#fee2e2', color: '#991b1b' };
+        }
+
+        function renderProductTable(eligible, excluded) {
+            const tbody = document.getElementById('productTableBody');
+            const all = [...eligible, ...excluded.map(e => e.product)];
+            all.sort((a, b) => {
+                const aE = eligible.includes(a), bE = eligible.includes(b);
+                if (aE && !bE) return -1;
+                if (!aE && bE) return 1;
+                return a.provider.localeCompare(b.provider);
+            });
+            let html = '';
+            all.forEach(p => {
+                const isEligible = eligible.includes(p);
+                const ex = excluded.find(e => e.product.id === p.id);
+                const reasons = ex ? ex.reasons : [];
+                const passAge = state.age >= p.eligibility.minAge && state.age <= p.eligibility.maxAge;
+                const passIncome = INCOME_RANK[state.incomeBand] >= INCOME_RANK[p.eligibility.minIncome];
+                const passJurisdiction = p.jurisdiction.includes(state.jurisdiction);
+                const passSharia = state.shariaPref === 'any' || (state.shariaPref === 'sharia' && p.compliance.sharia) || (state.shariaPref === 'conventional' && !p.compliance.sharia);
+                
+                const matchCount = (passAge ? 1 : 0) + (passIncome ? 1 : 0) + (passJurisdiction ? 1 : 0) + (passSharia ? 1 : 0);
+                const displayCompleteness = matchCount * 25;
+                const starsCount = Math.round((displayCompleteness / 100) * 5);
+                const ratingStars = '★'.repeat(starsCount) + '☆'.repeat(5 - starsCount);
+                
+                let costDisplayStr = '';
+                if (p.pricing && typeof p.pricing === 'object') {
+                    for (const [key, value] of Object.entries(p.pricing)) {
+                        const formattedKey = key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                        costDisplayStr += `${formattedKey}: ${value}<br>`;
+                    }
+                }
+                if (!costDisplayStr) costDisplayStr = 'N/A';
+                
+                let costDisplay = `<div style="line-height:1.4;">${costDisplayStr}</div>`;
+                html += `<tr class="main-row" onclick="toggleProductDetail('${p.id}')">
+                <td><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong>${p.provider}</strong><span class="trust-badge ${isEligible ? 'verified' : ''}">${isEligible ? '✅ Verified' : '⏳ Pending'}</span>${p.trustBadges.slice(0, 1).map(b => `<span class="trust-badge">${b}</span>`).join('')}</div></td>
+                <td><strong>${p.name}</strong><br><span style="font-size:11px;color:var(--gray-400);">${p.type.replace('_', ' ')}</span></td>
+                <td><span style="font-weight:700;color:${isEligible ? 'var(--green)' : 'var(--red)'};">${isEligible ? '✅ Eligible' : '❌ Ineligible'}</span></td>
+                <td style="font-size:12px;">${costDisplay}</td>
+                <td><div style="display:flex;align-items:center;gap:6px;"><span class="stars" style="font-size:12px;">${ratingStars}</span><span style="font-size:11px;color:var(--gray-400);">${displayCompleteness}%</span></div><div style="font-size:10px;color:var(--gray-400);">v${p.catalogueVersion} · ${p.dataFreshness || 'Today'}</div></td>
+                <td><button class="btn btn-secondary" style="padding:4px 12px;font-size:11px;" onclick="event.stopPropagation();showDetail('${p.id}')">Details</button>${isEligible ? `<button class="btn btn-primary" style="padding:4px 12px;font-size:11px;" onclick="event.stopPropagation();toggleSelect('${p.id}')">${state.selectedForApply.includes(p.id) ? '✓ Selected' : 'Select'}</button>` : ''}</td>
+            </tr>
+            <tr class="detail-row" id="detail-${p.id}" style="display:none;"><td colspan="6"><div class="detail-content"><div style="display:flex;flex-wrap:wrap;gap:16px;"><div style="flex:1;min-width:200px;"><h4 style="font-size:13px;margin-bottom:6px;">Eligibility Assessment</h4><div class="eligibility-check-grid"><span class="item ${passAge ? 'pass' : 'fail'}">Age: ${state.age} (${p.eligibility.minAge}-${p.eligibility.maxAge})</span><span class="item ${passIncome ? 'pass' : 'fail'}">Income: ${state.incomeBand} ≥ ${p.eligibility.minIncome}</span><span class="item ${passJurisdiction ? 'pass' : 'fail'}">Jurisdiction: ${state.jurisdiction}</span><span class="item ${passSharia ? 'pass' : 'fail'}">${p.compliance.sharia ? 'Sharia' : 'Conventional'} match</span></div>${!isEligible && reasons?.length > 0 ? `<div style="margin-top:8px;background:#fee2e2;padding:8px 12px;border-radius:4px;font-size:13px;color:#991b1b;"><strong>Why not eligible?</strong><br>${reasons.map(r => `• ${r}`).join('<br>')}</div>` : ''}${isEligible ? '<div style="margin-top:8px;color:var(--green);font-weight:600;">✓ Meets published eligibility criteria</div>' : ''}</div><div style="flex:1;min-width:150px;"><h4 style="font-size:13px;margin-bottom:6px;">Catalogue Governance</h4><div style="font-size:12px;color:var(--gray-600);">📦 Version: ${p.catalogueVersion}</div><div style="font-size:12px;color:var(--gray-600);">📅 Effective: ${p.effectiveDate}</div><div style="font-size:12px;color:var(--gray-600);">📌 Published By: ${p.publishedBy}</div><div style="font-size:12px;color:var(--gray-600);">✅ Approved By: ${p.approvedBy}</div><div style="font-size:12px;color:var(--gray-600);">🔄 Change Request: ${p.changeRequest}</div><div style="font-size:12px;color:var(--gray-600);">⬅️ Previous: ${p.previousVersion}</div><div style="font-size:12px;color:var(--gray-600);">🔑 Hash: ${p.hash}</div></div></div></div></td></tr>`;
+            });
+            tbody.innerHTML = html;
+            const names = state.filteredProducts.filter(p => state.selectedForApply.includes(p.id)).map(p => p.name).join(', ');
+            document.getElementById('consentProducts').textContent = names || 'None selected';
+            if (state.consentGiven) document.getElementById('consentTimestamp').textContent = state.consentTimestamp || new Date().toLocaleString();
+        }
+
+        function toggleProductDetail(id) {
+            const row = document.getElementById(`detail-${id}`);
+            if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+        }
+        function showDetail(id) {
+            const row = document.getElementById(`detail-${id}`);
+            if (row) { row.style.display = 'table-row'; setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100); }
+        }
+        function toggleSelect(id) {
+            const idx = state.selectedForApply.indexOf(id);
+            if (idx > -1) state.selectedForApply.splice(idx, 1);
+            else state.selectedForApply.push(id);
+            renderWorkspace();
+            logAudit(`Product ${id} ${idx > -1 ? 'deselected' : 'selected'}`);
+        }
+
+        function renderMatrix(eligible) {
+            const container = document.getElementById('matrixContainer');
+            if (eligible.length === 0) { container.innerHTML = '<p>No products to compare.</p>'; return; }
+            const allFeatures = new Set();
+            eligible.forEach(p => p.features.forEach(f => allFeatures.add(f)));
+            const list = Array.from(allFeatures);
+            let html = `<div class="enterprise-table-wrap"><table class="enterprise-table"><thead><tr><th>Feature</th>${eligible.map(p => `<th>${p.provider}<br><span style="font-weight:400;font-size:11px;">${p.name}</span></th>`).join('')}</tr></thead><tbody>`;
+            html += `<tr><td><strong>Cost</strong></td>${eligible.map(p => `<td>${p.annualCost || p.monthlyCost} ${p.pricing.currency}</td>`).join('')}</tr>`;
+            list.forEach(f => { html += `<tr><td>${f}</td>${eligible.map(p => `<td>${p.features.includes(f) ? '✅' : '❌'}</td>`).join('')}</tr>`; });
+            html += `<tr><td><strong>Sharia</strong></td>${eligible.map(p => `<td>${p.compliance.sharia ? '✅' : '❌'}</td>`).join('')}</tr>`;
+            html += `<tr><td><strong>Rating</strong></td>${eligible.map(p => `<td>${'★'.repeat(p.rating || 4)}</td>`).join('')}</tr>`;
+            html += `<tr><td><strong>Version</strong></td>${eligible.map(p => `<td style="font-size:11px;">v${p.catalogueVersion}</td>`).join('')}</tr>`;
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
+
+        function renderOverview(eligible, excluded) {
+            document.getElementById('overviewSummary').innerHTML = `<div style="font-size:14px;"><div><strong>${eligible.length}</strong> eligible products</div><div><strong>${excluded.length}</strong> excluded</div><div><strong>${new Set(eligible.map(p => p.provider)).size}</strong> providers</div><div style="margin-top:8px;font-size:12px;color:var(--gray-400);">Engine: ${CONFIG.ENGINE_VERSION} · Session: ${CONFIG.SESSION_ID}</div></div>`;
+            const preview = state.auditLog.slice(-3).map(e => `<div><span style="color:var(--gray-400);">${e.time}</span> ${e.action}</div>`).join('');
+            document.getElementById('overviewAuditPreview').innerHTML = preview || 'No events yet.';
+            document.getElementById('documentPreview').innerHTML = ['Product Disclosure', 'Key Facts', 'Privacy Notice'].map(d => `<span style="background:white;padding:4px 12px;border-radius:40px;border:1px solid var(--gray-200);font-size:12px;">✅ ${d}</span>`).join('');
+        }
+
+        function renderAudit() {
+            const container = document.getElementById('auditLogContainer');
+            container.innerHTML = state.auditLog.map(e => `
+            <div class="entry">
+                <span class="time">${e.time}</span>
+                <span class="meta">S:${e.sessionId} C:${e.correlationId}</span>
+                <span class="meta">${e.operator}</span>
+                <span class="action">${e.action}</span>
+            </div>
+        `).join('');
+        }
+
+        // ============================================================
+        // 8. DECISION TRACE (White‑Box with component breakdown)
+        // ============================================================
+        function renderDecisionTrace() {
+            const income = getIncomeValue(state.incomeBand);
+            const age = state.age;
+            const disposable = Math.round(income * 0.6);
+            const debtRatio = Math.round((income - disposable) / income * 100);
+            // Component weights (simulated)
+            const components = {
+                incomeWeight: 0.35,
+                employmentStability: 0.20,
+                dti: 0.25,
+                ageFactor: 0.10,
+                behavioural: 0.05,
+                fraudFlag: 0.05
+            };
+            const incomeScore = Math.min(1, income / 200000);
+            const employmentScore = 0.8;
+            const dtiScore = Math.max(0, 1 - (debtRatio / 60));
+            const ageScore = (age >= 25 && age <= 45) ? 1 : 0.5;
+            const behaviourScore = 0.9;
+            const fraudScore = 0.95;
+            const weighted = incomeScore * components.incomeWeight +
+                employmentScore * components.employmentStability +
+                dtiScore * components.dti +
+                ageScore * components.ageFactor +
+                behaviourScore * components.behavioural +
+                fraudScore * components.fraudFlag;
+            const pd = (1 - weighted).toFixed(4);
+            const internalScore = Math.round(weighted * 850);
+            const riskBand = internalScore > 700 ? 'B (Low)' : (internalScore > 650 ? 'C (Medium)' : 'D (High)');
+            const decision = internalScore >= 650 ? '✅ Approve' : '❌ Review';
+
+            document.getElementById('traceDynamicSummary').innerHTML = `
+            <div><strong>Income</strong><br>PKR ${income.toLocaleString()}</div>
+            <div><strong>Disposable</strong><br>PKR ${disposable.toLocaleString()}</div>
+            <div><strong>DTI</strong><br>${debtRatio}%</div>
+            <div><strong>PD (Probability of Default)</strong><br>${(pd * 100).toFixed(2)}%</div>
+            <div><strong>Risk Band</strong><br>${riskBand}</div>
+            <div><strong>Decision</strong><br><span class="badge ${internalScore >= 650 ? 'green' : 'red'}">${decision}</span></div>
+        `;
+
+            const now = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            const log = document.getElementById('traceLogContainer');
+            log.innerHTML = `
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">Income Weight: ${(incomeScore * 100).toFixed(0)}% (weight ${components.incomeWeight * 100}%)</span><span class="evidence">📎 User input</span></div>
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">Employment Stability: ${(employmentScore * 100).toFixed(0)}% (weight ${components.employmentStability * 100}%)</span><span class="evidence">📎 Provider data</span></div>
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">DTI Score: ${(dtiScore * 100).toFixed(0)}% (weight ${components.dti * 100}%)</span><span class="evidence">📎 Calculated from income</span></div>
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">Age Factor: ${(ageScore * 100).toFixed(0)}% (weight ${components.ageFactor * 100}%)</span><span class="evidence">📎 User age</span></div>
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">Behavioural Score: ${(behaviourScore * 100).toFixed(0)}% (weight ${components.behavioural * 100}%)</span><span class="evidence">📎 Simulated from history</span></div>
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">Fraud Flag: ${(fraudScore * 100).toFixed(0)}% (weight ${components.fraudFlag * 100}%)</span><span class="evidence">📎 Fraud checks</span></div>
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">Weighted PD: ${(pd * 100).toFixed(2)}% → Internal Score: ${internalScore}</span><span class="evidence">📎 Model v4.3</span></div>
+            <div class="trace-line"><span class="step">${now}</span><span class="detail">Decision: ${decision}</span><span class="evidence">📎 Risk Band: ${riskBand}</span></div>
+        `;
+        }
+
+        // ============================================================
+        // 9. AI EXPLANATION
+        // ============================================================
+        function renderAIExplanation(eligible, excluded) {
+            const container = document.getElementById('aiExplanation');
+            if (eligible.length === 0 && excluded.length === 0) {
+                container.innerHTML = '<p>Run eligibility to see AI explanations.</p>';
+                return;
+            }
+            let html = '<div style="font-size:14px;line-height:1.6;">';
+            if (eligible.length > 0) {
+                const top = eligible[0];
+                html += `<p><strong>✅ Recommendation:</strong> We recommend <strong>${top.name}</strong> from ${top.provider} because your age (${state.age}) and income (${state.incomeBand}) match the eligibility criteria. The product has an evidence confidence of ${top.completeness}% and offers ${top.profitRate || top.apr || 'competitive'} pricing.</p>`;
+                if (eligible.length > 1) {
+                    html += `<p><strong>Alternative:</strong> ${eligible[1].name} from ${eligible[1].provider} is also suitable.</p>`;
+                }
+            }
+            if (excluded.length > 0) {
+                html += `<p><strong>❌ Exclusions:</strong> ${excluded.length} products were filtered out. The main reasons are: ${excluded.slice(0, 3).map(e => e.reasons.join(', ')).join('; ')}.</p>`;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // 10. FRAUD DETECTION (deterministic, simulated)
+        // ============================================================
+        function runFraudChecks() {
+            // Deterministic demo: use CNIC and IBAN if available, else fallback to random but labelled as simulated
+            const cnic = document.getElementById('nationalId')?.value || '12345-6789012-3';
+            const iban = document.getElementById('ibanInput')?.value || 'PK36HBL0000000000000000';
+            // Simple hash for deterministic outcomes
+            const hash = (str) => {
+                let h = 0;
+                for (let i = 0; i < str.length; i++) {
+                    h = (h << 5) - h + str.charCodeAt(i);
+                    h = h & h;
+                }
+                return Math.abs(h);
+            };
+            const cnicHash = hash(cnic) % 100;
+            const ibanHash = hash(iban) % 100;
+            const deviceHash = hash(navigator.userAgent) % 100;
+
+            const checks = [
+                { name: 'Duplicate CNIC', passed: cnicHash > 5, reason: cnicHash <= 5 ? 'CNIC found in blacklist' : 'CNIC not found in blacklist' },
+                { name: 'Duplicate IBAN', passed: ibanHash > 3, reason: ibanHash <= 3 ? 'IBAN flagged' : 'IBAN unique' },
+                { name: 'Device Fingerprint', passed: deviceHash > 10, reason: deviceHash <= 10 ? 'Unknown device' : 'Fingerprint matches known device' },
+                { name: 'Velocity (applications/24h)', passed: (cnicHash % 5) > 0, reason: (cnicHash % 5) === 0 ? '3 applications in last 24h, threshold 3' : '2 applications in last 24h, threshold 3' },
+                { name: 'Sanctions / PEP', passed: (ibanHash % 10) > 1, reason: (ibanHash % 10) <= 1 ? 'Match on sanctions list' : 'No matches on sanctions lists' }
+            ];
+            const passed = checks.filter(c => c.passed).length;
+            const score = Math.round((passed / checks.length) * 100);
+            state.fraudResults = { checks, score };
+            renderFraudChecks();
+            logAudit(`Fraud checks run, score: ${score}% (simulated)`);
+        }
+
+        function renderFraudChecks() {
+            const container = document.getElementById('fraudResults');
+            if (!state.fraudResults) {
+                container.innerHTML = '<p>Click "Run Fraud Checks" to evaluate.</p>';
+                return;
+            }
+            const { checks, score } = state.fraudResults;
+            let html = '';
+            checks.forEach(c => {
+                html += `<div class="fraud-item ${c.passed ? 'pass' : 'fail'}">
+                <div><strong>${c.name}</strong> <span class="simulated-badge" style="font-size:8px;">simulated</span></div>
+                <div class="status">${c.passed ? '✅ Passed' : '❌ Failed'}</div>
+                <div style="font-size:12px;color:var(--gray-600);">${c.reason}</div>
+            </div>`;
+            });
+            container.innerHTML = html;
+            document.getElementById('fraudScore').textContent = score + '%';
+            const badge = document.getElementById('fraudScore');
+            badge.style.color = score >= 80 ? 'var(--green)' : (score >= 50 ? 'var(--gold)' : 'var(--red)');
+        }
+
+        // ============================================================
+        // 11. CATALOGUE MANAGEMENT
+        // ============================================================
+        function renderCatalogueTable() {
+            const tbody = document.getElementById('catalogueTableBody');
+            let html = '';
+            PRODUCTS.forEach(p => {
+                const statusClass = p.status === 'Published' ? 'green' : (p.status === 'Pending Approval' ? 'gold' : (p.status === 'Draft' ? 'gray' : 'red'));
+                html += `<tr>
+                <td>${p.id}</td>
+                <td>${p.name}</td>
+                <td>${p.provider}</td>
+                <td><span class="badge ${statusClass}">${p.status || 'Draft'}</span></td>
+                <td>${p.catalogueVersion}</td>
+                <td>
+                    <button class="btn btn-secondary" style="padding:2px 10px;font-size:11px;" onclick="updateProductStatus('${p.id}','Published')">Publish</button>
+                    <button class="btn btn-secondary" style="padding:2px 10px;font-size:11px;" onclick="updateProductStatus('${p.id}','Archived')">Archive</button>
+                    <button class="btn btn-secondary" style="padding:2px 10px;font-size:11px;" onclick="openProductEdit('${p.id}')">✏️ Edit</button>
+                </td>
+            </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function updateProductStatus(id, newStatus) {
+            const product = PRODUCTS.find(p => p.id === id);
+            if (product) {
+                product.status = newStatus;
+                logAudit(`Product ${id} status changed to ${newStatus}`);
+                renderCatalogueTable();
+                showToast(`Product ${id} updated to ${newStatus}`, 'success');
+            }
+        }
+
+        function openProductEdit(id) {
+            const product = PRODUCTS.find(p => p.id === id);
+            if (!product) return;
+            state.editingProductId = id;
+            document.getElementById('editName').value = product.name;
+            document.getElementById('editProvider').value = product.provider;
+            document.getElementById('editRate').value = product.profitRate || product.apr || '';
+            document.getElementById('productEditModal').classList.add('active');
+        }
+
+        function saveProductEdit() {
+            const id = state.editingProductId;
+            const product = PRODUCTS.find(p => p.id === id);
+            if (!product) return;
+            product.name = document.getElementById('editName').value;
+            product.provider = document.getElementById('editProvider').value;
+            const rate = document.getElementById('editRate').value;
+            if (product.profitRate) product.profitRate = rate;
+            if (product.apr) product.apr = rate;
+            logAudit(`Product ${id} edited`);
+            closeModal('productEditModal');
+            renderCatalogueTable();
+            showToast(`Product ${id} updated.`, 'success');
+        }
+
+        // ============================================================
+        // 12. RULE BUILDER (safe comparison)
+        // ============================================================
+        function addRuleCondition() {
+            const list = document.getElementById('ruleConditionsList');
+            const div = document.createElement('div');
+            div.className = 'rule-condition';
+            div.innerHTML = `
+            <select style="flex:1;min-width:100px;">
+                <option value="age">Age</option>
+                <option value="income">Income</option>
+                <option value="dti">DTI</option>
+                <option value="province">Province</option>
+                <option value="employment">Employment</option>
+                <option value="credit_score">Credit Score</option>
+            </select>
+            <select style="width:80px;">
+                <option value=">">&gt;</option>
+                <option value=">=">&gt;=</option>
+                <option value="==">=</option>
+                <option value="!=">!=</option>
+                <option value="<">&lt;</option>
+                <option value="<=">&lt;=</option>
+            </select>
+            <input type="text" placeholder="Value" style="width:100px;">
+            <button class="btn btn-danger" style="padding:2px 8px;font-size:11px;" onclick="this.parentElement.remove()">✕</button>
+        `;
+            list.appendChild(div);
+        }
+
+        function saveRules() {
+            const conditions = document.querySelectorAll('#ruleConditionsList .rule-condition');
+            const rules = [];
+            conditions.forEach(c => {
+                const selects = c.querySelectorAll('select');
+                const input = c.querySelector('input');
+                if (selects.length >= 2 && input) {
+                    rules.push({
+                        field: selects[0].value,
+                        operator: selects[1].value,
+                        value: input.value
+                    });
+                }
+            });
+            state.rules = rules;
+            logAudit(`Custom rules saved: ${rules.length} conditions`);
+            showToast(`Saved ${rules.length} rules.`, 'success');
+        }
+
+        function testRules() {
+            const rules = state.rules;
+            if (rules.length === 0) {
+                document.getElementById('ruleTestOutput').textContent = 'No rules defined. Add conditions and save first.';
+                return;
+            }
+            let passed = true;
+            const messages = [];
+            rules.forEach(r => {
+                let actual = 0;
+                if (r.field === 'age') actual = state.age;
+                else if (r.field === 'income') actual = getIncomeValue(state.incomeBand);
+                else if (r.field === 'dti') actual = Math.round((getIncomeValue(state.incomeBand) - getIncomeValue(state.incomeBand) * 0.6) / getIncomeValue(state.incomeBand) * 100);
+                else if (r.field === 'credit_score') actual = 680;
+                else actual = 0;
+                const result = compareValues(actual, r.operator, r.value);
+                if (!result) passed = false;
+                messages.push(`${r.field} ${r.operator} ${r.value} → ${result ? '✅' : '❌'} (actual: ${actual})`);
+            });
+            const result = passed ? '✅ All rules passed!' : '❌ Some rules failed.';
+            document.getElementById('ruleTestOutput').innerHTML = `<strong>${result}</strong><br>${messages.join('<br>')}`;
+        }
+
+        // ============================================================
+        // 13. LENDER COMPARE
+        // ============================================================
+        function renderLenderCompare() {
+            const container = document.getElementById('lenderCompareGrid');
+            const providers = [...new Set(PRODUCTS.map(p => p.provider))];
+            let html = '';
+            providers.forEach(prov => {
+                const p = PRODUCTS.find(prod => prod.provider === prov);
+                if (!p) return;
+                const agePass = state.age >= p.eligibility.minAge && state.age <= p.eligibility.maxAge;
+                const incomePass = INCOME_RANK[state.incomeBand] >= INCOME_RANK[p.eligibility.minIncome];
+                const jurPass = p.jurisdiction.includes(state.jurisdiction);
+                const shariaPass = state.shariaPref === 'any' || (state.shariaPref === 'sharia' && p.compliance.sharia) || (state.shariaPref === 'conventional' && !p.compliance.sharia);
+                const wlPass = state.mode !== 'white_label' || prov === CONFIG.WHITE_LABEL_PROVIDER;
+                const allPass = agePass && incomePass && jurPass && shariaPass && wlPass;
+                html += `<div class="lender-card"><h4>${prov}</h4>
+                <div>Age: ${p.eligibility.minAge}-${p.eligibility.maxAge} → <span class="${agePass ? 'pass' : 'fail'}">${agePass ? '✅' : '❌'} (${state.age})</span></div>
+                <div>Income: ≥${p.eligibility.minIncome} → <span class="${incomePass ? 'pass' : 'fail'}">${incomePass ? '✅' : '❌'} (${state.incomeBand})</span></div>
+                <div>Jurisdiction: ${p.jurisdiction.join(',')} → <span class="${jurPass ? 'pass' : 'fail'}">${jurPass ? '✅' : '❌'} (${state.jurisdiction})</span></div>
+                <div>Sharia: ${p.compliance.sharia ? 'Sharia' : 'Conventional'} → <span class="${shariaPass ? 'pass' : 'fail'}">${shariaPass ? '✅' : '❌'} (${state.shariaPref})</span></div>
+                ${!wlPass ? `<div style="color:var(--red);font-weight:700;">❌ White-label: ${CONFIG.WHITE_LABEL_PROVIDER} only</div>` : ''}
+                <div style="margin-top:8px;font-weight:700;color:${allPass ? 'var(--green)' : 'var(--red)'};">${allPass ? '✅ Eligible' : '❌ Ineligible'}</div>
+            </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // ============================================================
+        // 14. ADMIN SUB-TABS with editable Provider Config
+        // ============================================================
+        function switchAdminSubtab(subtab) {
+            document.querySelectorAll('.admin-subtabs button').forEach(b => b.classList.toggle('active', b.dataset.subtab === subtab));
+            renderAdminContent(subtab);
+        }
+
+        function renderAdminContent(subtab) {
+            const container = document.getElementById('adminContent');
+            const activeSubtab = subtab || document.querySelector('.admin-subtabs .active')?.dataset.subtab || 'tenant';
+            let html = '';
+            switch (activeSubtab) {
+                case 'tenant':
+                    html = `
+                    <div class="admin-panel"><h3>🏢 Tenant Configuration</h3>
+                        <div style="font-size:13px;color:var(--gray-600);">
+                            <div><strong>Branding:</strong> FinOS <span style="color:var(--gray-400);">(configurable)</span></div>
+                            <div><strong>Theme:</strong> Institutional Blue</div>
+                            <div><strong>Ruleset:</strong> v4.3</div>
+                            <div><strong>Product Catalogue:</strong> v3.0 (Pakistan data)</div>
+                            <div><strong>API Keys:</strong> ●●●●●●●● (rotated)</div>
+                            <div><strong>Workflow:</strong> Standard (6 steps)</div>
+                            <div><strong>Jurisdiction:</strong> PK / UAE / KSA</div>
+                            <div style="margin-top:6px;font-size:12px;color:var(--gray-400);">White-label provider: <span id="tenantDisplay">${state.mode === 'white_label' ? CONFIG.WHITE_LABEL_PROVIDER : 'Multi-tenant'}</span></div>
+                        </div>
+                    </div>
+                `;
+                    break;
+                case 'users':
+                    html = `
+                    <div class="admin-panel"><h3>👤 User & Role Management (RBAC)</h3>
+                        <table class="enterprise-table"><thead><tr><th>User</th><th>Role</th><th>Permissions</th><th>Status</th></tr></thead>
+                        <tbody>
+                            <tr><td>admin@finos</td><td>Super Admin</td><td>Full</td><td><span class="badge green">Active</span></td></tr>
+                            <tr><td>compliance@finos</td><td>Compliance</td><td>View, Approve</td><td><span class="badge green">Active</span></td></tr>
+                            <tr><td>risk@finos</td><td>Risk</td><td>View, Score</td><td><span class="badge gold">Pending</span></td></tr>
+                            <tr><td>operator@finos</td><td>Operator</td><td>View, Submit</td><td><span class="badge blue">Review</span></td></tr>
+                        </tbody></table>
+                    </div>
+                `;
+                    break;
+                case 'providers':
+                    let provHtml = '<div class="admin-panel"><h3>🔌 Provider Configuration (editable)</h3><div class="enterprise-table-wrap"><table class="enterprise-table"><thead><tr><th>Provider</th><th>Affordability</th><th>Age Range</th><th>DTI Limit</th><th>Income Min</th><th>Tenure</th><th>Risk Appetite</th><th>Actions</th></tr></thead><tbody>';
+                    for (const [key, val] of Object.entries(providerConfig)) {
+                        provHtml += `<tr id="prov-row-${key}">
+                        <td>${key}</td>
+                        <td><input type="text" value="${val.affordability}" class="prov-edit" data-prov="${key}" data-field="affordability" style="width:80px;"></td>
+                        <td><input type="number" value="${val.ageMin}" class="prov-edit" data-prov="${key}" data-field="ageMin" style="width:50px;"> - <input type="number" value="${val.ageMax}" class="prov-edit" data-prov="${key}" data-field="ageMax" style="width:50px;"></td>
+                        <td><input type="number" value="${val.dti}" class="prov-edit" data-prov="${key}" data-field="dti" style="width:50px;"></td>
+                        <td><input type="number" value="${val.incomeMin}" class="prov-edit" data-prov="${key}" data-field="incomeMin" style="width:80px;"></td>
+                        <td><input type="text" value="${val.tenure}" class="prov-edit" data-prov="${key}" data-field="tenure" style="width:80px;"></td>
+                        <td><input type="text" value="${val.riskAppetite}" class="prov-edit" data-prov="${key}" data-field="riskAppetite" style="width:80px;"></td>
+                        <td><button class="btn btn-primary" style="padding:2px 10px;font-size:11px;" onclick="saveProviderConfig('${key}')">Save</button></td>
+                    </tr>`;
+                    }
+                    provHtml += '</tbody></table></div></div>';
+                    html = provHtml;
+                    break;
+                case 'product_management':
+                    let pmHtml = `
+                    <div class="admin-panel">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3>📦 Product Management</h3>
+                            <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="productDataTable" class="display" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Product ID</th>
+                                        <th>Provider</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    `;
+                    html = pmHtml;
+                    // Need to wait for DOM to render the table before initializing DataTable
+                    setTimeout(() => {
+                        $('#productDataTable').DataTable({
+                            data: PRODUCTS,
+                            destroy: true,
+                            columns: [
+                                { data: 'id' },
+                                { data: 'provider' },
+                                { data: 'type' },
+                                { data: 'status' },
+                                { 
+                                    data: null,
+                                    render: function(data, type, row) {
+                                        return '<button class="btn btn-primary" style="padding: 2px 8px; font-size: 11px;" onclick="openProductModal(\'' + row.id + '\')">Edit</button>';
+                                    }
+                                }
+                            ]
+                        });
+                    }, 100);
+                    break;
+                case 'decision_engine':
+                    html = `
+                    <div class="admin-panel"><h3>⚙️ Decision Engine Configuration</h3>
+                        <div style="margin:12px 0;">
+                            <label>Mode:</label>
+                            <select id="decisionEngineModeSelect" onchange="state.decisionEngineMode=this.value; logAudit('Decision mode changed to '+this.value); runEligibilityInternal(); renderWorkspace();">
+                                <option value="Conservative" ${state.decisionEngineMode === 'Conservative' ? 'selected' : ''}>Conservative</option>
+                                <option value="Balanced" ${state.decisionEngineMode === 'Balanced' ? 'selected' : ''}>Balanced</option>
+                                <option value="Growth" ${state.decisionEngineMode === 'Growth' ? 'selected' : ''}>Growth</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="document.getElementById('decisionEngineModeSelect').onchange(); showToast('Mode updated and eligibility re-run.','success');">Apply</button>
+                        </div>
+                        <div style="font-size:13px;color:var(--gray-600);">
+                            <div>Current mode: <strong>${state.decisionEngineMode}</strong></div>
+                            <div>Thresholds: DTI ${state.decisionEngineMode === 'Conservative' ? '35' : (state.decisionEngineMode === 'Balanced' ? '45' : '50')}%, Income multiplier ${state.decisionEngineMode === 'Conservative' ? '1.2' : (state.decisionEngineMode === 'Balanced' ? '1' : '0.8')}</div>
+                        </div>
+                    </div>
+                `;
+                    break;
+                case 'workflow':
+                    html = `<div class="admin-panel"><h3>📋 Workflow Designer</h3><p style="font-size:13px;color:var(--gray-600);">Visual workflow editor (mock-up). Steps: Requirements → Eligibility → Workspace → Consent → Application → Tracking</p><div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px;background:white;border:1px solid var(--gray-200);border-radius:4px;">${['Requirements', 'Eligibility', 'Workspace', 'Consent', 'Application', 'Tracking'].map((s, i) => `<div style="background:var(--gray-50);padding:6px 12px;border-radius:20px;border:1px solid var(--gray-200);">${i + 1}. ${s}</div>`).join('')}</div></div>`;
+                    break;
+                case 'change':
+                    html = `<div class="admin-panel"><h3>🔄 Change Management</h3><div style="font-size:12px;color:var(--gray-400);font-family:var(--font-mono);"><div>2026-07-07 09:42 • Ruleset v4.3 deployed by admin</div><div>2026-07-06 14:20 • Product catalogue updated (v3.0) by product team</div><div>2026-07-06 10:05 • White-label provider changed to HBL</div></div></div>`;
+                    break;
+                case 'health':
+                    html = `<div class="admin-panel"><h3>📊 Health Dashboard</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;"><div style="background:white;padding:12px;border-radius:4px;border:1px solid var(--gray-200);"><strong>API Latency</strong><br>87 ms</div><div style="background:white;padding:12px;border-radius:4px;border:1px solid var(--gray-200);"><strong>Provider Uptime</strong><br>99.97%</div><div style="background:white;padding:12px;border-radius:4px;border:1px solid var(--gray-200);"><strong>Queue Length</strong><br>3</div><div style="background:white;padding:12px;border-radius:4px;border:1px solid var(--gray-200);"><strong>Memory Usage</strong><br>68%</div><div style="background:white;padding:12px;border-radius:4px;border:1px solid var(--gray-200);"><strong>CPU</strong><br>23%</div><div style="background:white;padding:12px;border-radius:4px;border:1px solid var(--gray-200);"><strong>Error Rate</strong><br>0.02%</div></div></div>`;
+                    break;
+                case 'feature_flags':
+                    html = `<div class="admin-panel"><h3>🚩 Feature Flags</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;"><div><input type="checkbox" checked> AI Explanation</div><div><input type="checkbox" checked> White-box Trace</div><div><input type="checkbox" checked> Fraud Detection</div><div><input type="checkbox" checked> Rule Builder</div><div><input type="checkbox"> Model Versioning</div><div><input type="checkbox" checked> Audit Trail</div><div><input type="checkbox"> Decision Replay</div><div><input type="checkbox" checked> Provider Config</div></div></div>`;
+                    break;
+                default:
+                    html = '<p>Select a sub-tab.</p>';
+            }
+            container.innerHTML = html;
+            // Re-apply tenant display if needed
+            if (activeSubtab === 'tenant') {
+                document.getElementById('tenantDisplay').textContent = state.mode === 'white_label' ? CONFIG.WHITE_LABEL_PROVIDER : 'Multi-tenant';
+            }
+        }
+
+        function saveProviderConfig(provider) {
+            const row = document.getElementById(`prov-row-${provider}`);
+            const inputs = row.querySelectorAll('.prov-edit');
+            inputs.forEach(input => {
+                const field = input.dataset.field;
+                let val = input.value;
+                if (field === 'ageMin' || field === 'ageMax' || field === 'dti' || field === 'incomeMin') {
+                    val = parseInt(val, 10);
+                    if (isNaN(val)) val = 0;
+                }
+                providerConfig[provider][field] = val;
+            });
+            logAudit(`Provider config updated for ${provider}`);
+            showToast(`Provider ${provider} configuration saved.`, 'success');
+            // Re-run eligibility to reflect changes
+            if (state.stage === 'workspace' || state.stage === 'consent' || state.stage === 'application') {
+                runEligibilityInternal();
+                renderWorkspace();
+            }
+        }
+
+        // ============================================================
+        // 15. DECISION PACK (matches weighted model)
+        // ============================================================
+        function generateDecisionPack() {
+            const income = getIncomeValue(state.incomeBand);
+            const disposable = Math.round(income * 0.6);
+            const debtRatio = Math.round((income - disposable) / income * 100);
+            const components = {
+                incomeWeight: 0.35,
+                employmentStability: 0.20,
+                dti: 0.25,
+                ageFactor: 0.10,
+                behavioural: 0.05,
+                fraudFlag: 0.05
+            };
+            const incomeScore = Math.min(1, income / 200000);
+            const employmentScore = 0.8;
+            const dtiScore = Math.max(0, 1 - (debtRatio / 60));
+            const ageScore = (state.age >= 25 && state.age <= 45) ? 1 : 0.5;
+            const behaviourScore = 0.9;
+            const fraudScore = 0.95;
+            const weighted = incomeScore * components.incomeWeight +
+                employmentScore * components.employmentStability +
+                dtiScore * components.dti +
+                ageScore * components.ageFactor +
+                behaviourScore * components.behavioural +
+                fraudScore * components.fraudFlag;
+            const pd = (1 - weighted).toFixed(4);
+            const internalScore = Math.round(weighted * 850);
+            const riskBand = internalScore > 700 ? 'B (Low)' : (internalScore > 650 ? 'C (Medium)' : 'D (High)');
+            const decision = internalScore >= 650 ? 'Approve' : 'Review';
+
+            const pack = {
+                sessionId: CONFIG.SESSION_ID,
+                correlationId: CONFIG.CORRELATION_ID,
+                timestamp: new Date().toISOString(),
+                engineVersion: CONFIG.ENGINE_VERSION,
+                operator: CONFIG.OPERATOR,
+                customerInputs: {
+                    age: state.age,
+                    incomeBand: state.incomeBand,
+                    jurisdiction: state.jurisdiction,
+                    shariaPref: state.shariaPref,
+                    intent: state.intent
+                },
+                eligibilitySummary: {
+                    eligible: state.filteredProducts.map(p => ({ id: p.id, name: p.name, provider: p.provider })),
+                    excluded: state.excludedProducts.map(e => ({ id: e.product.id, name: e.product.name, reasons: e.reasons }))
+                },
+                decisionTrace: {
+                    income: income,
+                    disposable: disposable,
+                    debtRatio: debtRatio,
+                    componentScores: {
+                        incomeScore: incomeScore,
+                        employmentScore: employmentScore,
+                        dtiScore: dtiScore,
+                        ageScore: ageScore,
+                        behaviourScore: behaviourScore,
+                        fraudScore: fraudScore
+                    },
+                    weights: components,
+                    weightedPD: pd,
+                    internalScore: internalScore,
+                    riskBand: riskBand,
+                    decision: decision
+                },
+                selectedProducts: state.selectedForApply.map(id => PRODUCTS.find(p => p.id === id)),
+                consent: { given: state.consentGiven, timestamp: state.consentTimestamp || null },
+                auditLog: state.auditLog,
+                fraudResults: state.fraudResults
+            };
+            const blob = new Blob([JSON.stringify(pack, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `DecisionPack_${CONFIG.SESSION_ID}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Decision Pack downloaded.', 'success');
+            logAudit('Decision Pack generated');
+        }
+
+        // ============================================================
+        // 16. TABS & NAVIGATION
+        // ============================================================
+        function switchTab(tab) {
+            state.tab = tab;
+            document.querySelectorAll('#workspaceTabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            if (tab === 'audit') renderAudit();
+            if (tab === 'decision_trace') renderDecisionTrace();
+            if (tab === 'lender_compare') renderLenderCompare();
+            if (tab === 'products' || tab === 'matrix' || tab === 'overview') renderWorkspace();
+            if (tab === 'catalogue') renderCatalogueTable();
+            if (tab === 'ai_explain') renderAIExplanation(state.filteredProducts, state.excludedProducts);
+            if (tab === 'fraud') renderFraudChecks();
+            if (tab === 'admin') renderAdminContent();
+            if (tab === 'rules_builder') { /* already rendered */ }
+        }
+
+        // ============================================================
+        // 17. ADVISORY, CONSENT, APPLICATION, TRACKING
+        // ============================================================
+        function confirmEscalation() {
+            closeModal('escalationModal');
+            state.mode = 'advisory';
+            state.escalated = true;
+            document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'advisory'));
+            document.getElementById('app').className = 'app mode-advisory';
+            logAudit('Advisory mode activated');
+            showToast('Advisory mode activated.', 'success');
+            let scored = state.filteredProducts.map(p => {
+                let s = 70; if (state.age >= 25 && state.age <= 40) s += 15; if (p.compliance.sharia && state.shariaPref === 'sharia') s += 10; if (p.monthlyCost < 3000) s += 5; return { ...p, score: Math.min(s, 100) };
+            }).sort((a, b) => b.score - a.score);
+            const top = scored[0];
+            if (top) {
+                document.getElementById('advisoryContent').innerHTML = `<div style="background:var(--gray-50);padding:16px;border-radius:var(--radius-sm);border-left:4px solid var(--gold);"><h4>${top.name}</h4><p>Score: ${top.score}/100</p><p><strong>Justification:</strong> Age ${state.age} and income ${state.incomeBand} meet criteria. ${top.compliance.sharia ? 'Sharia matched. ' : ''}</p></div>`;
+                document.getElementById('advisoryModal').classList.add('active');
+            }
+        }
+
+        function goToWorkspace() {
+            if (state.filteredProducts.length === 0 && state.excludedProducts.length === 0) { showToast('Run eligibility first.', 'error'); return; }
+            transitionTo('workspace');
+            renderWorkspace();
+        }
+
+        function goToConsent() {
+            if (state.selectedForApply.length === 0) return showToast('Select at least one product.', 'error');
+            state.consentTimestamp = new Date().toLocaleString();
+            document.getElementById('consentTimestamp').textContent = state.consentTimestamp;
+            transitionTo('consent');
+        }
+
+        function goToApplication() {
+            if (!document.getElementById('consentCheck').checked) return showToast('Consent required.', 'error');
+            state.consentGiven = true;
+            logAudit('Consent provided');
+            transitionTo('application');
+        }
+
+        async function submitApplication() {
+            const id = document.getElementById('nationalId').value.trim();
+            const iban = document.getElementById('ibanInput').value.trim();
+            if (!id || !iban) return showToast('Please fill in all fields.', 'error');
+            runFraudChecks();
+            if (state.fraudResults && state.fraudResults.score < 50) {
+                if (!confirm('Fraud score is low (' + state.fraudResults.score + '%). Submit anyway?')) return;
+            }
+            logAudit('Application submitted');
+            state.nationalId = id;
+            
+            try {
+                await fetch('/application', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: CONFIG.SESSION_ID,
+                        nationalId: id,
+                        iban: iban,
+                        products: state.selectedForApply,
+                        fraudScore: state.fraudResults ? state.fraudResults.score : null
+                    })
+                });
+            } catch (err) {
+                console.error("Failed to log event:", err);
+            }
+            
+            document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to ${state.selectedForApply.length} provider(s). Fraud score: ${state.fraudResults ? state.fraudResults.score + '%' : 'N/A'}</div>`;
+            showToast('Application submitted!', 'success');
+            setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1000);
+        }
+
+        function renderTracking() {
+            const container = document.getElementById('trackingProgress');
+            const steps = ['Submitted', 'Received', 'Validation', 'KYC', 'Fraud Screening', 'Risk Assessment', 'Offer', 'Acceptance', 'Disbursement / Policy Issued'];
+            const now = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            
+            // Check if KYC should be done based on nationalId
+            const kycDone = !!state.nationalId;
+            
+            container.innerHTML = steps.map((s, i) => {
+                let isDone = false;
+                if (state.allStepsApproved) isDone = true; // Simulated approval
+                else if (i < 3) isDone = true; // First 3 steps always done on submit
+                else if (s === 'KYC' && kycDone) isDone = true; // KYC done if CNIC provided
+                
+                return `<div class="tracking-step ${isDone ? 'done' : 'pending'}"><span style="font-size:18px;width:28px;text-align:center;">${isDone ? '✅' : '⏳'}</span><span style="font-weight:600;flex:1;">${s}</span><span style="font-size:12px;color:var(--gray-400);font-family:var(--font-mono);">${isDone ? now : 'Pending'}</span></div>`;
+            }).join('');
+            
+            // Add a simulation button to clear remaining steps
+            if (!state.allStepsApproved) {
+                container.innerHTML += `
+                    <div style="margin-top:20px; text-align:center;">
+                        <button onclick="simulateAllApprovals()" class="btn btn-success" style="padding:8px 16px; font-size:12px;">Simulate Backend Approvals (Clear Pending)</button>
+                    </div>
+                `;
+            }
+        }
+        
+        function simulateAllApprovals() {
+            state.allStepsApproved = true;
+            logAudit('All pending steps cleared via backend simulation');
+            renderTracking();
+            showToast('All pending steps have been approved!', 'success');
+        }
+
+        // ============================================================
+        // 18. RESET
+        // ============================================================
+        function resetJourney() {
+            if (!confirm('Reset all data?')) return;
+            state.stage = 'requirements';
+            state.intent = null;
+            state.filteredProducts = [];
+            state.excludedProducts = [];
+            state.selectedForApply = [];
+            state.auditLog = [];
+            state.escalated = false;
+            state.consentGiven = false;
+            state.consentTimestamp = null;
+            state.fraudResults = null;
+            state.allStepsApproved = false;
+            state.rules = [];
+            document.getElementById('ageInput').value = 32;
+            document.getElementById('incomeSelect').value = '50k-100k';
+            document.getElementById('jurisdictionSelect').value = 'PK';
+            document.getElementById('nationalId').value = '';
+            document.getElementById('ibanInput').value = '';
+            document.getElementById('consentCheck').checked = false;
+            document.getElementById('consentTimestamp').textContent = '—';
+            document.getElementById('executionResult').innerHTML = '';
+            setSharia('any');
+            document.querySelectorAll('#modeToggle button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'marketplace'));
+            document.getElementById('app').className = 'app mode-marketplace';
+            state.auditLog = [];
+            logAudit('System initialised');
+            transitionTo('requirements');
+            showToast('Journey reset.', 'info');
+        }
+
+        // ============================================================
+        // 19. INIT
+        // ============================================================
+        async function initApp() {
+            try {
+                // Initialize Session if not set
+                if (!sessionStorage.getItem('finos_session')) {
+                    const sessRes = await fetch('/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ channel: 'web', device: 'browser' })
+                    });
+                    const sessData = await sessRes.json();
+                    if (sessData.session_id || sessData.id) {
+                        CONFIG.SESSION_ID = sessData.session_id || sessData.id;
+                        sessionStorage.setItem('finos_session', CONFIG.SESSION_ID);
+                    }
+                }
+
+                // Fetch Products
+                const prodRes = await fetch('/products?limit=100');
+                if (prodRes.ok) {
+                    const prodData = await prodRes.json();
+                    if (prodData.products && prodData.products.length > 0) {
+                        const totalCount = prodData.total || prodData.products.length;
+                        const countElem = document.getElementById('totalProductsCount');
+                        if (countElem) {
+                            countElem.innerHTML = `· v7.1 · Board‑Ready · ${totalCount} Products`;
+                        }
+                        PRODUCTS = prodData.products.map(p => {
+                            const pr = p.pricing || {};
+                            const el = p.eligibility_rules || {};
+                            
+                            let uiType = 'unknown';
+                            let pt = (p.product_type || '').toLowerCase();
+                            if (pt.includes('saving')) uiType = 'savings';
+                            else if (pt.includes('loan')) uiType = 'personal_loan';
+                            else if (pt.includes('card')) uiType = 'credit_card';
+                            else if (pt.includes('health')) uiType = 'health_insurance';
+                            else if (pt.includes('motor')) uiType = 'motor_insurance';
+                            else if (pt.includes('life')) uiType = 'life_insurance';
+
+                            return {
+                                id: p.product_id,
+                                provider: p.provider_id || 'System Provider',
+                                name: p.provider_id + ' ' + (p.product_type || 'Product').replace('_', ' ').toUpperCase(),
+                                type: uiType,
+                                jurisdiction: p.jurisdiction || ['PK'],
+                                pricing: pr,
+                                features: p.features ? p.features.map(f => f.name || JSON.stringify(f)) : [],
+                                compliance: { sharia: p.compliance ? p.compliance.sharia_certified === true : false },
+                                eligibility: { 
+                                    minAge: p.eligibility_rules ? p.eligibility_rules.minAge || 18 : 18, 
+                                    maxAge: p.eligibility_rules ? p.eligibility_rules.maxAge || 65 : 65, 
+                                    minIncome: p.eligibility_rules ? p.eligibility_rules.minIncome || '<50k' : '<50k' 
+                                },
+                                monthlyCost: pr.max_amount ? Math.round(pr.max_amount / 100) : 0,
+                                annualCost: pr.max_amount ? Math.round(pr.max_amount / 10) : 0,
+                                trustBadges: ['Live DB Product'],
+                                rating: 4,
+                                completeness: 90,
+                                catalogueVersion: p.version || '1.0',
+                                status: p.status || 'Active',
+                                dataFreshness: 'Live',
+                                hash: p.schema_hash || 'not_provided',
+                                effectiveDate: p.effective_date || '2026-07-01',
+                                publishedBy: p.published_by || 'System Admin',
+                                approvedBy: p.approved_by || 'Compliance Team',
+                                changeRequest: p.change_request || 'CR-1001',
+                                previousVersion: p.previous_version || 'v0.9'
+                            };
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error("API Fetch Error:", e);
+            }
+            
+            logAudit('System initialised (Pakistan Enterprise)');
+            transitionTo('requirements');
+            console.log('🚀 FinOS v7.1 – Board-Ready Decision OS (API integrated)');
+            console.log(`   Session: ${CONFIG.SESSION_ID}`);
+            console.log(`   Engine: ${CONFIG.ENGINE_VERSION}`);
+            console.log(`   KIBOR: ${CONFIG.KIBOR_6M}%`);
+            console.log(`   Products in catalogue: ${PRODUCTS.length}`);
+        }
+        
+        initApp();
+    </script>
+    
+    <!-- Product Management Modal -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-content modal-content-large">
+            <h3><span id="productModalTitle">Add</span> Product</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <div>
+                    <label>Product ID (Optional for new)</label>
+                    <input type="text" id="pm_product_id" class="form-control">
+                </div>
+                <div>
+                    <label>Provider ID</label>
+                    <input type="text" id="pm_provider_id" class="form-control">
+                </div>
+                <div>
+                    <label>Product Type</label>
+                    <input type="text" id="pm_product_type" class="form-control">
+                </div>
+                <div>
+                    <label>Jurisdiction (comma separated)</label>
+                    <input type="text" id="pm_jurisdiction" class="form-control" value="PK">
+                </div>
+                <div>
+                    <label>Status</label>
+                    <select id="pm_status" class="form-control">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Version</label>
+                    <input type="text" id="pm_version" class="form-control" value="1">
+                </div>
+                
+                <!-- Eligibility -->
+                <div style="grid-column: 1 / -1; margin-top: 10px;">
+                    <h4>Eligibility Rules</h4>
+                </div>
+                <div>
+                    <label>Min Age</label>
+                    <input type="number" id="pm_minAge" class="form-control">
+                </div>
+                <div>
+                    <label>Max Age</label>
+                    <input type="number" id="pm_maxAge" class="form-control">
+                </div>
+                <div>
+                    <label>Min Income</label>
+                    <input type="number" id="pm_minIncome" class="form-control">
+                </div>
+                
+                <!-- Compliance & Pricing -->
+                <div style="grid-column: 1 / -1; margin-top: 10px;">
+                    <h4>Compliance & Pricing</h4>
+                </div>
+                <div>
+                    <label>Sharia Certified</label>
+                    <select id="pm_sharia_certified" class="form-control">
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Pricing (JSON format)</label>
+                    <textarea id="pm_pricing" class="form-control" rows="2">{}</textarea>
+                </div>
+                
+                <!-- Governance -->
+                <div style="grid-column: 1 / -1; margin-top: 10px;">
+                    <h4>Governance</h4>
+                </div>
+                <div>
+                    <label>Schema Hash</label>
+                    <input type="text" id="pm_schema_hash" class="form-control">
+                </div>
+                <div>
+                    <label>Effective Date</label>
+                    <input type="date" id="pm_effective_date" class="form-control">
+                </div>
+                <div>
+                    <label>Published By</label>
+                    <input type="text" id="pm_published_by" class="form-control" value="System Admin">
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn btn-secondary" onclick="document.getElementById('productModal').style.display='none'">Cancel</button>
+                <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openProductModal(productId = null) {
+            document.getElementById('productModal').style.display = 'flex';
+            if (productId) {
+                document.getElementById('productModalTitle').innerText = 'Edit';
+                const p = PRODUCTS.find(x => x.id === productId);
+                if (p) {
+                    document.getElementById('pm_product_id').value = p.id || '';
+                    document.getElementById('pm_product_id').disabled = true;
+                    document.getElementById('pm_provider_id').value = p.provider || '';
+                    document.getElementById('pm_product_type').value = p.type || '';
+                    document.getElementById('pm_jurisdiction').value = (p.jurisdiction || []).join(',');
+                    document.getElementById('pm_status').value = p.status || 'active';
+                    document.getElementById('pm_version').value = p.version || '1';
+                    
+                    document.getElementById('pm_minAge').value = p.eligibility_rules?.minAge || '';
+                    document.getElementById('pm_maxAge').value = p.eligibility_rules?.maxAge || '';
+                    document.getElementById('pm_minIncome').value = p.eligibility_rules?.minIncome || '';
+                    
+                    let isSharia = p.compliance?.sharia_certified;
+                    if(isSharia === undefined) isSharia = false;
+                    document.getElementById('pm_sharia_certified').value = isSharia ? 'true' : 'false';
+                    
+                    document.getElementById('pm_pricing').value = JSON.stringify(p.pricing || {});
+                    
+                    document.getElementById('pm_schema_hash').value = p.schema_hash || '';
+                    document.getElementById('pm_effective_date').value = p.effective_date ? p.effective_date.substring(0, 10) : '';
+                    document.getElementById('pm_published_by').value = p.published_by || '';
+                }
+            } else {
+                document.getElementById('productModalTitle').innerText = 'Add';
+                document.getElementById('pm_product_id').value = '';
+                document.getElementById('pm_product_id').disabled = false;
+                document.getElementById('pm_provider_id').value = '';
+                document.getElementById('pm_product_type').value = '';
+                document.getElementById('pm_jurisdiction').value = 'PK';
+                document.getElementById('pm_status').value = 'active';
+                document.getElementById('pm_version').value = '1';
+                
+                document.getElementById('pm_minAge').value = '';
+                document.getElementById('pm_maxAge').value = '';
+                document.getElementById('pm_minIncome').value = '';
+                document.getElementById('pm_sharia_certified').value = 'false';
+                document.getElementById('pm_pricing').value = '{}';
+                
+                document.getElementById('pm_schema_hash').value = '';
+                document.getElementById('pm_effective_date').value = '';
+                document.getElementById('pm_published_by').value = 'System Admin';
+            }
+        }
+
+        async function saveProduct() {
+            try {
+                let pricingParsed = {};
+                try {
+                    pricingParsed = JSON.parse(document.getElementById('pm_pricing').value);
+                } catch(e) {
+                    alert("Invalid JSON in Pricing");
+                    return;
+                }
+                
+                const payload = {
+                    provider_id: document.getElementById('pm_provider_id').value,
+                    schema_hash: document.getElementById('pm_schema_hash').value,
+                    products: [
+                        {
+                            product_id: document.getElementById('pm_product_id').value || undefined,
+                            product_type: document.getElementById('pm_product_type').value,
+                            jurisdiction: document.getElementById('pm_jurisdiction').value.split(',').map(s=>s.trim()),
+                            status: document.getElementById('pm_status').value,
+                            version: document.getElementById('pm_version').value,
+                            pricing: pricingParsed,
+                            eligibility_rules: {
+                                minAge: parseInt(document.getElementById('pm_minAge').value) || 0,
+                                maxAge: parseInt(document.getElementById('pm_maxAge').value) || 99,
+                                minIncome: parseInt(document.getElementById('pm_minIncome').value) || 0
+                            },
+                            features: [],
+                            compliance: {
+                                sharia_certified: document.getElementById('pm_sharia_certified').value === 'true'
+                            },
+                            effective_date: document.getElementById('pm_effective_date').value || undefined,
+                            published_by: document.getElementById('pm_published_by').value || undefined,
+                        }
+                    ]
+                };
+
+                const response = await fetch('http://163.245.222.160/provider/ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    showToast('Product saved successfully!', 'success');
+                    document.getElementById('productModal').style.display = 'none';
+                    // Re-fetch products and re-render DataTable
+                    await initApp();
+                    if($.fn.DataTable.isDataTable('#productDataTable')) {
+                        $('#productDataTable').DataTable().clear().rows.add(PRODUCTS).draw();
+                    }
+                } else {
+                    const text = await response.text();
+                    alert('Error saving product: ' + text);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error saving product.');
+            }
+        }
+    </script>
+</body>
+</html>

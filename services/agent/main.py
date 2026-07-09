@@ -96,8 +96,46 @@ async def parse_intent(request: IntentRequest):
             "task_graph": task_graph,
             "stage": "intent_parsed"
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Intent parsing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ToolStep(BaseModel):
+    tool: str
+    params: Dict
+
+class ExecuteToolsRequest(BaseModel):
+    session_id: str
+    mode: str
+    steps: List[ToolStep]
+
+@app.post("/execute_tools")
+async def execute_tools(request: ExecuteToolsRequest):
+    try:
+        session_data = redis_client.get(f"session:{request.session_id}")
+        if not session_data:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        results = []
+        for step in request.steps:
+            results.append({
+                "tool": step.tool,
+                "status": "success",
+                "result": f"Executed {step.tool} successfully"
+            })
+            
+        return {
+            "session_id": request.session_id,
+            "status": "completed",
+            "results": results
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Execution error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

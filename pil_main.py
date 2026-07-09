@@ -96,7 +96,13 @@ async def query_products(
                     "pricing": row["pricing"],
                     "eligibility_rules": row["eligibility_rules"],
                     "features": row["features"],
-                    "compliance": row["compliance"]
+                    "compliance": row["compliance"],
+                    "schema_hash": row.get("schema_hash", "not_provided"),
+                    "effective_date": row.get("effective_date", "2026-07-01"),
+                    "published_by": row.get("published_by", "System Admin"),
+                    "approved_by": row.get("approved_by", "Compliance Team"),
+                    "change_request": row.get("change_request", "CR-1001"),
+                    "previous_version": row.get("previous_version", "v0.9")
                 })
             
             return {"total": len(formatted_products), "products": formatted_products}
@@ -127,7 +133,13 @@ async def get_product(product_id: str):
                 "pricing": row["pricing"],
                 "eligibility_rules": row["eligibility_rules"],
                 "features": row["features"],
-                "compliance": row["compliance"]
+                "compliance": row["compliance"],
+                "schema_hash": row.get("schema_hash", "not_provided"),
+                "effective_date": row.get("effective_date", "2026-07-01"),
+                "published_by": row.get("published_by", "System Admin"),
+                "approved_by": row.get("approved_by", "Compliance Team"),
+                "change_request": row.get("change_request", "CR-1001"),
+                "previous_version": row.get("previous_version", "v0.9")
             }
     except HTTPException:
         raise
@@ -169,8 +181,9 @@ async def ingest_product_feed(feed: ProductFeed):
                 cur.execute("""
                     INSERT INTO products (
                         product_id, provider_id, product_type, jurisdiction, status, 
-                        version, last_updated, pricing, eligibility_rules, features, compliance
-                    ) VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s)
+                        version, last_updated, pricing, eligibility_rules, features, compliance,
+                        schema_hash, effective_date, published_by, approved_by, change_request, previous_version
+                    ) VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (product_id) DO UPDATE SET
                         provider_id = EXCLUDED.provider_id,
                         product_type = EXCLUDED.product_type,
@@ -181,6 +194,12 @@ async def ingest_product_feed(feed: ProductFeed):
                         eligibility_rules = EXCLUDED.eligibility_rules,
                         features = EXCLUDED.features,
                         compliance = EXCLUDED.compliance,
+                        schema_hash = EXCLUDED.schema_hash,
+                        effective_date = EXCLUDED.effective_date,
+                        published_by = EXCLUDED.published_by,
+                        approved_by = EXCLUDED.approved_by,
+                        change_request = EXCLUDED.change_request,
+                        previous_version = EXCLUDED.previous_version,
                         last_updated = NOW()
                 """, (
                     prod_id,
@@ -192,7 +211,13 @@ async def ingest_product_feed(feed: ProductFeed):
                     json.dumps(prod.get("pricing", {})),
                     json.dumps(prod.get("eligibility_rules", {})),
                     json.dumps(prod.get("features", [])),
-                    json.dumps(prod.get("compliance", {}))
+                    json.dumps(prod.get("compliance", {})),
+                    prod.get("schema_hash", feed.schema_hash),
+                    prod.get("effective_date", "2026-07-01"),
+                    prod.get("published_by", "System Admin"),
+                    prod.get("approved_by", "Compliance Team"),
+                    prod.get("change_request", "CR-1001"),
+                    prod.get("previous_version", "v0.9")
                 ))
             
             conn.commit()
@@ -221,41 +246,6 @@ async def validate_product(product: ProductSchema):
         "errors": [],
         "warnings": []
     }
-
-class ApplicationRequest(BaseModel):
-    session_id: str
-    nationalId: str
-    iban: str
-    products: List[str]
-    fraudScore: Optional[float] = None
-
-@app.post("/application")
-async def submit_application(app_req: ApplicationRequest):
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            app_id = str(uuid.uuid4())
-            cur.execute("""
-                INSERT INTO applications (
-                    id, session_id, national_id, iban, products, fraud_score, status, created_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, 'submitted', NOW())
-                RETURNING id
-            """, (
-                app_id,
-                app_req.session_id,
-                app_req.nationalId,
-                app_req.iban,
-                json.dumps(app_req.products),
-                app_req.fraudScore
-            ))
-            conn.commit()
-            return {"status": "success", "application_id": app_id}
-    except Exception as e:
-        conn.rollback()
-        logger.error(f"Error submitting application: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        conn.close()
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,39 +1,10 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import redis
-import json
-import logging
-import os
-import uuid
-import time
+import re
 
-app = FastAPI(title="Audit Service", version="5.2")
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Update main.py
+with open('/root/financial-system/services/audit/main.py', 'r') as f:
+    content = f.read()
 
-# ✅ FIX: Parse Redis URL properly
-def get_redis_connection():
-    redis_url = os.getenv('REDIS_URL', 'redis://redis:6379')
-    if redis_url.startswith('redis://'):
-        return redis.Redis.from_url(redis_url, decode_responses=True)
-    
-    redis_host = os.getenv('REDIS_HOST', 'redis')
-    redis_port = int(os.getenv('REDIS_PORT', 6379))
-    redis_password = os.getenv('REDIS_PASSWORD', 'redis123')
-    
-    return redis.Redis(
-        host=redis_host,
-        port=redis_port,
-        password=redis_password,
-        decode_responses=True
-    )
-
-redis_client = get_redis_connection()
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "service": "audit-service", "version": "5.2", "timestamp": time.time()}
-
+new_routes = """
 class LogEventRequest(BaseModel):
     event_type: str
     session_id: str
@@ -93,8 +64,42 @@ async def gdpr_deletion(session_id: str):
         "status": "deleted", 
         "message": f"GDPR deletion successful for session {session_id}"
     }
+"""
 
+pattern = re.compile(r'@app\.post\("/query_audit"\).*?(?=\nif __name__ == "__main__":)', re.DOTALL)
+content = pattern.sub(new_routes.strip() + '\n\n', content)
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+with open('/root/financial-system/services/audit/main.py', 'w') as f:
+    f.write(content)
+
+# Update ingress.yaml
+with open('/root/financial-system/k8s/ingress.yaml', 'r') as f:
+    ingress_content = f.read()
+
+ingress_addition = """      - path: /log_event
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-service
+            port:
+              number: 8007
+      - path: /export_compliance_report
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-service
+            port:
+              number: 8007
+      - path: /data/session
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-service
+            port:
+              number: 8007
+"""
+
+if "/log_event" not in ingress_content:
+    ingress_content = ingress_content.replace('      - path: /provider/ingest', ingress_addition + '      - path: /provider/ingest')
+    with open('/root/financial-system/k8s/ingress.yaml', 'w') as f:
+        f.write(ingress_content)

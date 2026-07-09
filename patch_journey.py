@@ -1,39 +1,8 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import redis
-import json
-import logging
-import os
-import uuid
-import time
+import re
+with open('/root/financial-system/services/journey/main.py', 'r') as f:
+    content = f.read()
 
-app = FastAPI(title="Journey Service", version="5.2")
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# ✅ FIX: Parse Redis URL properly
-def get_redis_connection():
-    redis_url = os.getenv('REDIS_URL', 'redis://redis:6379')
-    if redis_url.startswith('redis://'):
-        return redis.Redis.from_url(redis_url, decode_responses=True)
-    
-    redis_host = os.getenv('REDIS_HOST', 'redis')
-    redis_port = int(os.getenv('REDIS_PORT', 6379))
-    redis_password = os.getenv('REDIS_PASSWORD', 'redis123')
-    
-    return redis.Redis(
-        host=redis_host,
-        port=redis_port,
-        password=redis_password,
-        decode_responses=True
-    )
-
-redis_client = get_redis_connection()
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "service": "journey-service", "version": "5.2", "timestamp": time.time()}
-
+new_routes = """
 class CreateSessionRequest(BaseModel):
     mode: str = "marketplace"
     primary_jurisdiction: str = "PK"
@@ -88,8 +57,11 @@ async def escalate_session(session_id: str, request: EscalateRequest):
     session['stage'] = "human_handoff"
     redis_client.setex(f"session:{session_id}", 3600, json.dumps(session))
     return {"status": "escalated", "session_id": session_id, "reason": request.reason}
+"""
 
+# Replace the existing create_session with the new full implementation
+pattern = re.compile(r'@app\.post\("/sessions"\).*?(?=\nif __name__ == "__main__":)', re.DOTALL)
+content = pattern.sub(new_routes.strip() + '\n\n', content)
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+with open('/root/financial-system/services/journey/main.py', 'w') as f:
+    f.write(content)

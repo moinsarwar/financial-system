@@ -4,7 +4,7 @@ metadata:
   name: financial-system-ingress
   namespace: financial-system
   annotations:
-    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-rps: '100'
 spec:
   rules:
   - http:
@@ -36,8 +36,29 @@ spec:
           service:
             name: agent-service
             port:
-              number: 8002
+              number: 8003
       - path: /query_audit
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-service
+            port:
+              number: 8007
+      - path: /log_event
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-service
+            port:
+              number: 8007
+      - path: /export_compliance_report
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-service
+            port:
+              number: 8007
+      - path: /data/session
         pathType: Prefix
         backend:
           service:
@@ -64,4 +85,53 @@ spec:
           service:
             name: database-service
             port:
-              number: 8000
+              number: 8000
+      - path: /validate_mode_action
+        pathType: Prefix
+        backend:
+          service:
+            name: policy-service
+            port:
+              number: 8002
+      - path: /should_collect
+        pathType: Prefix
+        backend:
+          service:
+            name: info-control
+            port:
+              number: 8005
+      - path: /mark_collected
+        pathType: Prefix
+        backend:
+          service:
+            name: info-control
+            port:
+              number: 8005
+      - path: /mode
+        pathType: Prefix
+        backend:
+          service:
+            name: mode-control
+            port:
+              number: 8006
+      - path: /reset_intent
+        pathType: Prefix
+        backend:
+          service:
+            name: info-control
+            port:
+              number: 8005
+      - path: /evaluate_output
+        pathType: Prefix
+        backend:
+          service:
+            name: policy-service
+            port:
+              number: 8002
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80

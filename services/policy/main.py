@@ -132,3 +132,33 @@ async def query_products(query: ProductQuery):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+class ModeAction(BaseModel):
+    mode: str
+    action: str
+
+@app.post("/validate_mode_action")
+async def validate_mode_action(request: ModeAction):
+    if request.mode == "marketplace":
+        if request.action in ["rank", "recommend"]:
+            return {"allowed": False, "reason": f"Action '{request.action}' not allowed in marketplace mode."}
+        return {"allowed": True}
+    elif request.mode == "advisory":
+        return {"allowed": True}
+    return {"allowed": False, "reason": "Unknown mode"}
+
+class EvaluateOutputRequest(BaseModel):
+    mode: str
+    output_text: str
+    product_list: List[str]
+
+@app.post("/evaluate_output")
+async def evaluate_output(request: EvaluateOutputRequest):
+    if request.mode == "marketplace":
+        forbidden_words = ["best", "recommend", "should buy", "advice"]
+        text_lower = request.output_text.lower()
+        for word in forbidden_words:
+            if word in text_lower:
+                return {"is_compliant": False, "reason": "Marketplace mode cannot provide recommendations."}
+        return {"is_compliant": True}
+    return {"is_compliant": True}

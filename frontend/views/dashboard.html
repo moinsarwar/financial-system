@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCompare Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body { font-family: 'Roboto', Arial, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; color: #202124; }
+        
+        /* Sidebar */
+        .sidebar { width: 256px; background-color: white; border-right: 1px solid #dadce0; display: flex; flex-direction: column; padding-top: 1rem; }
+        .sidebar h2 { padding: 0 1.5rem 1.5rem 1.5rem; margin: 0; color: #202124; font-size: 1.25rem; font-weight: 500; }
+        .nav-links { flex: 1; padding: 0 0.5rem; }
+        .nav-link { display: block; padding: 0.75rem 1.5rem; color: #3c4043; text-decoration: none; font-weight: 500; cursor: pointer; transition: all 0.2s; border-radius: 0 24px 24px 0; margin-bottom: 0.25rem; }
+        .nav-link:hover { background-color: #f1f3f4; color: #202124; }
+        .nav-link.active { background-color: #e8f0fe; color: #1a73e8; }
+        .nav-link.logout { color: #d93025; margin-top: auto; border-top: 1px solid #dadce0; border-radius: 0; }
+        
+        /* Main Content */
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .container, .list-container { max-width: 900px; margin: 0 auto; background: white; border-radius: 8px; border: 1px solid #dadce0; padding: 2rem; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); }
+        
+        h2.title { color: #202124; font-weight: 400; font-size: 1.5rem; margin-top: 0; margin-bottom: 1.5rem; }
+        
+        /* Forms */
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #3c4043; }
+        input, select, textarea { width: 100%; padding: 0.75rem; border: 1px solid #dadce0; border-radius: 4px; box-sizing: border-box; font-family: inherit; font-size: 1rem; color: #202124; transition: border-color 0.2s; }
+        input:focus, select:focus { outline: none; border-color: #1a73e8; border-width: 2px; padding: calc(0.75rem - 1px); }
+        
+        /* Buttons */
+        button.submit-btn { background-color: #1a73e8; color: white; padding: 0.625rem 1.5rem; border: none; border-radius: 4px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3); }
+        button.submit-btn:hover { background-color: #1b66c9; box-shadow: 0 1px 3px 1px rgba(60,64,67,0.15); }
+        
+        .add-btn { background-color: white; color: #1a73e8; border: 1px solid #dadce0; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 0.875rem; transition: background-color 0.2s; }
+        .add-btn:hover { background-color: #f8f9fa; }
+        
+        /* Dynamic Rows */
+        .row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .row input { flex: 1; }
+        .remove-btn { background-color: white; color: #5f6368; border: 1px solid #dadce0; border-radius: 4px; padding: 0 0.75rem; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .remove-btn:hover { background-color: #f1f3f4; color: #d93025; }
+        
+        /* Table overrides */
+        table.dataTable { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+        table.dataTable th, table.dataTable td { border-bottom: 1px solid #dadce0; padding: 1rem 0.5rem; font-size: 0.875rem; }
+        table.dataTable th { color: #5f6368; font-weight: 500; text-align: left; }
+        
+        .action-btn { padding: 0.375rem 0.75rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 0.875rem; margin-right: 0.5rem; background: transparent; transition: background-color 0.2s; }
+        .btn-edit { color: #1a73e8; border: 1px solid #dadce0; }
+        .btn-edit:hover { background-color: #e8f0fe; }
+        .btn-delete { color: #d93025; border: 1px solid #dadce0; }
+        .btn-delete:hover { background-color: #fce8e6; }
+
+        .status-pill { background: #e6f4ea; color: #137333; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; }
+
+        #toast { position: fixed; bottom: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 4px; color: white; display: none; font-size: 0.875rem; font-weight: 500; z-index: 1000; box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3); background-color: #202124; }
+        
+        /* DataTables Custom Overrides */
+        .dataTables_wrapper { width: 100%; margin-top: 1rem; font-size: 0.875rem; }
+        .dataTables_filter input { width: auto; display: inline-block; padding: 0.4rem; margin-left: 0.5rem; border: 1px solid #dadce0; border-radius: 4px; }
+        .dataTables_length select { padding: 0.3rem; border-radius: 4px; border: 1px solid #dadce0; }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #e8f0fe; color: #1a73e8 !important; border: 1px solid transparent; border-radius: 4px; }
+    </style>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2>FinCompare</h2>
+        <div class="nav-links">
+            <a class="nav-link active" id="nav-list" onclick="showView('list')">Product List</a>
+            <a class="nav-link logout" onclick="logout()">Logout</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- ADD / EDIT VIEW -->
+        <div id="view-add" class="container" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 class="title" id="form-title" style="margin-bottom:0;">Add New Product</h2>
+                <button type="button" class="add-btn" style="width:auto; margin:0;" onclick="showView('list')">Cancel / Back</button>
+            </div>
+            <br>
+            <form id="productForm" onsubmit="submitProduct(event)">
+                <input type="hidden" id="edit_product_id" value="">
+                <div class="form-group">
+                    <label>Provider ID</label>
+                    <input type="text" id="provider_id" required placeholder="e.g., UBL, Meezan">
+                </div>
+                <div class="form-group">
+                    <label>Product Type</label>
+                    <input list="product_types_list" id="product_type" required placeholder="Select or type new...">
+                    <datalist id="product_types_list">
+                        <option value="account">Bank Account</option>
+                        <option value="card">Credit Card</option>
+                        <option value="loan">Loan</option>
+                        <option value="insurance">Insurance</option>
+                        <option value="Premium Saving">Premium Saving</option>
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label>Schema Hash</label>
+                    <input type="text" id="schema_hash" required value="sha256:abc1234567890abcdef">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="status" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Version</label>
+                    <input type="text" id="version" required value="1">
+                </div>
+                <div class="form-group">
+                    <label>Last Updated</label>
+                    <input type="datetime-local" id="last_updated" required>
+                </div>
+                <div class="form-group">
+                    <label>Min Age</label>
+                    <input type="number" id="minAge" placeholder="e.g. 18">
+                </div>
+                <div class="form-group">
+                    <label>Max Age</label>
+                    <input type="number" id="maxAge" placeholder="e.g. 65">
+                </div>
+                <div class="form-group">
+                    <label>Sharia Certified</label>
+                    <select id="sharia_certified">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Jurisdiction</label>
+                    <input type="text" id="jurisdiction" required value='["PK"]' placeholder='["PK"]'>
+                </div>
+                <div class="form-group">
+                    <label>Effective Date</label>
+                    <input type="date" id="effective_date">
+                </div>
+                <div class="form-group">
+                    <label>Published By</label>
+                    <input type="text" id="published_by" value="System Admin">
+                </div>
+                <div class="form-group">
+                    <label>Approved By</label>
+                    <input type="text" id="approved_by" value="Compliance Team">
+                </div>
+                <div class="form-group">
+                    <label>Change Request</label>
+                    <input type="text" id="change_request" value="CR-1001">
+                </div>
+                <div class="form-group">
+                    <label>Previous Version</label>
+                    <input type="text" id="previous_version" value="v0.9">
+                </div>
+                <div class="form-group" id="pricing-container">
+                    <label>Pricing Items</label>
+                    <div id="pricing-rows">
+                        <div class="row">
+                            <input type="text" placeholder="Key (e.g. monthly_fee)" class="price-key">
+                            <input type="text" placeholder="Value (e.g. 0)" class="price-value">
+                            <button type="button" class="remove-btn" onclick="removeRow(this)">X</button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addPricingRow()" class="add-btn">+ Add Pricing Item</button>
+                </div>
+                <div class="form-group" id="features-container">
+                    <label>Features List</label>
+                    <div id="features-rows">
+                        <div class="row">
+                            <input type="text" placeholder="Feature Name" class="feat-name">
+                            <input type="text" placeholder="Feature Details" class="feat-details">
+                            <button type="button" class="remove-btn" onclick="removeRow(this)">X</button>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addFeatureRow()" class="add-btn">+ Add Feature</button>
+                </div>
+                <button type="submit" class="submit-btn" id="submit-btn">Ingest Product</button>
+            </form>
+        </div>
+
+        <!-- LIST VIEW -->
+        <div id="view-list" class="list-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 class="title" style="margin: 0;">Product List</h2>
+                <button class="submit-btn" style="width: auto; margin: 0;" onclick="showView('add')">+ Add Product</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table id="productsTable" class="display">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Provider</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-tbody">
+                        <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <script>
+        if(localStorage.getItem('auth_token') !== 'logged_in_valid_token') {
+            window.location.href = '/login.html';
+        }
+
+        document.getElementById('last_updated').value = new Date().toISOString().slice(0, 16);
+        
+        // Load list view by default
+        fetchProducts();
+
+        function logout() {
+            localStorage.removeItem('auth_token');
+            window.location.href = '/login.html';
+        }
+
+        function showToast(msg, isError) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.backgroundColor = isError ? '#ef4444' : '#10b981';
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
+
+        function showView(view) {
+            document.getElementById('view-add').style.display = view === 'add' ? 'block' : 'none';
+            document.getElementById('view-list').style.display = view === 'list' ? 'block' : 'none';
+            
+            if(view === 'list') {
+                fetchProducts();
+            } else {
+                if(!document.getElementById('edit_product_id').value) {
+                    document.getElementById('form-title').innerText = "Add New Product";
+                    document.getElementById('submit-btn').innerText = "Ingest Product";
+                }
+            }
+        }
+
+        function addPricingRow(key='', val='') {
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.innerHTML = `<input type="text" placeholder="Key" class="price-key" value="${key}"><input type="text" placeholder="Value" class="price-value" value="${val}"><button type="button" class="remove-btn" onclick="removeRow(this)">X</button>`;
+            document.getElementById('pricing-rows').appendChild(row);
+        }
+        function addFeatureRow(name='', details='') {
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.innerHTML = `<input type="text" placeholder="Feature Name" class="feat-name" value="${name}"><input type="text" placeholder="Feature Details" class="feat-details" value="${details}"><button type="button" class="remove-btn" onclick="removeRow(this)">X</button>`;
+            document.getElementById('features-rows').appendChild(row);
+        }
+        function removeRow(btn) {
+            btn.parentElement.remove();
+        }
+
+        async function fetchProducts() {
+            try {
+                const res = await fetch('/products');
+                const data = await res.json();
+                
+                if ($.fn.DataTable.isDataTable('#productsTable')) {
+                    $('#productsTable').DataTable().destroy();
+                }
+
+                const tbody = document.getElementById('products-tbody');
+                tbody.innerHTML = '';
+                
+                if(!data.products || data.products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No products found.</td></tr>';
+                    return;
+                }
+
+                window.productsData = data.products; // save for edit
+                
+                data.products.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${p.product_id}</td>
+                        <td>${p.provider_id}</td>
+                        <td>${p.product_type}</td>
+                        <td><span class="status-pill">${p.status}</span></td>
+                        <td>${new Date(p.last_updated).toLocaleString()}</td>
+                        <td>
+                            <button class="action-btn btn-edit" onclick="editProduct('${p.product_id}')">Edit</button>
+                            <button class="action-btn btn-delete" onclick="deleteProduct('${p.product_id}')">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                
+                $('#productsTable').DataTable({
+                    "pageLength": 10,
+                    "ordering": true,
+                    "searching": true,
+                    "responsive": true
+                });
+            } catch(e) {
+                showToast("Failed to load products", true);
+            }
+        }
+
+        function editProduct(productId) {
+            const p = window.productsData.find(x => x.product_id === productId);
+            if(!p) return;
+
+            document.getElementById('form-title').innerText = "Edit Product: " + productId;
+            document.getElementById('submit-btn').innerText = "Update Product";
+            document.getElementById('edit_product_id').value = productId;
+
+            document.getElementById('provider_id').value = p.provider_id || '';
+            document.getElementById('product_type').value = p.product_type || '';
+            document.getElementById('status').value = p.status || 'active';
+            document.getElementById('version').value = p.version || '1';
+            document.getElementById('schema_hash').value = p.schema_hash || 'sha256:abc1234567890abcdef';
+            document.getElementById('jurisdiction').value = p.jurisdiction ? JSON.stringify(p.jurisdiction) : '["PK"]';
+            if(p.last_updated) document.getElementById('last_updated').value = p.last_updated.slice(0, 16);
+            if(p.compliance) document.getElementById('sharia_certified').value = p.compliance.sharia_certified ? "true" : "false";
+            
+            document.getElementById('minAge').value = p.eligibility_rules?.minAge || '';
+            document.getElementById('maxAge').value = p.eligibility_rules?.maxAge || '';
+            document.getElementById('effective_date').value = p.effective_date ? p.effective_date.substring(0, 10) : '';
+            document.getElementById('published_by').value = p.published_by || 'System Admin';
+            document.getElementById('approved_by').value = p.approved_by || 'Compliance Team';
+            document.getElementById('change_request').value = p.change_request || 'CR-1001';
+            document.getElementById('previous_version').value = p.previous_version || 'v0.9';
+
+            document.getElementById('pricing-rows').innerHTML = '';
+            if(p.pricing) {
+                Object.entries(p.pricing).forEach(([k,v]) => addPricingRow(k, v));
+            }
+            if(document.getElementById('pricing-rows').children.length === 0) addPricingRow();
+
+            document.getElementById('features-rows').innerHTML = '';
+            if(p.features) {
+                p.features.forEach(f => addFeatureRow(f.name, f.details));
+            }
+            if(document.getElementById('features-rows').children.length === 0) addFeatureRow();
+
+            showView('add');
+        }
+
+        async function deleteProduct(productId) {
+            if(!confirm(`Are you sure you want to delete ${productId}?`)) return;
+            try {
+                const res = await fetch(`/products/${productId}`, { method: 'DELETE' });
+                if(res.ok) {
+                    showToast("Product deleted successfully", false);
+                    fetchProducts();
+                } else {
+                    showToast("Failed to delete product", true);
+                }
+            } catch(e) {
+                showToast("Network error", true);
+            }
+        }
+
+        async function submitProduct(e) {
+            e.preventDefault();
+            
+            let pricing = {};
+            document.querySelectorAll('#pricing-rows .row').forEach(row => {
+                const k = row.querySelector('.price-key').value.trim();
+                const v = row.querySelector('.price-value').value.trim();
+                if(k && v) {
+                    pricing[k] = isNaN(v) ? v : Number(v);
+                }
+            });
+
+            let features = [];
+            document.querySelectorAll('#features-rows .row').forEach(row => {
+                const n = row.querySelector('.feat-name').value.trim();
+                const d = row.querySelector('.feat-details').value.trim();
+                if(n || d) {
+                    features.push({name: n, details: d});
+                }
+            });
+            
+            let jurisdiction = ["PK"];
+            try {
+                if(document.getElementById('jurisdiction').value.trim()) jurisdiction = JSON.parse(document.getElementById('jurisdiction').value);
+            } catch(err) {
+                showToast("Invalid JSON format in Jurisdiction!", true);
+                return;
+            }
+
+            const productObj = {
+                product_type: document.getElementById('product_type').value,
+                jurisdiction: jurisdiction,
+                status: document.getElementById('status').value,
+                version: document.getElementById('version').value,
+                last_updated: new Date(document.getElementById('last_updated').value).toISOString(),
+                pricing: pricing,
+                eligibility_rules: {
+                    minAge: parseInt(document.getElementById('minAge').value) || 0,
+                    maxAge: parseInt(document.getElementById('maxAge').value) || 99
+                },
+                features: features,
+                compliance: {"sharia_certified": document.getElementById('sharia_certified').value === 'true'},
+                effective_date: document.getElementById('effective_date').value || undefined,
+                published_by: document.getElementById('published_by').value || undefined,
+                approved_by: document.getElementById('approved_by').value || undefined,
+                change_request: document.getElementById('change_request').value || undefined,
+                previous_version: document.getElementById('previous_version').value || undefined
+            };
+
+            const editId = document.getElementById('edit_product_id').value;
+            if(editId) {
+                productObj.product_id = editId;
+            }
+
+            const payload = {
+                provider_id: document.getElementById('provider_id').value,
+                schema_hash: document.getElementById('schema_hash').value,
+                products: [productObj]
+            };
+
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            try {
+                const res = await fetch('/provider/ingest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if(res.ok) {
+                    showToast(editId ? "Product updated successfully!" : "Product successfully ingested!", false);
+                    document.getElementById('productForm').reset();
+                    document.getElementById('edit_product_id').value = '';
+                    document.getElementById('form-title').innerText = "Add New Product";
+                    document.getElementById('submit-btn').innerText = "Ingest Product";
+                    document.getElementById('jurisdiction').value = '["PK"]';
+                    document.getElementById('pricing-rows').innerHTML = '<div class="row"><input type="text" placeholder="Key" class="price-key"><input type="text" placeholder="Value" class="price-value"><button type="button" class="remove-btn" onclick="removeRow(this)">X</button></div>';
+                    document.getElementById('features-rows').innerHTML = '<div class="row"><input type="text" placeholder="Feature Name" class="feat-name"><input type="text" placeholder="Feature Details" class="feat-details"><button type="button" class="remove-btn" onclick="removeRow(this)">X</button></div>';
+                    showView('list');
+                } else {
+                    const errText = await res.text();
+                    showToast("Failed to process product: " + errText, true);
+                }
+            } catch(err) {
+                showToast("Network error occurred.", true);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = editId ? "Update Product" : "Ingest Product";
+            }
+        }
+    </script>
+</body>
+</html>
