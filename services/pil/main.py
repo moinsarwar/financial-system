@@ -106,6 +106,55 @@ async def query_products(
     finally:
         conn.close()
 
+@app.get("/products/all")
+async def query_all_products(
+    product_type: Optional[str] = None,
+    jurisdiction: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            query = "SELECT * FROM products WHERE 1=1"
+            params = []
+            
+            if product_type:
+                query += " AND product_type = %s"
+                params.append(product_type)
+            if jurisdiction:
+                query += " AND jurisdiction ? %s"
+                params.append(jurisdiction)
+            
+            query += " LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+            
+            cur.execute(query, params)
+            rows = cur.fetchall()
+            
+            formatted_products = []
+            for row in rows:
+                formatted_products.append({
+                    "product_id": row["product_id"],
+                    "provider_id": row["provider_id"],
+                    "product_type": row["product_type"],
+                    "jurisdiction": row["jurisdiction"],
+                    "status": row["status"],
+                    "version": row["version"],
+                    "last_updated": row["last_updated"].isoformat() if row["last_updated"] else None,
+                    "pricing": row["pricing"],
+                    "eligibility_rules": row["eligibility_rules"],
+                    "features": row["features"],
+                    "compliance": row["compliance"]
+                })
+            
+            return {"total": len(formatted_products), "products": formatted_products}
+    except Exception as e:
+        logger.error(f"Error querying all products: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
 @app.get("/products/{product_id}")
 async def get_product(product_id: str):
     conn = get_db_connection()
