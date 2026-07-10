@@ -7,7 +7,9 @@ const Dashboard: React.FC = () => {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboard'],
     queryFn: async () => {
-      const res = await api.get('/dashboard/stats');
+      const res = await api.get('/dashboard/stats/', {
+        headers: { 'x-admin-key': 'admin_secret_123' }
+      });
       return res.data as DashboardStats;
     },
   });

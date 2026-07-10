@@ -7,7 +7,7 @@
             "name": "html-volume",
             "configMap": null,
             "hostPath": {
-              "path": "/root/financial-system/frontend/views",
+              "path": "/root/financial-system/finCompare/frontend/views",
               "type": "DirectoryOrCreate"
             }
           }

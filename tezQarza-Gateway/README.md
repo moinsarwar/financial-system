@@ -1,59 +1,49 @@
-# TezQarza – LFE Channel Gateway
+# TezQarza-Gateway
 
-**TezQarza** is a customer‑facing channel gateway for the Loan Facilitation Engine (LFE).  
-It handles application intake, product display, document upload, and displays LFE decisions.  
-All eligibility, scoring, routing, and auditing are delegated to LFE.
+**TezQarza-Gateway** is a channel gateway within the Financial System monorepo. It connects frontend applications and external partners directly with the core backend financial systems for rapid loan processing, originations, and product listings.
 
-## Architecture
+## Technologies Used
 
-```
-Frontend (React)  →  TezQarza API Gateway  →  LFE (Loan Facilitation Engine)  →  Lenders
-```
+- **Backend**: FastAPI (Python)
+- **Frontend**: React (TypeScript, Vite/CRA)
+- **Database**: PostgreSQL
+- **Web Server / Proxy**: Nginx
+- **Deployment**: Docker Compose
+
+## Features
+
+- **Product Listing**: Fetch and display available financial products from the Loan/Financial Engine (LFE).
+- **Loan Applications**: Accept and process loan originations from borrowers.
+- **Dashboard Analytics**: Provide administrative insights into total applications, match rates, and rejection reasons.
+- **Qwen Integration**: Connects with local LLM models to provide intelligent chatbot capabilities for financial assistance.
 
 ## Prerequisites
 
-- Docker & Docker Compose
-- Environment variables (see `.env.example`)
+- **Docker** and **Docker Compose** installed on your system.
+- Port `8080`, `8000`, and `5432` should be available.
 
-## Quick Start
+## How to Start the Project
 
-1. Clone the repository.
-2. Copy `.env.example` to `.env` and fill in secrets (especially `ENCRYPTION_KEY` and `ADMIN_API_KEY`).
-3. Build and run:
-   ```bash
-   docker-compose up -d --build
-   ```
-4. Access:
-   - Frontend: http://localhost
-   - API docs: http://localhost/api/docs
-   - Admin sync: `POST /api/products/sync` with header `X-Admin-Key`
+This project relies on Docker Compose to easily orchestrate the backend, frontend, and database services.
 
-## Environment Variables
+### 1. Configure Environment Variables
+Ensure that the `.env` file exists in the root of `tezQarza-Gateway` directory with appropriate credentials (e.g., `POSTGRES_USER`, `ADMIN_API_KEY`, etc.).
 
-| Variable | Description |
-|----------|-------------|
-| `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | PostgreSQL credentials |
-| `SECRET_KEY` | JWT secret |
-| `CORS_ORIGINS` | Comma‑separated allowed origins |
-| `ENVIRONMENT` | `development` / `staging` / `production` |
-| `LFE_BASE_URL` | LFE service URL |
-| `LFE_API_KEY` | API key for LFE |
-| `ENCRYPTION_KEY` | 32‑byte base64 key (generate with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key())"`) |
-| `ADMIN_API_KEY` | Admin API key for protected endpoints |
-
-## Testing the Admin Endpoint
+### 2. Build and Run Containers
+To start the services in detached mode, run:
 
 ```bash
-curl -X POST http://localhost:8000/api/products/sync -H "X-Admin-Key: your-secure-admin-api-key"
+cd tezQarza-Gateway
+docker compose up -d --build
 ```
 
-## Production Deployment
+### 3. Verify Services
+Check if all containers are running successfully:
+```bash
+docker compose ps
+```
 
-- In production, set `ENVIRONMENT=production` to avoid auto‑sync of products on startup.
-- Use a scheduled job (e.g., Celery) to call `/api/products/sync` periodically.
-- Replace the mock LFE client with a real one by editing `lfe_client.py`.
-- For retries, implement a robust worker (Celery, RQ, or AWS SQS).
-
-## License
-
-Proprietary – for internal use only.
+### 4. Access the Application
+- **Frontend**: `http://localhost:8080` (Proxied via Nginx)
+- **Backend API Docs**: `http://localhost:8000/docs` (Swagger UI)
+- **Dashboard**: `http://localhost:8080/dashboard` (Ensure `ADMIN_API_KEY` is correctly handled for stats fetching).

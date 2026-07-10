@@ -8,7 +8,7 @@ const Products: React.FC = () => {
   const { data: products, isLoading } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const res = await api.get('/products');
+      const res = await api.get('/products/');
       return res.data as Product[];
     },
   });
