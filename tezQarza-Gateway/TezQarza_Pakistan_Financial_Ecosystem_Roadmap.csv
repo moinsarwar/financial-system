@@ -1,0 +1,97 @@
+Category,Sub-Category,Supplier,Product,Key Features
+Personal Finance,Conventional Banks,Askari Bank,Personal Finance,"Min PKR 50,000; max up to 40% Debt Burden Ratio; max age 60 years"
+Personal Finance,Conventional Banks,Askari Bank,Secured Personal Finance,Against own vehicle; up to PKR 5-7M
+Personal Finance,Conventional Banks,MCB Bank,Personal Loan,"PKR 50,000 – 2 million; 1–4 years; no collateral"
+Personal Finance,Conventional Banks,MCB Bank,Student Personal Loan,For LUMS MBA/Executive MBA students
+Personal Finance,Conventional Banks,Bank of Punjab,Marriage Loan,"PKR 500,000 – 1.5 million; 1–5 years; fixed markup"
+Personal Finance,Conventional Banks,Bank of Punjab,Personal Loan & Consumer Durables,Rates from 23.99% – 38.99%
+Personal Finance,Conventional Banks,Samba Bank,Personal Loan,Short-term term loan
+Personal Finance,Conventional Banks,Samba Bank,Break-Free Finance,Up to 95% against deposit account
+Personal Finance,Conventional Banks,HBL,Personal Loan,"Medical, education, weddings, home repairs"
+Personal Finance,Conventional Banks,BankIslami,Islamic Personal Finance,Shariah-compliant Tawarruq model
+Personal Finance,Islamic Banks,Askari Islamic,Islamic Personal Finance (Secured),"Min PKR 100,000; max PKR 5-7M; halal needs"
+Personal Finance,Islamic Banks,Meezan Bank,Various Islamic personal products,Pakistan's largest Islamic bank
+Personal Finance,Islamic Banks,Faysal Bank,Islamic personal finance,Full-fledged Islamic bank
+Personal Finance,Islamic Banks,Dubai Islamic Bank,Islamic personal finance,Pakistan operations
+Personal Finance,Islamic Banks,MCB Islamic,Islamic personal finance,Islamic window of MCB
+Personal Finance,Islamic Banks,Al Baraka Bank,Islamic personal finance,Full-fledged Islamic bank
+Personal Finance,Fintech / NBFC (Digital Lending),SmartQarza,Digital loans,Safe easy cash loans
+Personal Finance,Fintech / NBFC (Digital Lending),MoneyTap,Digital loans,Safe cash loans
+Personal Finance,Fintech / NBFC (Digital Lending),Fauri Cash,Rapid cash solutions,Quick disbursement
+Personal Finance,Fintech / NBFC (Digital Lending),PakCredit,Digital loans,Safe easy loans
+Personal Finance,Fintech / NBFC (Digital Lending),PaisaGhur,Digital loans,Easy safe cash loans
+Personal Finance,Fintech / NBFC (Digital Lending),QarzMitra,Digital loans,Easy borrow loans
+Personal Finance,Fintech / NBFC (Digital Lending),Easypaisa,Digital banking,Pakistan's leading digital bank
+Personal Finance,Fintech / NBFC (Digital Lending),JazzCash,Digital wallet & lending,Mobile account with lending
+Business & SME Finance,Commercial Banks,Askari Bank,PM Youth Business Loan,Ages 21-45; IT/E-commerce from 18 years
+Business & SME Finance,Commercial Banks,Askari Bank,SME Financing,"Imarat Finance, Nai Umang, Sahar Finance"
+Business & SME Finance,Commercial Banks,Meezan Bank,I-SAAF (Islamic SME Asaan Finance),Up to PKR 10M at 9% p.a.; for non-existing borrowers
+Business & SME Finance,Commercial Banks,Khushhali Microfinance Bank,Karobari Loans,"For rural, urban, semi-urban SMEs"
+Business & SME Finance,Commercial Banks,MCB Bank,SME financing,"Working capital, term loans"
+Business & SME Finance,Commercial Banks,Allied Bank,Corporate & Commercial,"Working capital, term loans, trade finance"
+Business & SME Finance,Commercial Banks,NBP,SME financing,"Seasonal financing (Wheat, Cotton)"
+Business & SME Finance,Commercial Banks,UBL,SME & Agriculture,"Farm loans, crop input, development"
+Business & SME Finance,Microfinance Banks,Apna Microfinance Bank,Apna Business Loan,Core SME product
+Business & SME Finance,Microfinance Banks,Mobilink Bank,MSME Financing,Up to PKR 5M with SEDF subsidy
+Business & SME Finance,Microfinance Banks,ABHI Microfinance Bank,Retailer Lending,Super Agent Network
+Business & SME Finance,Microfinance Banks,ABHI Microfinance Bank,Small Business Loans,Micro-enterprise focus
+Business & SME Finance,Microfinance Banks,NRSP Microfinance Bank,Micro Enterprise Loans,Rural focus
+Business & SME Finance,Microfinance Banks,ASA Microfinance Bank,"Small Loan, Small Business Loan, MSME Loan",PKR 30k–500k
+Business & SME Finance,NBFCs,OLP Financial Services,SME Finance,"Corporate lease, auto lease, commercial vehicle"
+Business & SME Finance,NBFCs,GoldFin Limited,Secured gold-backed loans,NBFC specializing in gold-backed lending
+Inventory & Supply Chain Finance,Banks,Meezan Bank,Wisaaq Platform (with Dawlance),Murabaha-based digital inventory financing for distributors
+Inventory & Supply Chain Finance,Banks,HBL,"Distributor Finance, Supplier Finance",Inventory procurement from corporates
+Inventory & Supply Chain Finance,Banks,Askari Bank,Supply Chain Finance,"Reverse Factoring, Invoice Discounting, Distributor Financing"
+Inventory & Supply Chain Finance,Banks,Bank Alfalah Islamic,Supply Chain Finance,Corporate value chain liquidity
+Inventory & Supply Chain Finance,Banks,Faysal Bank,Islamic Digital SCF,With Fauree platform
+Inventory & Supply Chain Finance,Banks,Dubai Islamic Bank,Digital Supply Chain Finance,Multi-product Shariah-compliant DSCF
+Inventory & Supply Chain Finance,Banks,MCB Islamic,Supply Chain Finance,With Fauree partnership
+Inventory & Supply Chain Finance,Banks,Allied Bank,"Supplier Finance, Distributor Finance",For large corporate/commercial entities
+Inventory & Supply Chain Finance,Banks,NBP,Trade Finance,"Bill purchase, negotiation, discounting"
+Inventory & Supply Chain Finance,Banks,Bank AL Habib,Trade Finance,"Bill discounting, export finance"
+Inventory & Supply Chain Finance,Fintech Enablers,Fauree,Digital Supply Chain Finance Platform,Powers multiple banks' SCF solutions
+Inventory & Supply Chain Finance,Fintech Enablers,Haball,Supply Chain Digitization,End-to-end visibility and financing
+Auto & Asset Finance,Islamic Auto Finance,Meezan Bank,Car Ijarah,Pakistan's first interest-free car financing
+Auto & Asset Finance,Islamic Auto Finance,Meezan Bank,Women First Car Ijarah,For women customers
+Auto & Asset Finance,Islamic Auto Finance,Askari Islamic,Ijarah Bis Sayyarah,Shariah-compliant car financing
+Auto & Asset Finance,Islamic Auto Finance,Al Baraka Bank,Digital Auto Finance,"Paperless, Shariah-compliant"
+Auto & Asset Finance,Conventional Auto Finance,UBL,UBL Drive,"Up to 70% financing; salaried, self-employed, pensioners"
+Auto & Asset Finance,Conventional Auto Finance,Samba Bank,"Auto Loan, Roshan Apni Car",For Roshan Digital Account holders
+Auto & Asset Finance,Conventional Auto Finance,MCB Bank,Auto Loan,1 Year KIBOR + 1.50% – 5.00%
+Auto & Asset Finance,Conventional Auto Finance,Bank of Punjab,Auto Loan,1 Year KIBOR + 1.50%
+Auto & Asset Finance,Microfinance,Apna Microfinance Bank,"Apni Sawari, Apna Tractor Loan",Vehicle and tractor financing
+Auto & Asset Finance,Microfinance,LOLC Microfinance Bank,Auto Loan,Ages 18-65; verifiable income
+Auto & Asset Finance,Microfinance,Mobilink Bank,Commercial Vehicle Financing,For business use
+Agriculture Finance,Commercial Banks,UBL,Farm Loans,"Crop Input, Development (land, orchards, storage, vehicles)"
+Agriculture Finance,Commercial Banks,NBP,Seasonal Financing,"Wheat, Cotton financing"
+Agriculture Finance,Commercial Banks,Askari Bank,PM Youth Agriculture Loan,Ages 21-45
+Agriculture Finance,Microfinance Banks,Khushhali Microfinance Bank,Agriculture Loans,"Seeds, fertilizers, pesticides, machinery, tractors, irrigation, solar, livestock"
+Agriculture Finance,Microfinance Banks,HBL Microfinance Bank,Roshan Zameen,Agriculture finance; 'Best Performing Bank' under SBP's AFLP
+Agriculture Finance,Microfinance Banks,Apna Microfinance Bank,"Apna Agriculture Loan, Apna Live Stock Loan, Apna Tractor Loan",Comprehensive agri portfolio
+Agriculture Finance,Microfinance Banks,ABHI Microfinance Bank,"Agricultural Loans, Livestock Loans",Rural focus
+Agriculture Finance,Microfinance Banks,NRSP Microfinance Bank,Agriculture Loans,"Rural, agricultural markets"
+Agriculture Finance,Microfinance Banks,Mobilink Bank,Agriculture Financing,With HBL Zarai Services partnership
+Agriculture Finance,Microfinance Banks,Mobilink Bank,"Agriculture, Livestock, Renewable Energy",With SEDF subsidy for women-led enterprises
+Home & Housing Finance,Housing Institutions / Banks,House Building Finance Company (HBFC),Home Loans,Pakistan's dedicated housing finance institution
+Home & Housing Finance,Housing Institutions / Banks,Allied Bank,Home Finance,"Up to PKR 75M; buying, constructing, renovating"
+Home & Housing Finance,Housing Institutions / Banks,Meezan Bank,Easy Home,Islamic home financing
+Home & Housing Finance,Housing Institutions / Banks,HBL,Home Loan,Major provider
+Home & Housing Finance,Housing Institutions / Banks,UBL,Mera Pakistan Mera Ghar,Up to PKR 10M
+Home & Housing Finance,Housing Institutions / Banks,MCB Bank,Property Purchase / Renovation,From PKR 0.5M
+Home & Housing Finance,Housing Institutions / Banks,NBP,Saibaan,Housing scheme
+Home & Housing Finance,Housing Institutions / Banks,JS Bank,Ghar Apna Scheme,Housing finance
+Home & Housing Finance,Housing Institutions / Banks,Bank AL Habib,Home Finance,Under Mera Ghar Mera Ashiana
+Home & Housing Finance,Housing Institutions / Banks,Askari Bank,Home Finance / Musharakah,Under Mera Ghar Mera Ashiana
+Home & Housing Finance,Housing Institutions / Banks,MCB Islamic,Home Finance,Under Mera Ghar Mera Ashiana
+Gold & Secured Lending,Specialized NBFC / Banks,GoldFin Limited (NBFC),Gold-Backed Loans (GBL),Specialized NBFC; secured gold-backed lending
+Gold & Secured Lending,Specialized NBFC / Banks,Apna Microfinance Bank,Apna Gold,Gold loan product
+Gold & Secured Lending,Specialized NBFC / Banks,Mobilink Bank,Gold Loan,Against gold/gold ornaments; for businesses across all sectors
+Gold & Secured Lending,Specialized NBFC / Banks,Khushhali Microfinance Bank,Gold Loan,"PKR 50,000 – 500,000; valid CNIC required"
+Gold & Secured Lending,Specialized NBFC / Banks,Askari Bank,Secured Personal Finance,Against acceptable assets; up to PKR 5-7M
+Gold & Secured Lending,Specialized NBFC / Banks,Samba Bank,Break-Free Finance,Up to 95% against deposit account
+Education Finance,Schemes / Banks / Fintech,State Bank of Pakistan,Higher Education Financing Scheme (HEFS),"Up to PKR 300,000; tuition, books, boarding"
+Education Finance,Schemes / Banks / Fintech,Askari Bank,Askari Education Loan,HEC-recognized institutions; 50% marks minimum
+Education Finance,Schemes / Banks / Fintech,MCB Bank,Student Personal Loan,LUMS partnership; MBA/Executive MBA
+Education Finance,Schemes / Banks / Fintech,Edufi,Education Financing,Interest-free/low-interest plans
+Education Finance,Schemes / Banks / Fintech,KalPay,Education BNPL,First BNPL for overseas education
+Education Finance,Schemes / Banks / Fintech,ABHI Microfinance Bank,Education Financing,With knowledge platform partners

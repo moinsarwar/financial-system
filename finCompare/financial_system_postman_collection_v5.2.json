@@ -1,0 +1,283 @@
+{
+  "info": {
+    "name": "Unified Agentic Financial System v5.2",
+    "description": "Complete Postman collection for all v5.2 endpoints across all microservices.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Product Intelligence Layer (PIL)",
+      "item": [
+        {
+          "name": "Query Products",
+          "request": {
+            "method": "GET",
+            "url": "http://163.245.222.160/products?product_type=savings_account&jurisdiction=PK"
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": "http://163.245.222.160/products/PK_HBL_SAVINGS_001_v3"
+          }
+        },
+        {
+          "name": "Ingest Product Feed",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": \"TEST_BANK\",\n  \"schema_hash\": \"sha256:abc1234567890abcdef\",\n  \"products\": [\n    {\n      \"product_type\": \"savings_account\",\n      \"jurisdiction\": [\"PK\"],\n      \"status\": \"active\",\n      \"version\": \"1\",\n      \"last_updated\": \"2026-05-05T00:00:00Z\",\n      \"pricing\": {\"base_rate_percent\": 10, \"currency\": \"PKR\", \"fees\": {}, \"frequency\": \"monthly\"},\n      \"eligibility_rules\": {\"rules\": []},\n      \"features\": [],\n      \"compliance\": {\"sharia_certified\": false}\n    }\n  ]\n}"
+            },
+            "url": "http://163.245.222.160/provider/ingest"
+          }
+        },
+        {
+          "name": "Validate Product",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider_id\": \"TEST_BANK\",\n  \"product_type\": \"savings_account\",\n  \"jurisdiction\": [\"PK\"],\n  \"status\": \"active\",\n  \"version\": \"1\",\n  \"last_updated\": \"2026-05-05T00:00:00Z\",\n  \"pricing\": {},\n  \"eligibility_rules\": {},\n  \"features\": [],\n  \"compliance\": {}\n}"
+            },
+            "url": "http://163.245.222.160/validate/product"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Policy Enforcement Service",
+      "item": [
+        {
+          "name": "Evaluate Output",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"marketplace\",\n  \"output_text\": \"This is the best savings account.\",\n  \"product_list\": [\"PK_HBL_SAVINGS_001_v3\"]\n}"
+            },
+            "url": "http://163.245.222.160/evaluate_output"
+          }
+        },
+        {
+          "name": "Validate Mode Action",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"marketplace\",\n  \"action\": \"rank\"\n}"
+            },
+            "url": "http://163.245.222.160/validate_mode_action"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Agent Orchestration Service",
+      "item": [
+        {
+          "name": "Parse Intent",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_input\": \"Find health insurance under 5000 PKR\",\n  \"session_id\": \"sess_abc123\"\n}"
+            },
+            "url": "http://163.245.222.160/parse_intent"
+          }
+        },
+        {
+          "name": "Execute Tools",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_abc123\",\n  \"mode\": \"marketplace\",\n  \"steps\": [\n    {\n      \"tool\": \"query_products\",\n      \"params\": {\"product_type\": \"health_insurance\"}\n    }\n  ]\n}"
+            },
+            "url": "http://163.245.222.160/execute_tools"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Journey State Service",
+      "item": [
+        {
+          "name": "Create Session",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": \"marketplace\",\n  \"primary_jurisdiction\": \"PK\",\n  \"user_id\": \"user_789\"\n}"
+            },
+            "url": "http://163.245.222.160/sessions"
+          }
+        },
+        {
+          "name": "Update Stage",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_stage\": \"discovery\"\n}"
+            },
+            "url": "http://163.245.222.160/sessions/sess_abc123/stage"
+          }
+        },
+        {
+          "name": "Get Session State",
+          "request": {
+            "method": "GET",
+            "url": "http://163.245.222.160/sessions/sess_abc123/state"
+          }
+        },
+        {
+          "name": "Escalate Session",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"user_asked_which_is_best\"\n}"
+            },
+            "url": "http://163.245.222.160/sessions/sess_abc123/escalate"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Information Control Service",
+      "item": [
+        {
+          "name": "Should Collect Field",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_abc123\",\n  \"field_name\": \"age\"\n}"
+            },
+            "url": "http://163.245.222.160/should_collect"
+          }
+        },
+        {
+          "name": "Mark Field Collected",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_abc123\",\n  \"field_name\": \"age\",\n  \"value\": \"32\"\n}"
+            },
+            "url": "http://163.245.222.160/mark_collected"
+          }
+        },
+        {
+          "name": "Reset Intent",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_abc123\",\n  \"new_intent\": {\"product_type\": \"savings_account\"}\n}"
+            },
+            "url": "http://163.245.222.160/reset_intent"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Mode Control Service",
+      "item": [
+        {
+          "name": "Get Current Mode",
+          "request": {
+            "method": "GET",
+            "url": "http://163.245.222.160/mode/sess_abc123"
+          }
+        },
+        {
+          "name": "Validate Mode Transition",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_abc123\",\n  \"requested_mode\": \"advisory\",\n  \"transition_reason\": \"User explicitly asked for advice\",\n  \"user_consent\": true,\n  \"approver_id\": \"admin_123\"\n}"
+            },
+            "url": "http://163.245.222.160/mode/validate_transition"
+          }
+        },
+        {
+          "name": "Lock Mode",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_abc123\"\n}"
+            },
+            "url": "http://163.245.222.160/mode/lock"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Audit & Compliance Service",
+      "item": [
+        {
+          "name": "Log Event",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event_type\": \"COMPARISON_BUILT\",\n  \"session_id\": \"sess_abc123\",\n  \"mode\": \"marketplace\",\n  \"event_data\": {\"product_count\": 3}\n}"
+            },
+            "url": "http://163.245.222.160/log_event"
+          }
+        },
+        {
+          "name": "Query Audit Logs",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"session_id\": \"sess_abc123\",\n  \"start_time\": \"2026-05-01T00:00:00Z\",\n  \"end_time\": \"2026-05-10T00:00:00Z\",\n  \"event_types\": [\"COMPARISON_BUILT\"],\n  \"limit\": 100\n}"
+            },
+            "url": "http://163.245.222.160/query_audit"
+          }
+        },
+        {
+          "name": "Export Compliance Report",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date_range\": {\"from\": \"2026-05-01\", \"to\": \"2026-05-31\"},\n  \"format\": \"json\"\n}"
+            },
+            "url": "http://163.245.222.160/export_compliance_report"
+          }
+        },
+        {
+          "name": "GDPR Deletion Request",
+          "request": {
+            "method": "DELETE",
+            "url": "http://163.245.222.160/data/session/sess_abc123"
+          }
+        }
+      ]
+    }
+  ]
+}
