@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: financial-system-ingress
-  namespace: financial-system
+  name: fincompare-ingress
+  namespace: fincompare
   annotations:
     nginx.ingress.kubernetes.io/limit-rps: '100'
 spec:

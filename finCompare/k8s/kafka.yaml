@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: zookeeper
-  namespace: financial-system
+  namespace: fincompare
 spec:
   selector:
     app: zookeeper
@@ -13,7 +13,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kafka
-  namespace: financial-system
+  namespace: fincompare
 spec:
   selector:
     app: kafka
@@ -24,7 +24,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: zookeeper
-  namespace: financial-system
+  namespace: fincompare
 spec:
   serviceName: zookeeper
   replicas: 1
@@ -51,7 +51,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: kafka
-  namespace: financial-system
+  namespace: fincompare
 spec:
   serviceName: kafka
   replicas: 1

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .routes import applications, products, eligibility, dashboard
+from .routes import applications, products, eligibility, dashboard, qwen
 from .utils.logging import setup_logging
 from .database import engine, Base, AsyncSessionLocal
 from .crud import sync_products_from_lfe, retry_failed_submissions
@@ -13,7 +13,7 @@ app = FastAPI(title="TezQarza Channel Gateway", version="2.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -23,6 +23,7 @@ app.include_router(applications.router, prefix="/api/applications", tags=["appli
 app.include_router(products.router, prefix="/api/products", tags=["products"])
 app.include_router(eligibility.router, prefix="/api/eligibility", tags=["eligibility"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+app.include_router(qwen.router, prefix="/api", tags=["qwen"])
 
 @app.on_event("startup")
 async def startup():

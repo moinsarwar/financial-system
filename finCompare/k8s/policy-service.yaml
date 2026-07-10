@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: policy-service
-  namespace: financial-system
+  namespace: fincompare
 spec:
   selector:
     app: policy-service
@@ -14,7 +14,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: policy-service
-  namespace: financial-system
+  namespace: fincompare
 spec:
   replicas: 1
   selector:
@@ -39,7 +39,7 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: financial-system-secrets
+              name: fincompare-secrets
               key: postgres-password
         - name: MODE_CONTROL_URL
           value: http://mode-control:8004

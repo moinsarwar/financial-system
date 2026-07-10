@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: frontend-nginx-config
-  namespace: financial-system
+  namespace: fincompare
 data:
   default.conf: |
     server {

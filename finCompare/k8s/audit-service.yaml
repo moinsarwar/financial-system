@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: audit-service
-  namespace: financial-system
+  namespace: fincompare
 spec:
   selector:
     app: audit-service
@@ -14,7 +14,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: audit-service
-  namespace: financial-system
+  namespace: fincompare
 spec:
   replicas: 1
   selector:
@@ -39,12 +39,12 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: financial-system-secrets
+              name: fincompare-secrets
               key: postgres-password
         - name: S3_BUCKET
           valueFrom:
             secretKeyRef:
-              name: financial-system-secrets
+              name: fincompare-secrets
               key: s3-bucket
         ports:
         - containerPort: 8000

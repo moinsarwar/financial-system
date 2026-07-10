@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mode-control
-  namespace: financial-system
+  namespace: fincompare
 spec:
   selector:
     app: mode-control
@@ -14,7 +14,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mode-control
-  namespace: financial-system
+  namespace: fincompare
 spec:
   replicas: 1
   selector:
@@ -39,7 +39,7 @@ spec:
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: financial-system-secrets
+              name: fincompare-secrets
               key: postgres-password
         ports:
         - containerPort: 8000

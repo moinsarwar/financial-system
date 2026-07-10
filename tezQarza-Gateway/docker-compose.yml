@@ -36,6 +36,9 @@ services:
       LFE_API_KEY: ${LFE_API_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       ADMIN_API_KEY: ${ADMIN_API_KEY}
+      QWEN_API_KEY: ${QWEN_API_KEY}
+      QWEN_BASE_URL: ${QWEN_BASE_URL}
+      QWEN_MODEL: ${QWEN_MODEL}
     ports:
       - "8000:8000"
     depends_on:
