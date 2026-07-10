@@ -8,6 +8,8 @@ import uuid
 import re
 from typing import Dict, List
 import time
+import httpx
+import asyncio
 
 app = FastAPI(title="Agent Service", version="5.2")
 
@@ -58,19 +60,44 @@ async def parse_intent(request: IntentRequest):
         intent = "marketplace_query"
         entities = {}
         
-        if "health" in request.user_input.lower() and "insurance" in request.user_input.lower():
-            intent = "health_insurance_query"
-            entities["type"] = "health_insurance"
-        elif "saving" in request.user_input.lower() or "savings" in request.user_input.lower():
-            intent = "savings_query"
-            entities["type"] = "savings"
-        elif "invest" in request.user_input.lower():
-            intent = "investment_query"
-            entities["type"] = "investment"
+        # Call Qwen via Ollama
+        base_url = os.environ.get("OLLAMA_BASE_URL", "http://163.245.222.160:11434")
+        url = f"{base_url.rstrip('/')}/api/chat"
+        prompt = f"Analyze this text: '{request.user_input}'. Return ONLY a JSON object with 'intent' (one of: health_insurance_query, savings_query, investment_query, marketplace_query) and 'entities' (e.g. {{'type': 'health_insurance', 'max_price': 5000}})."
         
-        price_match = re.search(r'(\d+)\s*PKR', request.user_input)
-        if price_match:
-            entities["max_price"] = int(price_match.group(1))
+        payload = {
+            "model": "qwen2.5:0.5b",
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+            "format": "json"
+        }
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(url, json=payload, timeout=10.0)
+                resp.raise_for_status()
+                data = resp.json()
+                content = data.get("message", {}).get("content", "")
+                parsed = json.loads(content)
+                intent = parsed.get("intent", "marketplace_query")
+                entities = parsed.get("entities", {})
+                logger.info(f"Qwen parsed intent: {intent}, entities: {entities}")
+        except Exception as e:
+            logger.warning(f"Qwen intent parsing failed, falling back to regex: {e}")
+            # Fallback logic
+            if "health" in request.user_input.lower() and "insurance" in request.user_input.lower():
+                intent = "health_insurance_query"
+                entities["type"] = "health_insurance"
+            elif "saving" in request.user_input.lower() or "savings" in request.user_input.lower():
+                intent = "savings_query"
+                entities["type"] = "savings"
+            elif "invest" in request.user_input.lower():
+                intent = "investment_query"
+                entities["type"] = "investment"
+            
+            price_match = re.search(r'(\d+)\s*PKR', request.user_input)
+            if price_match:
+                entities["max_price"] = int(price_match.group(1))
         
         task_graph = [
             {"step": 1, "action": "validate_session", "params": {}},
@@ -137,6 +164,38 @@ async def execute_tools(request: ExecuteToolsRequest):
     except Exception as e:
         logger.error(f"Execution error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class ChatRequest(BaseModel):
+    messages: List[Dict[str, str]]
+
+@app.post("/chat")
+async def chat_with_qwen(req: ChatRequest):
+    base_url = os.environ.get("OLLAMA_BASE_URL", "http://163.245.222.160:11434")
+    url = f"{base_url.rstrip('/')}/api/chat"
+    payload = {
+        "model": "qwen2.5:0.5b",
+        "messages": req.messages,
+        "stream": False
+    }
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload, timeout=20.0)
+            resp.raise_for_status()
+            data = resp.json()
+            return {
+                "choices": [{
+                    "message": data.get("message", {})
+                }]
+            }
+    except httpx.TimeoutException:
+        return {
+            "choices": [{"message": {"role": "assistant", "content": "Maazrat, agent timeout ho gaya hai. Dobara koshish karein."}}]
+        }
+    except Exception as e:
+        return {
+            "choices": [{"message": {"role": "assistant", "content": "Maazrat, system connection error."}}]
+        }
 
 if __name__ == "__main__":
     import uvicorn
