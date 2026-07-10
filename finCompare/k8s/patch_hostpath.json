@@ -1,18 +1,13 @@
-{
-  "spec": {
-    "template": {
-      "spec": {
-        "volumes": [
-          {
-            "name": "html-volume",
-            "configMap": null,
-            "hostPath": {
-              "path": "/root/financial-system/finCompare/frontend/views",
-              "type": "DirectoryOrCreate"
-            }
-          }
-        ]
+[
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/volumes/0",
+    "value": {
+      "name": "html-volume",
+      "hostPath": {
+        "path": "/root/financial-system/finCompare/frontend-react/dist",
+        "type": "Directory"
       }
     }
   }
-}
+]
