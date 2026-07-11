@@ -36,3 +36,12 @@ def record_failed_login(email: str, ip_address: str | None = None):
         audit_db.rollback()  
     finally:  
         audit_db.close()
+
+def get_activity(db: Session, current_user: User, search: str = None, event_type: str = None, limit: int = 100):
+    query = db.query(AuditLog)
+    if search:
+        from sqlalchemy import or_
+        query = query.filter(or_(AuditLog.event.ilike(f"%{search}%"), AuditLog.details.ilike(f"%{search}%")))
+    if event_type:
+        query = query.filter(AuditLog.event == event_type)
+    return query.order_by(AuditLog.time.desc()).limit(limit).all()

@@ -36,8 +36,6 @@ def upgrade():
         name="userrole",  
     )  
   
-    lifecycle_stage_enum.create(op.get_bind(), checkfirst=True)  
-    user_role_enum.create(op.get_bind(), checkfirst=True)  
   
     op.create_table(  
         "clients",  

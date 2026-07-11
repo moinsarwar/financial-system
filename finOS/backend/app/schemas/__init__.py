@@ -21,7 +21,7 @@ class ClientBase(BaseModel):
     name: str  
     email: EmailStr  
     phone: Optional[str] = None  
-    assigned_department: str  
+    assigned_department: Optional[str] = None  
   
 class ClientCreate(ClientBase): pass  
   
