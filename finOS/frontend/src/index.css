@@ -1,0 +1,53 @@
+@tailwind base;  
+@tailwind components;  
+@tailwind utilities;  
+  
+@layer base {  
+  * { margin: 0; padding: 0; box-sizing: border-box; }  
+  body { @apply bg-gray-100 text-gray-800 font-sans antialiased; }  
+}  
+  
+@layer components {  
+  .badge { @apply px-3 py-0.5 rounded-full text-xs font-bold inline-block; }  
+  .badge-lead { @apply bg-blue-100 text-blue-800; }  
+  .badge-applicant { @apply bg-yellow-100 text-yellow-800; }  
+  .badge-customer { @apply bg-green-100 text-green-800; }  
+  .badge-in-progress { @apply bg-yellow-100 text-yellow-800; }  
+  .badge-approved { @apply bg-green-100 text-green-800; }  
+  .badge-rejected { @apply bg-red-100 text-red-800; }  
+  .badge-active { @apply bg-green-100 text-green-800; }  
+  .badge-expired { @apply bg-yellow-100 text-yellow-800; }  
+  .badge-closed { @apply bg-gray-200 text-gray-600; }  
+  .badge-pending { @apply bg-yellow-100 text-yellow-800; }  
+  .badge-verified { @apply bg-green-100 text-green-800; }  
+  .badge-paid { @apply bg-green-100 text-green-800; }  
+  .badge-partial { @apply bg-yellow-100 text-yellow-800; }  
+  .badge-fraud { @apply bg-red-100 text-red-800; }  
+  .badge-declined { @apply bg-red-100 text-red-800; }  
+  .badge-completed { @apply bg-green-100 text-green-800; }  
+  .badge-gold { @apply bg-yellow-100 text-yellow-800; }  
+  
+  .btn-sm { @apply px-3 py-1 rounded-full text-xs font-semibold border-none cursor-pointer transition; }  
+  .btn-sm.primary { @apply bg-accent text-white hover:bg-primary-light; }  
+  .btn-sm.gold { @apply bg-gold text-yellow-900 hover:opacity-80; }  
+  .btn-sm.success { @apply bg-success text-white hover:opacity-80; }  
+  .btn-sm.danger { @apply bg-danger text-white hover:opacity-80; }  
+  .btn-sm.outline { @apply border border-gray-200 bg-white text-gray-600 hover:bg-gray-50; }  
+  .btn-sm:disabled { @apply cursor-not-allowed opacity-50; }  
+  
+  .funnel-step { @apply flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-400 cursor-pointer transition; }  
+  .funnel-step:hover { @apply border-accent bg-accent-soft; }  
+  .funnel-step.active { @apply border-accent bg-accent-soft text-primary; }  
+  .funnel-step .count { @apply bg-gray-200 px-2 rounded-full text-xs; }  
+  .funnel-step.active .count { @apply bg-accent text-white; }  
+  
+  .form-input {  
+    @apply w-full px-4 py-2 border border-gray-200 rounded-md focus:border-accent outline-none text-sm;  
+  }  
+  .form-label {  
+    @apply block font-semibold text-sm mb-1;  
+  }  
+  .form-group {  
+    @apply mb-4;  
+  }  
+}

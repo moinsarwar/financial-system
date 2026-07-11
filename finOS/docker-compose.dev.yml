@@ -1,0 +1,56 @@
+version: '3.8'  
+services:  
+  db:  
+    image: postgres:15-alpine  
+    environment:  
+      POSTGRES_USER: ${POSTGRES_USER:-finos}  
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finos123}  
+      POSTGRES_DB: ${POSTGRES_DB:-finos}  
+    ports:  
+      - "5432:5432"  
+    volumes:  
+      - postgres_data:/var/lib/postgresql/data  
+    healthcheck:  
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-finos} -d ${POSTGRES_DB:-finos}"]  
+      interval: 10s  
+      timeout: 5s  
+      retries: 5  
+  
+  backend:  
+    build:  
+      context: ./backend  
+      target: development  
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload  
+    volumes:  
+      - ./backend:/app  
+      - document_uploads:/app/uploads  
+    environment:  
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-finos}:${POSTGRES_PASSWORD:-finos123}@db:5432/${POSTGRES_DB:-finos}  
+      - SECRET_KEY=${SECRET_KEY:-dev_secret_key_change_me_123456789}  
+      - ENVIRONMENT=development  
+      - SEED_DEMO_DATA=true  
+      - UPLOAD_ROOT=/app/uploads  
+    ports:  
+      - "8000:8000"  
+    depends_on:  
+      db:  
+        condition: service_healthy  
+  
+  frontend:  
+    build:  
+      context: ./frontend  
+      target: development  
+    command: npm run dev -- --host  
+    volumes:  
+      - ./frontend:/app  
+      - /app/node_modules  
+    environment:  
+      - VITE_API_URL=http://localhost:8000/api  
+    ports:  
+      - "5173:5173"  
+    depends_on:  
+      - backend  
+  
+volumes:  
+  postgres_data:
+  document_uploads:
