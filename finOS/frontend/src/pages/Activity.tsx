@@ -1,6 +1,6 @@
 import React, { useState } from 'react';  
 import { useQuery } from '@tanstack/react-query';  
-import { getActivity, Activity } from '../api/activity';  
+import { getActivity } from '../api/activity';  
 import { useAuth } from '../contexts/AuthContext';  
 import { Table } from '../components/common/Table';  
 import { SearchFilterBar } from '../components/common/SearchFilterBar';  

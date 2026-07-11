@@ -20,7 +20,7 @@ for attempt in range(30):
         if attempt == 29:  
             raise  
         time.sleep(2)  
-PY  
+PY
   
 echo "Running migrations..."  
 alembic upgrade head  

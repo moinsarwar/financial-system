@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';  
+import React, { useState } from 'react';  
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';  
 import { getApplications, advanceApplication, Application, createApplication } from '../api/applications';  
 import { getClients } from '../api/clients';  

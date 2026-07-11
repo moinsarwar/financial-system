@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';  
-import { Link, useNavigate } from 'react-router-dom';  
+import { Link } from 'react-router-dom';  
 import clsx from 'clsx';  
 import { can } from '../../utils/permissions';  
   
@@ -27,7 +27,7 @@ const navItems = {
 };  
   
 export const Sidebar: React.FC<Props> = ({ user, currentPath, open, onClose }) => {  
-  const navigate = useNavigate();  
+  // removed unused navigate  
   useEffect(() => {  
     if (open) {  
       document.body.style.overflow = 'hidden';  

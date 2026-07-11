@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';  
+import React, { useState } from 'react';  
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';  
 import { getClients, createClient } from '../api/clients';  
 import { useAuth } from '../contexts/AuthContext';  
@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 export const Clients: React.FC = () => {  
   const { user } = useAuth();  
   const queryClient = useQueryClient();  
-  const [searchParams, setSearchParams] = useSearchParams();  
+  const [searchParams] = useSearchParams();  
   const navigate = useNavigate();  
   const [search, setSearch] = useState('');  
   const [stage, setStage] = useState(searchParams.get('stage') || 'all');  

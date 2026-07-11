@@ -36,7 +36,7 @@ export const ClaimDetail: React.FC = () => {
   });  
   
   const resolve = useMutation({  
-    mutationFn: ({ claimId, outcome }: { claimId: string; outcome: string }) =>  
+    mutationFn: ({ claimId, outcome }: { claimId: string; outcome: any }) =>  
       resolveClaim(claimId, outcome),  
     onSuccess: () => {  
       toast.success('Claim resolved');  
