@@ -35,17 +35,17 @@ export default function App() {
 
   const fetchData = async () => {
     setLoading(true);
+    setError('');
     try {
-      const cRes = await fetch('http://localhost:9000/api/containers');
+      const cRes = await fetch('http://163.245.222.160:9000/api/containers');
       if (!cRes.ok) throw new Error('Failed to fetch containers');
       const cData = await cRes.json();
       setContainers(cData.containers);
 
-      const sRes = await fetch('http://localhost:9000/api/stats');
+      const sRes = await fetch('http://163.245.222.160:9000/api/stats');
       if (!sRes.ok) throw new Error('Failed to fetch stats');
       const sData = await sRes.json();
       setStats(sData.stats);
-      setError('');
     } catch (err: any) {
       setError(err.message || 'An error occurred');
     } finally {
