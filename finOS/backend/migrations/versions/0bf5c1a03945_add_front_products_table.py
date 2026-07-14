@@ -32,7 +32,6 @@ def upgrade():
     sa.Column('compliance', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.PrimaryKeyConstraint('product_id')
     )
-    op.drop_table('products')
     # ### end Alembic commands ###
 
 
