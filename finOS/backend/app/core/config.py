@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = [  
         "http://localhost:5173",  
         "http://localhost:3000",  
-        "http://localhost",  
+        "http://localhost",
+        "file://"
     ]  
   
     model_config = SettingsConfigDict(  

@@ -12,7 +12,7 @@ app = FastAPI(title="FinOS API", version="9.0")
 # CORS – configured from settings  
 app.add_middleware(  
     CORSMiddleware,  
-    allow_origins=settings.CORS_ORIGINS,  
+    allow_origins=["*"],  
     allow_credentials=True,  
     allow_methods=["*"],  
     allow_headers=["*"],  
@@ -27,6 +27,8 @@ app.include_router(products.router, prefix="/api/products", tags=["products"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])  
 app.include_router(activity.router, prefix="/api/activity", tags=["activity"])  
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])  
+from app.api.endpoints import front_products
+app.include_router(front_products.router, prefix="/api/front_products", tags=["front_products"])
   
 @app.get("/health")  
 def health(db: Session = Depends(get_db)):  

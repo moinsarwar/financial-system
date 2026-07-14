@@ -6,3 +6,4 @@ from .holding import Holding
 from .claim import Claim  
 from .document import Document  
 from .audit_log import AuditLog
+from .front_product import FrontProduct
