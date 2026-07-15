@@ -1276,21 +1276,52 @@
         <!-- ============================================================ -->
         <!-- SCREEN 5: APPLICATION -->
         <!-- ============================================================ -->
-        <div class="screen" id="screen-application">
-            <div class="hero">
-                <h2>Application Submission</h2>
-                <p>Provide identification to finalise.</p>
-            </div>
-            <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);max-width:600px;">
-                <div class="form-group"><label>CNIC / National ID</label><input type="text" id="nationalId"
-                        placeholder="e.g. 12345-6789012-3"></div>
-                <div class="form-group"><label>IBAN</label><input type="text" id="ibanInput"
-                        placeholder="e.g. PK36HBL..."></div>
-                <button class="btn btn-success" onclick="submitApplication()">📨 Submit Application</button>
-                <div id="executionResult" style="margin-top:12px;"></div>
-                <button class="btn btn-secondary" style="margin-top:8px;" onclick="goToConsent()">← Back</button>
-            </div>
-        </div>
+<div class="screen" id="screen-application">
+  <div class="hero"><h2>Application & KYC</h2><p>Upload your documents and track institution decisions.</p></div>
+  <div style="max-width:720px;">
+
+    <!-- KYC Uploads -->
+    <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);margin-bottom:16px;">
+      <h4>📎 Upload Documents</h4>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+        <div class="form-group"><label>CNIC Front</label><input type="file" accept="image/*,application/pdf" id="cnicFront" onchange="uploadKYC('cnicFront', this)"></div>
+        <div class="form-group"><label>CNIC Back</label><input type="file" accept="image/*,application/pdf" id="cnicBack" onchange="uploadKYC('cnicBack', this)"></div>
+        <div class="form-group"><label>Driving Licence (optional)</label><input type="file" accept="image/*,application/pdf" id="drivingLicence" onchange="uploadKYC('drivingLicence', this)"></div>
+        <div class="form-group"><label>Utility Bill (address proof)</label><input type="file" accept="image/*,application/pdf" id="utilityBill" onchange="uploadKYC('utilityBill', this)"></div>
+      </div>
+      <div id="kycStatus" style="margin-top:8px;font-size:13px;color:var(--gray-600);"></div>
+    </div>
+
+    <!-- Institution Action Panel -->
+    <div style="background:white;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+      <h4>🏛️ Institution Actions (simulated)</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
+        <div><span class="badge" id="fraudBadge" style="background:var(--gray-200);">Fraud: Pending</span></div>
+        <div><button class="btn btn-secondary" onclick="updateFraudStatus('cleared')" style="padding:2px 10px;font-size:11px;">✅ Clear Fraud</button>
+            <button class="btn btn-secondary" onclick="updateFraudStatus('flagged')" style="padding:2px 10px;font-size:11px;">🚩 Flag</button></div>
+        <div><span class="badge" id="riskBadge" style="background:var(--gray-200);">Risk: Pending</span></div>
+        <div><button class="btn btn-secondary" onclick="updateRiskAssessment('approved')" style="padding:2px 10px;font-size:11px;">✅ Approve Risk</button>
+            <button class="btn btn-secondary" onclick="updateRiskAssessment('rejected')" style="padding:2px 10px;font-size:11px;">❌ Reject</button></div>
+        <div><span class="badge" id="policyBadge" style="background:var(--gray-200);">Policy: Not issued</span></div>
+        <div><button class="btn btn-primary" onclick="issuePolicy()" style="padding:2px 10px;font-size:11px;">📄 Issue Policy</button></div>
+      </div>
+      <div id="policyDetailsSection" style="display:none;margin-top:12px;background:var(--gray-50);padding:12px;border-radius:var(--radius-sm);">
+        <h5>Policy Details</h5>
+        <div id="policyDetailsContent"></div>
+        <button class="btn btn-success" onclick="acceptPolicy()" style="margin-top:8px;">✅ Accept Policy</button>
+      </div>
+    </div>
+
+    <!-- Original Application fields -->
+    <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);">
+      <div class="form-group"><label>CNIC / National ID</label><input type="text" id="nationalId" placeholder="e.g. 12345-6789012-3"></div>
+      <div class="form-group"><label>IBAN</label><input type="text" id="ibanInput" placeholder="e.g. PK36HBL..."></div>
+      <button class="btn btn-success" onclick="submitApplication()">📨 Submit Application</button>
+      <div id="executionResult" style="margin-top:12px;"></div>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="goToConsent()">← Back</button>
+  </div>
+</div>
 
         <!-- ============================================================ -->
         <!-- SCREEN 6: TRACKING -->
@@ -1587,6 +1618,12 @@
             escalated: false,
             consentGiven: false,
             consentTimestamp: null,
+            kyc: { cnicFront: null, cnicBack: null, drivingLicence: null, utilityBill: null },
+            fraudStatus: 'pending',
+            riskAssessment: 'pending',
+            policyIssued: false,
+            policyAccepted: false,
+            policyDetails: null,
             auditLog: [],
             tab: 'overview',
             rules: [],
@@ -2505,46 +2542,141 @@
             transitionTo('application');
         }
 
-        async function submitApplication() {
-            const id = document.getElementById('nationalId').value.trim();
-            const iban = document.getElementById('ibanInput').value.trim();
-            if (!id || !iban) return showToast('Please fill in all fields.', 'error');
-            runFraudChecks();
-            if (state.fraudResults && state.fraudResults.score < 50) {
-                if (!confirm('Fraud score is low (' + state.fraudResults.score + '%). Submit anyway?')) return;
-            }
-            logAudit('Application submitted');
-            try {
-                await fetch('/log_event', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        event_type: 'application_submitted',
-                        session_id: CONFIG.SESSION_ID,
-                        details: {
-                            nationalId: id,
-                            iban: iban,
-                            products: state.selectedForApply,
-                            fraudScore: state.fraudResults ? state.fraudResults.score : null
-                        }
-                    })
-                });
-            } catch (err) {
-                console.error("Failed to log event:", err);
-            }
-            
-            document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to ${state.selectedForApply.length} provider(s). Fraud score: ${state.fraudResults ? state.fraudResults.score + '%' : 'N/A'}</div>`;
-            showToast('Application submitted!', 'success');
-            setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1000);
-        }
+// ----- KYC Upload -----
+function uploadKYC(field, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    state.kyc[field] = e.target.result; // store base64
+    updateKYCStatus();
+    logAudit(`KYC ${field} uploaded`);
+    showToast(`${field} uploaded successfully`, 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateKYCStatus() {
+  const uploaded = Object.values(state.kyc).filter(v => v !== null).length;
+  const total = 4;
+  document.getElementById('kycStatus').innerHTML = `📄 ${uploaded}/${total} documents uploaded.`;
+}
+
+// ----- Fraud & Risk (institution simulated) -----
+function updateFraudStatus(status) {
+  state.fraudStatus = status;
+  const badge = document.getElementById('fraudBadge');
+  badge.textContent = `Fraud: ${status.charAt(0).toUpperCase()+status.slice(1)}`;
+  badge.style.background = status === 'cleared' ? 'var(--green)' : (status === 'flagged' ? 'var(--red)' : 'var(--gray-200)');
+  badge.style.color = status === 'cleared' ? 'white' : (status === 'flagged' ? 'white' : '');
+  logAudit(`Fraud status updated to ${status} by institution`);
+  showToast(`Fraud ${status}`, status === 'cleared' ? 'success' : 'error');
+}
+
+function updateRiskAssessment(status) {
+  state.riskAssessment = status;
+  const badge = document.getElementById('riskBadge');
+  badge.textContent = `Risk: ${status.charAt(0).toUpperCase()+status.slice(1)}`;
+  badge.style.background = status === 'approved' ? 'var(--green)' : (status === 'rejected' ? 'var(--red)' : 'var(--gray-200)');
+  badge.style.color = status === 'approved' ? 'white' : (status === 'rejected' ? 'white' : '');
+  logAudit(`Risk assessment ${status} by institution`);
+  showToast(`Risk ${status}`, status === 'approved' ? 'success' : 'error');
+}
+
+// ----- Policy Issuance (institution) -----
+function issuePolicy() {
+  if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
+    showToast('Cannot issue policy: fraud or risk not cleared.', 'error');
+    return;
+  }
+  state.policyIssued = true;
+  // Simulate policy details from institution API
+  const policyNumber = 'POL-' + Date.now().toString().slice(-8);
+  state.policyDetails = {
+    policyNumber: policyNumber,
+    coverage: 'PKR 1,000,000',
+    premium: 'PKR 25,000/year',
+    effectiveDate: new Date().toISOString().slice(0,10),
+    expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
+  };
+  document.getElementById('policyBadge').textContent = 'Policy: Issued';
+  document.getElementById('policyBadge').style.background = 'var(--green)';
+  document.getElementById('policyBadge').style.color = 'white';
+  document.getElementById('policyDetailsSection').style.display = 'block';
+  document.getElementById('policyDetailsContent').innerHTML = `
+    <div style="font-size:13px;line-height:1.6;">
+      <div><strong>Policy #:</strong> ${state.policyDetails.policyNumber}</div>
+      <div><strong>Coverage:</strong> ${state.policyDetails.coverage}</div>
+      <div><strong>Premium:</strong> ${state.policyDetails.premium}</div>
+      <div><strong>Effective:</strong> ${state.policyDetails.effectiveDate}</div>
+      <div><strong>Expiry:</strong> ${state.policyDetails.expiryDate}</div>
+    </div>
+  `;
+  logAudit(`Policy issued: ${policyNumber}`);
+  showToast('Policy issued!', 'success');
+}
+
+function acceptPolicy() {
+  if (!state.policyIssued) {
+    showToast('No policy to accept.', 'error');
+    return;
+  }
+  state.policyAccepted = true;
+  document.getElementById('policyDetailsSection').innerHTML += `<div style="margin-top:8px;font-weight:700;color:var(--green);">✅ Policy accepted by client on ${new Date().toLocaleString()}</div>`;
+  logAudit('Policy accepted by client');
+  showToast('Policy accepted!', 'success');
+}
+
+function submitApplication() {
+  const id = document.getElementById('nationalId').value.trim();
+  const iban = document.getElementById('ibanInput').value.trim();
+  if (!id || !iban) return showToast('Please fill in all fields.', 'error');
+  // Check KYC uploads
+  const uploaded = Object.values(state.kyc).filter(v => v !== null).length;
+  if (uploaded < 4) {
+    showToast('Please upload all 4 KYC documents before submitting.', 'error');
+    return;
+  }
+  // If fraud or risk not cleared, warn
+  if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
+    if (!confirm('Fraud or risk not fully cleared. Submit anyway?')) return;
+  }
+  logAudit('Application submitted with KYC docs');
+  document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution. KYC complete. Fraud: ${state.fraudStatus}, Risk: ${state.riskAssessment}</div>`;
+  showToast('Application submitted!', 'success');
+  // Redirect to tracking after delay
+  setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1500);
+}
 
         function renderTracking() {
-            const container = document.getElementById('trackingProgress');
-            const steps = ['Submitted', 'Received', 'Validation', 'KYC', 'Fraud Screening', 'Risk Assessment', 'Offer', 'Acceptance', 'Disbursement / Policy Issued'];
-            const now = new Date().toLocaleTimeString('en-GB', { hour12: false });
-            
-            container.innerHTML = steps.map((s, i) => `<div class="tracking-step ${i < 3 ? 'done' : 'pending'}"><span style="font-size:18px;width:28px;text-align:center;">${i < 3 ? '✅' : '⏳'}</span><span style="font-weight:600;flex:1;">${s}</span><span style="font-size:12px;color:var(--gray-400);font-family:var(--font-mono);">${i < 3 ? now : 'Pending'}</span></div>`).join('');
-        }
+  const container = document.getElementById('trackingProgress');
+  const steps = [
+    { label: 'Application Received', done: true },
+    { label: 'KYC Documents Uploaded', done: Object.values(state.kyc).every(v => v !== null) },
+    { label: 'Fraud Screening', done: state.fraudStatus === 'cleared' },
+    { label: 'Risk Assessment', done: state.riskAssessment === 'approved' },
+    { label: 'Policy Issued', done: state.policyIssued },
+    { label: 'Policy Accepted', done: state.policyAccepted },
+    { label: 'Policy Active', done: state.policyAccepted }
+  ];
+  const now = new Date().toLocaleTimeString('en-GB', { hour12: false });
+  container.innerHTML = steps.map((s, i) => `
+    <div class="tracking-step ${s.done ? 'done' : 'pending'}">
+      <span style="font-size:18px;width:28px;text-align:center;">${s.done ? '✅' : '⏳'}</span>
+      <span style="font-weight:600;flex:1;">${s.label}</span>
+      <span style="font-size:12px;color:var(--gray-400);font-family:var(--font-mono);">${s.done ? now : 'Pending'}</span>
+    </div>
+  `).join('');
+  // Show policy details if issued
+  if (state.policyIssued && state.policyDetails) {
+    container.innerHTML += `
+      <div style="margin-top:16px;background:var(--gray-50);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);">
+        <h4>📄 Policy Details</h4>
+        <div style="font-size:13px;">Policy #: ${state.policyDetails.policyNumber}<br>Coverage: ${state.policyDetails.coverage}<br>Premium: ${state.policyDetails.premium}</div>
+      </div>
+    `;
+  }
+}
 
         // ============================================================
         // 18. RESET
@@ -2562,6 +2694,16 @@
             state.consentTimestamp = null;
             state.fraudResults = null;
             state.rules = [];
+            state.kyc = { cnicFront: null, cnicBack: null, drivingLicence: null, utilityBill: null };
+            state.fraudStatus = 'pending';
+            state.riskAssessment = 'pending';
+            state.policyIssued = false;
+            state.policyAccepted = false;
+            state.policyDetails = null;
+            if (document.getElementById('cnicFront')) document.getElementById('cnicFront').value = '';
+            if (document.getElementById('cnicBack')) document.getElementById('cnicBack').value = '';
+            if (document.getElementById('drivingLicence')) document.getElementById('drivingLicence').value = '';
+            if (document.getElementById('utilityBill')) document.getElementById('utilityBill').value = '';
             document.getElementById('ageInput').value = 32;
             document.getElementById('incomeSelect').value = '50k-100k';
             document.getElementById('jurisdictionSelect').value = 'PK';
