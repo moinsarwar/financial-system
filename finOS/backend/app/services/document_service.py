@@ -8,7 +8,7 @@ from app.services.audit_service import log_audit
 from app.core.config import settings  
   
 def get_documents(db: Session, current_user: User, search: str = None, doc_type: str = None, department: str = None):  
-    query = db.query(Document).join(Client, Client.id == Document.client_id)  
+    query = db.query(Document, Client.name).join(Client, Client.id == Document.client_id)  
     if current_user.role == UserRole.CLIENT:  
         query = query.filter(Document.client_id == current_user.client_id)  
     if search:  
@@ -17,7 +17,11 @@ def get_documents(db: Session, current_user: User, search: str = None, doc_type:
         query = query.filter(Document.type == doc_type)  
     if department:  
         query = query.filter(Client.assigned_department == department)  
-    return query.order_by(Document.uploaded_at.desc()).all()  
+    
+    results = query.order_by(Document.uploaded_at.desc()).all()
+    for doc, client_name in results:
+        doc.client_name = client_name
+    return [r[0] for r in results]  
   
 def get_document(db: Session, document_id: str, current_user: User):  
     query = db.query(Document).filter(Document.id == document_id)  
