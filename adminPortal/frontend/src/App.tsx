@@ -39,7 +39,9 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:9000';
+      const apiUrl = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'http://localhost:9000' 
+        ? import.meta.env.VITE_API_URL 
+        : `http://${window.location.hostname}:9000`;
       const cRes = await fetch(`${apiUrl}/api/containers`);
       if (!cRes.ok) throw new Error('Failed to fetch containers');
       const cData = await cRes.json();

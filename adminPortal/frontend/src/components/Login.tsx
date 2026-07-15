@@ -17,7 +17,9 @@ export default function Login({ onLogin }: LoginProps) {
     setError('');
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:9000';
+      const apiUrl = import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== 'http://localhost:9000' 
+        ? import.meta.env.VITE_API_URL 
+        : `http://${window.location.hostname}:9000`;
       const res = await fetch(`${apiUrl}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
