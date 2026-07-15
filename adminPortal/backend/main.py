@@ -2,6 +2,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import docker
 from typing import List, Dict, Any
+from pydantic import BaseModel
+import hashlib
+from database import get_db, AdminUser, Base, engine
+from sqlalchemy.orm import Session
+from fastapi import FastAPI, HTTPException, Depends
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Admin Portal API", version="1.0.0")
 
@@ -19,6 +27,24 @@ def get_docker_client():
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+@app.post("/api/login")
+def login(request: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(AdminUser).filter(AdminUser.email == request.email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if user.hashed_password != hash_password(request.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+    return {"status": "success", "token": "dummy_jwt_token"}
 
 @app.get("/api/containers")
 def get_containers():

@@ -9,6 +9,7 @@ import {
   LogOut
 } from 'lucide-react';
 import Login from './components/Login';
+import ProjectsView from './components/ProjectsView';
 
 interface Container {
   id: string;
@@ -28,6 +29,7 @@ interface Stat {
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentView, setCurrentView] = useState<'overview' | 'projects'>('overview');
   const [containers, setContainers] = useState<Container[]>([]);
   const [stats, setStats] = useState<Stat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,12 +39,13 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const cRes = await fetch('http://163.245.222.160:9000/api/containers');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:9000';
+      const cRes = await fetch(`${apiUrl}/api/containers`);
       if (!cRes.ok) throw new Error('Failed to fetch containers');
       const cData = await cRes.json();
       setContainers(cData.containers);
 
-      const sRes = await fetch('http://163.245.222.160:9000/api/stats');
+      const sRes = await fetch(`${apiUrl}/api/stats`);
       if (!sRes.ok) throw new Error('Failed to fetch stats');
       const sData = await sRes.json();
       setStats(sData.stats);
@@ -76,18 +79,32 @@ export default function App() {
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
-          <a href="#" className="flex items-center gap-3 px-4 py-3 bg-indigo-500/10 text-indigo-400 rounded-xl transition-all font-medium">
+          <button 
+            onClick={() => setCurrentView('overview')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+              currentView === 'overview' 
+                ? 'bg-indigo-500/10 text-indigo-400' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
             <Activity className="w-5 h-5" />
             Overview
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-all font-medium">
+          </button>
+          <button 
+            onClick={() => setCurrentView('projects')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
+              currentView === 'projects' 
+                ? 'bg-indigo-500/10 text-indigo-400' 
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
             <Server className="w-5 h-5" />
             Projects
-          </a>
-          <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-all font-medium">
+          </button>
+          <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-all font-medium">
             <Settings className="w-5 h-5" />
             Settings
-          </a>
+          </button>
         </nav>
         
         <div className="p-4 mt-auto border-t border-slate-800">
@@ -130,106 +147,114 @@ export default function App() {
             </div>
           )}
 
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-              <div className="bg-blue-50 p-4 rounded-full">
-                <Box className="w-8 h-8 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500">Total Containers</p>
-                <h3 className="text-3xl font-bold text-slate-800">{containers.length}</h3>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-              <div className="bg-emerald-50 p-4 rounded-full">
-                <Activity className="w-8 h-8 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500">Running</p>
-                <h3 className="text-3xl font-bold text-slate-800">
-                  {containers.filter(c => c.status === 'running').length}
-                </h3>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
-              <div className="bg-amber-50 p-4 rounded-full">
-                <Server className="w-8 h-8 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-500">Stopped</p>
-                <h3 className="text-3xl font-bold text-slate-800">
-                  {containers.filter(c => c.status !== 'running').length}
-                </h3>
-              </div>
-            </div>
-          </div>
-
-          {/* Containers List */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-200 bg-slate-50">
-              <h3 className="font-bold text-slate-800">Docker Containers</h3>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {containers.length === 0 && !loading && !error && (
-                <div className="p-8 text-center text-slate-500">No containers found.</div>
-              )}
-              {containers.map(container => {
-                const stat = stats.find(s => s.id === container.id || s.name === container.name);
-                const isRunning = container.status === 'running';
-
-                return (
-                  <div key={container.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
-                    <div className="flex items-start gap-4">
-                      <div className={`mt-1 w-3 h-3 rounded-full ${isRunning ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`}></div>
-                      <div>
-                        <h4 className="font-bold text-slate-800">{container.name.replace(/^\//, '')}</h4>
-                        <p className="text-sm text-slate-500 mt-1 font-mono text-xs">{container.image}</p>
-                      </div>
-                    </div>
-                    
-                    {isRunning && stat && (
-                      <div className="flex gap-8 items-center">
-                        <div className="w-32">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="font-medium text-slate-500">CPU</span>
-                            <span className="font-bold text-slate-700">{stat.cpu_percent}%</span>
-                          </div>
-                          <div className="w-full bg-slate-100 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${stat.cpu_percent > 80 ? 'bg-red-500' : 'bg-indigo-500'}`} 
-                              style={{ width: `${Math.min(stat.cpu_percent, 100)}%` }}
-                            ></div>
-                          </div>
-                        </div>
-
-                        <div className="w-32">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="font-medium text-slate-500">RAM</span>
-                            <span className="font-bold text-slate-700">{stat.mem_percent}%</span>
-                          </div>
-                          <div className="w-full bg-slate-100 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${stat.mem_percent > 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
-                              style={{ width: `${Math.min(stat.mem_percent, 100)}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {!isRunning && (
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
-                        {container.status}
-                      </span>
-                    )}
+          {currentView === 'overview' && (
+            <>
+              {/* KPI Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
+                  <div className="bg-blue-50 p-4 rounded-full">
+                    <Box className="w-8 h-8 text-blue-600" />
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">Total Containers</p>
+                    <h3 className="text-3xl font-bold text-slate-800">{containers.length}</h3>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
+                  <div className="bg-emerald-50 p-4 rounded-full">
+                    <Activity className="w-8 h-8 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">Running</p>
+                    <h3 className="text-3xl font-bold text-slate-800">
+                      {containers.filter(c => c.status === 'running').length}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center gap-4">
+                  <div className="bg-amber-50 p-4 rounded-full">
+                    <Server className="w-8 h-8 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">Stopped</p>
+                    <h3 className="text-3xl font-bold text-slate-800">
+                      {containers.filter(c => c.status !== 'running').length}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+
+              {/* Containers List */}
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="px-6 py-5 border-b border-slate-200 bg-slate-50">
+                  <h3 className="font-bold text-slate-800">Docker Containers</h3>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {containers.length === 0 && !loading && !error && (
+                    <div className="p-8 text-center text-slate-500">No containers found.</div>
+                  )}
+                  {containers.map(container => {
+                    const stat = stats.find(s => s.id === container.id || s.name === container.name);
+                    const isRunning = container.status === 'running';
+
+                    return (
+                      <div key={container.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
+                        <div className="flex items-start gap-4">
+                          <div className={`mt-1 w-3 h-3 rounded-full ${isRunning ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`}></div>
+                          <div>
+                            <h4 className="font-bold text-slate-800">{container.name.replace(/^\//, '')}</h4>
+                            <p className="text-sm text-slate-500 mt-1 font-mono text-xs">{container.image}</p>
+                          </div>
+                        </div>
+                        
+                        {isRunning && stat && (
+                          <div className="flex gap-8 items-center">
+                            <div className="w-32">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="font-medium text-slate-500">CPU</span>
+                                <span className="font-bold text-slate-700">{stat.cpu_percent}%</span>
+                              </div>
+                              <div className="w-full bg-slate-100 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full ${stat.cpu_percent > 80 ? 'bg-red-500' : 'bg-indigo-500'}`} 
+                                  style={{ width: `${Math.min(stat.cpu_percent, 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+
+                            <div className="w-32">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="font-medium text-slate-500">RAM</span>
+                                <span className="font-bold text-slate-700">{stat.mem_percent}%</span>
+                              </div>
+                              <div className="w-full bg-slate-100 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full ${stat.mem_percent > 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                                  style={{ width: `${Math.min(stat.mem_percent, 100)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {!isRunning && (
+                          <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                            {container.status}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+
+          {currentView === 'projects' && (
+             <ProjectsView containers={containers} stats={stats} />
+          )}
 
         </div>
       </main>

@@ -11,20 +11,32 @@ export default function Login({ onLogin }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Hardcoded authentication for demo purposes
-    setTimeout(() => {
-      if (email === 'admin@tezqarza.com' && password === 'admin123') {
-        onLogin();
-      } else {
-        setError('Invalid credentials. Hint: admin@tezqarza.com / admin123');
-        setLoading(false);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:9000';
+      const res = await fetch(`${apiUrl}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Invalid credentials');
       }
-    }, 1000);
+      
+      if (data.status === 'success') {
+        onLogin();
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to login');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
