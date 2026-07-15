@@ -29,9 +29,14 @@ interface Stat {
 }
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'finos'>('overview');
-  const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('adminToken'));
+  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'finos'>(() => {
+    const path = window.location.pathname;
+    if (path === '/finos') return 'finos';
+    if (path === '/projects') return 'projects';
+    return 'overview';
+  });
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(() => window.location.pathname === '/finos' || window.location.pathname === '/projects');
   const [containers, setContainers] = useState<Container[]>([]);
   const [stats, setStats] = useState<Stat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,10 +66,26 @@ export default function App() {
   };
 
   useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/finos') setCurrentView('finos');
+      else if (path === '/projects') setCurrentView('projects');
+      else setCurrentView('overview');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
     if (isAuthenticated) {
       fetchData();
     }
   }, [isAuthenticated]);
+
+  const changeView = (view: 'overview' | 'projects' | 'finos') => {
+    setCurrentView(view);
+    window.history.pushState(null, '', view === 'overview' ? '/' : `/${view}`);
+  };
 
   if (!isAuthenticated) {
     return <Login onLogin={() => setIsAuthenticated(true)} />;
@@ -84,7 +105,7 @@ export default function App() {
         
         <nav className="flex-1 p-4 space-y-2">
           <button 
-            onClick={() => setCurrentView('overview')}
+            onClick={() => changeView('overview')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
               currentView === 'overview' 
                 ? 'bg-indigo-500/10 text-indigo-400' 
@@ -101,7 +122,7 @@ export default function App() {
                 if (currentView === 'projects') {
                   setIsProjectsExpanded(!isProjectsExpanded);
                 } else {
-                  setCurrentView('projects');
+                  changeView('projects');
                   setIsProjectsExpanded(true);
                 }
               }}
@@ -121,7 +142,7 @@ export default function App() {
             {isProjectsExpanded && (
               <div className="ml-8 mt-1 space-y-1">
                 <button 
-                  onClick={() => setCurrentView('finos')}
+                  onClick={() => changeView('finos')}
                   className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm font-medium ${
                     currentView === 'finos' 
                       ? 'text-indigo-400' 
@@ -143,7 +164,11 @@ export default function App() {
         
         <div className="p-4 mt-auto border-t border-slate-800">
           <button 
-            onClick={() => setIsAuthenticated(false)}
+            onClick={() => {
+              localStorage.removeItem('adminToken');
+              setIsAuthenticated(false);
+              window.history.pushState(null, '', '/');
+            }}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 text-slate-400 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all font-medium"
           >
             <LogOut className="w-5 h-5" />

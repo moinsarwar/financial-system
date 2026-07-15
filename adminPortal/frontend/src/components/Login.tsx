@@ -27,12 +27,13 @@ export default function Login({ onLogin }: LoginProps) {
       });
       
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.detail || 'Invalid credentials');
-      }
-      
-      if (data.status === 'success') {
+      if (res.ok) {
+        if (data.token) {
+          localStorage.setItem('adminToken', data.token);
+        }
         onLogin();
+      } else {
+        throw new Error(data.detail || 'Invalid credentials');
       }
     } catch (err: any) {
       setError(err.message || 'Failed to login');
