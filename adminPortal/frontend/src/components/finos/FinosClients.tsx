@@ -16,7 +16,7 @@ export default function FinosClients() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  const backendUrl = import.meta.env.VITE_FINOS_BACKEND_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'http://' + window.location.hostname + ':8000');
+  const backendUrl = import.meta.env.VITE_FINOS_BACKEND_URL || (window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'http://' + window.location.hostname + ':3000');
 
   const fetchClients = async () => {
     try {
