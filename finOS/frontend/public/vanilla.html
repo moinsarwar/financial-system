@@ -2584,21 +2584,46 @@ function updateRiskAssessment(status) {
 }
 
 // ----- Policy Issuance (institution) -----
-function issuePolicy() {
+async function issuePolicy() {
   if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
     showToast('Cannot issue policy: fraud or risk not cleared.', 'error');
     return;
   }
+  
+  // Simulate API call to backend
+  if (state.applicationId) {
+    try {
+      const response = await fetch(`/api/applications/public/${state.applicationId}/simulate-issue-policy`, { method: 'POST' });
+      const data = await response.json();
+      state.policyDetails = {
+        policyNumber: data.policyNumber || 'POL-' + Date.now().toString().slice(-8),
+        coverage: data.coverage || 'PKR 1,000,000',
+        premium: data.premium || 'PKR 25,000/year',
+        effectiveDate: data.effectiveDate ? data.effectiveDate.slice(0,10) : new Date().toISOString().slice(0,10),
+        expiryDate: data.expiryDate ? data.expiryDate.slice(0,10) : new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
+      };
+    } catch (e) {
+      console.error(e);
+      // Fallback dummy
+      state.policyDetails = {
+        policyNumber: 'POL-' + Date.now().toString().slice(-8),
+        coverage: 'PKR 1,000,000',
+        premium: 'PKR 25,000/year',
+        effectiveDate: new Date().toISOString().slice(0,10),
+        expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
+      };
+    }
+  } else {
+      state.policyDetails = {
+        policyNumber: 'POL-' + Date.now().toString().slice(-8),
+        coverage: 'PKR 1,000,000',
+        premium: 'PKR 25,000/year',
+        effectiveDate: new Date().toISOString().slice(0,10),
+        expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
+      };
+  }
+  
   state.policyIssued = true;
-  // Simulate policy details from institution API
-  const policyNumber = 'POL-' + Date.now().toString().slice(-8);
-  state.policyDetails = {
-    policyNumber: policyNumber,
-    coverage: 'PKR 1,000,000',
-    premium: 'PKR 25,000/year',
-    effectiveDate: new Date().toISOString().slice(0,10),
-    expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
-  };
   document.getElementById('policyBadge').textContent = 'Policy: Issued';
   document.getElementById('policyBadge').style.background = 'var(--green)';
   document.getElementById('policyBadge').style.color = 'white';
@@ -2627,7 +2652,7 @@ function acceptPolicy() {
   showToast('Policy accepted!', 'success');
 }
 
-function submitApplication() {
+async function submitApplication() {
   const id = document.getElementById('nationalId').value.trim();
   const iban = document.getElementById('ibanInput').value.trim();
   if (!id || !iban) return showToast('Please fill in all fields.', 'error');
@@ -2641,6 +2666,25 @@ function submitApplication() {
   if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
     if (!confirm('Fraud or risk not fully cleared. Submit anyway?')) return;
   }
+  
+  try {
+    const res = await fetch('/api/applications/public/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nationalId: id,
+        iban: iban,
+        products: state.selectedForApply
+      })
+    });
+    const data = await res.json();
+    if (data.application_id) {
+        state.applicationId = data.application_id;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  
   logAudit('Application submitted with KYC docs');
   document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution. KYC complete. Fraud: ${state.fraudStatus}, Risk: ${state.riskAssessment}</div>`;
   showToast('Application submitted!', 'success');
@@ -2700,6 +2744,7 @@ function submitApplication() {
             state.policyIssued = false;
             state.policyAccepted = false;
             state.policyDetails = null;
+            state.applicationId = null;
             if (document.getElementById('cnicFront')) document.getElementById('cnicFront').value = '';
             if (document.getElementById('cnicBack')) document.getElementById('cnicBack').value = '';
             if (document.getElementById('drivingLicence')) document.getElementById('drivingLicence').value = '';

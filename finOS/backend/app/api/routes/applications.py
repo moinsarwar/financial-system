@@ -20,6 +20,9 @@ from app.models.document import Document
 from app.services.audit_service import log_audit
 import uuid
 from datetime import datetime, timezone
+from pydantic import BaseModel
+from app.services.product_service import create_product_from_application
+from app.services.workflow_service import get_workflow
 
 from app.schemas.unified import (
     UnifiedApplicationRequest,
@@ -329,3 +332,75 @@ def create_unified_application(
         status=application.status,
         created_at=application.created_at,
     )
+
+class PublicSubmissionRequest(BaseModel):
+    nationalId: str
+    iban: str
+    products: list[str]
+
+@router.post("/public/submit")
+def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db)):
+    # Find client@finos.com
+    demo_user = db.query(User).filter(User.email == "client@finos.com").first()
+    if not demo_user or not demo_user.client_id:
+        raise HTTPException(status_code=400, detail="Demo client user not found in DB")
+    
+    # We take the first product just for simplicity
+    product_type = request.products[0] if request.products else "motor"
+    steps = get_workflow(product_type, "application")
+    
+    app_id = f"APP-{uuid.uuid4().hex[:8].upper()}"
+    app = Application(
+        id=app_id,
+        client_id=demo_user.client_id,
+        product_type=product_type,
+        product_label=product_type.replace("_", " ").title(),
+        department="Retail Banking",
+        steps=steps,
+        step_index=0,
+        current_step=steps[0],
+        amount=500000.0, # dummy amount
+        currency="PKR",
+        status="in-progress",
+        unified_data={"nationalId": request.nationalId, "iban": request.iban}
+    )
+    db.add(app)
+    db.commit()
+    db.refresh(app)
+    return {"application_id": app.id}
+
+@router.post("/public/{app_id}/simulate-issue-policy")
+def public_simulate_issue_policy(app_id: str, db: Session = Depends(get_db)):
+    app = db.query(Application).filter(Application.id == app_id).first()
+    if not app:
+        raise HTTPException(404, "Application not found")
+        
+    app.status = "approved"
+    app.current_step = "Approved"
+    
+    # Trigger product creation
+    create_product_from_application(db, app)
+    db.commit()
+    db.refresh(app)
+    
+    # Fetch the generated policy/holding to return to frontend
+    from app.models.policy import Policy
+    from app.models.holding import Holding
+    policy = db.query(Policy).filter(Policy.application_id == app.id).first()
+    if policy:
+        return {
+            "policyNumber": policy.policy_number,
+            "premium": f"PKR {policy.premium}/year",
+            "coverage": f"PKR {policy.sum_assured}",
+            "effectiveDate": policy.start_date.isoformat(),
+            "expiryDate": policy.end_date.isoformat()
+        }
+    holding = db.query(Holding).filter(Holding.application_id == app.id).first()
+    if holding:
+        return {
+            "policyNumber": holding.id,
+            "premium": "N/A",
+            "coverage": "N/A"
+        }
+    
+    return {"status": "approved"}
