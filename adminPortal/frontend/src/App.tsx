@@ -6,7 +6,8 @@ import {
   Settings, 
   RefreshCw,
   Box,
-  LogOut
+  LogOut,
+  ChevronDown
 } from 'lucide-react';
 import Login from './components/Login';
 import ProjectsView from './components/ProjectsView';
@@ -29,7 +30,8 @@ interface Stat {
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentView, setCurrentView] = useState<'overview' | 'projects'>('overview');
+  const [currentView, setCurrentView] = useState<'overview' | 'projects' | 'finos'>('overview');
+  const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
   const [containers, setContainers] = useState<Container[]>([]);
   const [stats, setStats] = useState<Stat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,17 +94,47 @@ export default function App() {
             <Activity className="w-5 h-5" />
             Overview
           </button>
-          <button 
-            onClick={() => setCurrentView('projects')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
-              currentView === 'projects' 
-                ? 'bg-indigo-500/10 text-indigo-400' 
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-            }`}
-          >
-            <Server className="w-5 h-5" />
-            Projects
-          </button>
+          
+          <div>
+            <button 
+              onClick={() => {
+                if (currentView === 'projects') {
+                  setIsProjectsExpanded(!isProjectsExpanded);
+                } else {
+                  setCurrentView('projects');
+                  setIsProjectsExpanded(true);
+                }
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all font-medium ${
+                currentView === 'projects' || currentView === 'finos'
+                  ? 'bg-indigo-500/10 text-indigo-400' 
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <Server className="w-5 h-5" />
+                Projects
+              </div>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isProjectsExpanded ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isProjectsExpanded && (
+              <div className="ml-8 mt-1 space-y-1">
+                <button 
+                  onClick={() => setCurrentView('finos')}
+                  className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl transition-all text-sm font-medium ${
+                    currentView === 'finos' 
+                      ? 'text-indigo-400' 
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                  FinOS
+                </button>
+              </div>
+            )}
+          </div>
+
           <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl transition-all font-medium">
             <Settings className="w-5 h-5" />
             Settings
@@ -124,20 +156,24 @@ export default function App() {
       <main className="flex-1 flex flex-col overflow-hidden">
         
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center shadow-sm z-0">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">System Overview</h2>
-            <p className="text-sm text-slate-500 mt-1">Monitor all financial-system projects</p>
-          </div>
-          <button 
-            onClick={fetchData}
-            disabled={loading}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 shadow-sm"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </header>
+        {currentView !== 'finos' && (
+          <header className="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center shadow-sm z-0">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-800">
+                {currentView === 'projects' ? 'Projects Management' : 'System Overview'}
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">Monitor all financial-system projects</p>
+            </div>
+            <button 
+              onClick={fetchData}
+              disabled={loading}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 shadow-sm"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </header>
+        )}
 
         {/* Scrollable Area */}
         <div className="flex-1 overflow-auto p-8">
@@ -259,6 +295,16 @@ export default function App() {
           )}
 
         </div>
+        
+        {currentView === 'finos' && (
+          <div className="flex-1 w-full h-full">
+            <iframe 
+              src={import.meta.env.VITE_FINOS_FRONTEND_URL || `http://${window.location.hostname}:3000`} 
+              className="w-full h-full border-none"
+              title="FinOS Dashboard"
+            />
+          </div>
+        )}
       </main>
     </div>
   );
