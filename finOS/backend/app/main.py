@@ -1,6 +1,6 @@
 from fastapi import FastAPI  
 from fastapi.middleware.cors import CORSMiddleware  
-from app.api.routes import auth, clients, applications, claims, products, documents, activity, dashboard  
+from app.api.routes import auth, clients, applications, claims, products, documents, activity, dashboard, admin_portal  
 from app.core.database import get_db  
 from app.core.config import settings  
 from sqlalchemy.orm import Session  
@@ -27,6 +27,7 @@ app.include_router(products.router, prefix="/api/products", tags=["products"])
 app.include_router(documents.router, prefix="/api/documents", tags=["documents"])  
 app.include_router(activity.router, prefix="/api/activity", tags=["activity"])  
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])  
+app.include_router(admin_portal.router, prefix="/api/admin_portal", tags=["admin_portal"])  
 from app.api.endpoints import front_products
 app.include_router(front_products.router, prefix="/api/front_products", tags=["front_products"])
   
