@@ -45,7 +45,7 @@ class ApplicationCreate(ApplicationBase): pass
 class ApplicationResponse(ApplicationBase):  
     id: str  
     product_label: str  
-    department: str  
+    department: Optional[str] = None  
     steps: List[str]  
     step_index: int  
     current_step: str  
