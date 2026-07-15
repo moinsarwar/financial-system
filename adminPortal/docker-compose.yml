@@ -9,6 +9,7 @@ services:
       - "9000:8000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /home/moin/financial-system:/home/moin/financial-system
     restart: always
 
   admin-frontend:

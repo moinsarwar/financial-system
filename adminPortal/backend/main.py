@@ -4,6 +4,9 @@ import docker
 from typing import List, Dict, Any
 from pydantic import BaseModel
 import hashlib
+import subprocess
+import os
+import time
 from database import get_db, AdminUser, Base, engine
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, HTTPException, Depends
@@ -59,7 +62,8 @@ def get_containers():
                 "status": c.status,
                 "image": c.image.tags[0] if c.image.tags else "unknown",
                 "ports": c.ports,
-                "created": c.attrs.get("Created")
+                "created": c.attrs.get("Created"),
+                "startedAt": c.attrs.get("State", {}).get("StartedAt")
             })
         return {"containers": result}
     except Exception as e:
@@ -98,5 +102,36 @@ def get_stats():
                 "mem_limit_bytes": mem_limit
             })
         return {"stats": stats_list}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/containers/{container_id}/start")
+def start_container(container_id: str):
+    try:
+        client = get_docker_client()
+        container = client.containers.get(container_id)
+        container.start()
+        return {"status": "success", "message": f"Container {container_id} started."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/containers/{container_id}/stop")
+def stop_container(container_id: str):
+    try:
+        client = get_docker_client()
+        container = client.containers.get(container_id)
+        container.stop()
+        return {"status": "success", "message": f"Container {container_id} stopped."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/containers/{container_id}")
+def delete_container(container_id: str):
+    try:
+        client = get_docker_client()
+        container = client.containers.get(container_id)
+        container.remove(force=True)
+        return {"status": "success", "message": f"Container {container_id} deleted."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
