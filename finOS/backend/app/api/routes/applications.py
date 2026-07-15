@@ -333,10 +333,16 @@ def create_unified_application(
         created_at=application.created_at,
     )
 
+class PublicProduct(BaseModel):
+    id: str
+    name: str
+    type: str
+    provider: str
+
 class PublicSubmissionRequest(BaseModel):
     nationalId: str
     iban: str
-    products: list[str]
+    products: list[PublicProduct]
 
 @router.post("/public/submit")
 def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db)):
@@ -346,7 +352,16 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         raise HTTPException(status_code=400, detail="Demo client user not found in DB")
     
     # We take the first product just for simplicity
-    product_type = request.products[0] if request.products else "motor"
+    if request.products:
+        prod = request.products[0]
+        product_type = prod.type
+        product_label = prod.name
+        department = prod.provider
+    else:
+        product_type = "motor"
+        product_label = "Motor Insurance"
+        department = "System Provider"
+
     steps = get_workflow(product_type, "application")
     
     app_id = f"APP-{uuid.uuid4().hex[:8].upper()}"
@@ -354,8 +369,8 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         id=app_id,
         client_id=demo_user.client_id,
         product_type=product_type,
-        product_label=product_type.replace("_", " ").title(),
-        department="Retail Banking",
+        product_label=product_label,
+        department=department,
         steps=steps,
         step_index=0,
         current_step=steps[0],

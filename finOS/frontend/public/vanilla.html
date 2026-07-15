@@ -2668,13 +2668,23 @@ async function submitApplication() {
   }
   
   try {
+    const productsPayload = state.selectedForApply.map(id => {
+      const p = PRODUCTS.find(prod => prod.id === id);
+      return {
+        id: p.id,
+        name: p.name,
+        type: p.type,
+        provider: p.provider
+      };
+    });
+    
     const res = await fetch('/api/applications/public/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         nationalId: id,
         iban: iban,
-        products: state.selectedForApply
+        products: productsPayload
       })
     });
     const data = await res.json();
