@@ -94,7 +94,23 @@ export const Claims: React.FC = () => {
       ].includes(p.product_type?.toLowerCase());
       return isCorrectClient && (p.policy_number || isInsuranceType);
     })  
-    .map((p: any) => ({ id: p.id, label: `${p.product_label} (${p.policy_number || p.id})` }));  
+    .map((p: any) => {
+      const typeLabels: Record<string, string> = {
+        health_insurance: 'Health',
+        motor_insurance: 'Motor',
+        life_insurance: 'Life',
+        travel_insurance: 'Travel',
+        home_insurance: 'Home',
+        accident: 'Accident',
+        health: 'Health',
+        motor: 'Motor',
+        life: 'Life',
+        travel: 'Travel',
+      };
+      const typeKey = p.product_type?.toLowerCase() || '';
+      const mappedType = typeLabels[typeKey] || (typeKey ? typeKey.charAt(0).toUpperCase() + typeKey.slice(1) : 'Policy');
+      return { id: p.id, label: `${mappedType} - ${p.product_label} (${p.policy_number || p.id})` };
+    });  
   
   const { data, isLoading } = useQuery({  
     queryKey: ['claims', { search, step, department, openOnly }],  

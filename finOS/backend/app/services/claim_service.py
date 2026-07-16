@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.claim import Claim  
 from app.models.client import Client  
 from app.models.policy import Policy  
+from app.models.holding import Holding
 from app.models.user import User, UserRole  
 from app.schemas import ClaimCreate, ClaimResolutionRequest  
 from app.services.audit_service import log_audit  
@@ -43,18 +44,29 @@ def create_claim(db: Session, data: ClaimCreate, current_user: User,
     if current_user.role == UserRole.CLIENT and client.id != current_user.client_id:  
         raise PermissionError("Cannot create claim for another client")  
     policy = db.query(Policy).filter(Policy.id == data.policy_id).first()  
-    if not policy: raise ValueError("Policy not found")  
-    if policy.client_id != data.client_id:  
+    holding = None
+    if not policy:
+        holding = db.query(Holding).filter(Holding.id == data.policy_id).first()
+    if not policy and not holding:
+        raise ValueError("Policy not found")  
+        
+    p_client_id = policy.client_id if policy else holding.client_id
+    p_status = policy.status if policy else holding.status
+    p_product_type = policy.product_type if policy else holding.product_type
+    p_product_label = policy.product_label if policy else holding.product_label
+    
+    if p_client_id != data.client_id:  
         raise ValueError("Policy does not belong to the selected client")  
-    if policy.status != "active":  
+    if p_status != "active":  
         raise ValueError("Claims can only be created against an active policy")  
-    steps = get_workflow(policy.product_type, "claim")  
+        
+    steps = get_workflow(p_product_type, "claim")  
     claim = Claim(  
         id=f"CLM-{uuid.uuid4().hex[:8].upper()}",  
         client_id=data.client_id,  
-        product_type=policy.product_type,  
-        product_label=policy.product_label,  
-        policy_id=policy.id,  
+        product_type=p_product_type,  
+        product_label=p_product_label,  
+        policy_id=data.policy_id,  
         type=data.type,  
         amount=data.amount,  
         currency="PKR",  
