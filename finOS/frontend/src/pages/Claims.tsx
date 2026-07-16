@@ -85,8 +85,16 @@ export const Claims: React.FC = () => {
     enabled: isModalOpen && !!effectiveClientId,  
   });  
   const policies = productData  
-    .filter((p: any) => p.client_id === effectiveClientId && p.policy_number)  
-    .map((p: any) => ({ id: p.id, label: p.product_label }));  
+    .filter((p: any) => {
+      const isCorrectClient = p.client_id === effectiveClientId;
+      const isInsuranceType = [
+        'health_insurance', 'motor_insurance', 'life_insurance', 'accident', 
+        'travel_insurance', 'home_insurance', 'health', 'motor', 'life', 'travel', 
+        'accident_insurance'
+      ].includes(p.product_type?.toLowerCase());
+      return isCorrectClient && (p.policy_number || isInsuranceType);
+    })  
+    .map((p: any) => ({ id: p.id, label: `${p.product_label} (${p.policy_number || p.id})` }));  
   
   const { data, isLoading } = useQuery({  
     queryKey: ['claims', { search, step, department, openOnly }],  
