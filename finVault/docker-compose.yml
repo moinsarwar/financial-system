@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-finvault}
+      POSTGRES_USER: ${POSTGRES_USER:-finvault}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finvault_change_me}
+    volumes: [finvault_db:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-finvault} -d ${POSTGRES_DB:-finvault}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://finvault:finvault_change_me@db:5432/finvault}
+      SECRET_KEY: ${SECRET_KEY:-replace-with-a-long-random-secret-at-least-32-characters}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:8080}
+      UPLOAD_DIR: /app/uploads
+    volumes: [finvault_uploads:/app/uploads]
+    depends_on:
+      db: {condition: service_healthy}
+    ports: ["8002:8000"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  frontend:
+    build: ./frontend
+    depends_on:
+      backend: {condition: service_healthy}
+    ports: ["8080:80"]
+volumes:
+  finvault_db:
+  finvault_uploads:
