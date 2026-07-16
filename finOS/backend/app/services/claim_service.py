@@ -84,7 +84,7 @@ def create_claim(db: Session, data: ClaimCreate, current_user: User,
     db.add(claim)  
     db.flush()  
     log_audit(db, current_user.id, client.id, "claim", claim.id, "claim.created",  
-              f"Created claim {claim.id}", policy.product_type, ip_address, request_id)  
+              f"Created claim {claim.id}", p_product_type, ip_address, request_id)  
     update_client_lifecycle_state(db, client.id)  
     db.refresh(claim)  
     return claim  
