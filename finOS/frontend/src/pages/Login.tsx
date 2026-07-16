@@ -17,7 +17,7 @@ export const Login: React.FC = () => {
     try {  
       await login(email, password);  
       toast.success('Welcome back!');  
-      navigate('/');  
+      navigate('/dashboard');  
     } catch (err: any) {  
       const msg = err.response?.data?.detail || 'Login failed';  
       setError(msg);  
@@ -36,7 +36,7 @@ export const Login: React.FC = () => {
     try {  
       await login(creds.email, creds.password);  
       toast.success('Welcome back!');  
-      navigate('/');  
+      navigate('/dashboard');  
     } catch (err: any) {  
       const msg = err.response?.data?.detail || 'Login failed';  
       setError(msg);  

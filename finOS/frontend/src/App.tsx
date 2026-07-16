@@ -44,7 +44,7 @@ export const App: React.FC = () => (
         <Routes>  
           <Route path="/login" element={<Login />} />  
           <Route  
-            path="/*"  
+            path="/dashboard"  
             element={  
               <ProtectedRoute>  
                 <Layout />  
@@ -64,8 +64,9 @@ export const App: React.FC = () => (
             <Route path="documents/:id" element={<DocumentDetail />} />  
             <Route path="activity" element={<Activity />} />  
             <Route path="unified-application" element={<UnifiedApplication />} />
-            <Route path="*" element={<Navigate to="/" replace />} />  
           </Route>  
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />  
         </Routes>  
       </BrowserRouter>  
     </AuthProvider>  

@@ -109,3 +109,16 @@ export async function resolveClaim(
 
   return data;
 }
+
+export async function addClaimMessage(
+  id: string,
+  message: string,
+): Promise<Claim> {
+  const { data } = await api.post<Claim>(
+    `/claims/${id}/message`,
+    { message },
+  );
+
+  return data;
+}
+

@@ -65,7 +65,7 @@ export const ApplicationDetail: React.FC = () => {
   return (  
     <DetailPanel  
       isOpen={true}  
-      onClose={() => navigate('/applications')}  
+      onClose={() => navigate('/dashboard/applications')}  
       title={data.id}  
       subhead={`${data.product_label} · ${data.department}`}  
       actions={  
@@ -124,7 +124,7 @@ export const ApplicationDetail: React.FC = () => {
                 </button>
               </>
             )}
-          <button className="btn-sm outline" onClick={() => navigate('/applications')}>Close</button>  
+          <button className="btn-sm outline" onClick={() => navigate('/dashboard/applications')}>Close</button>  
         </>  
       }  
     >  

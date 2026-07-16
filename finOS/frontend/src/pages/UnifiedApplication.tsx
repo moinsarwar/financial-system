@@ -139,7 +139,7 @@ export const UnifiedApplication: React.FC = () => {
     try {
       const result = await createUnifiedApplication(payload);
       toast.success(`Application ${result.application_id} created`);
-      navigate('/applications');
+      navigate('/dashboard/applications');
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Submission failed');
     }

@@ -38,7 +38,7 @@ export const Clients: React.FC = () => {
     { key: 'phone', header: 'Phone' },  
     { key: 'lifecycle_stage', header: 'Stage', render: (v: string) => <Badge type={v}>{v}</Badge> },  
     { key: 'has_open_claim', header: 'Open Claim', render: (v: boolean) => v ? '⚠️ Yes' : '✅ No' },  
-    { key: 'actions', header: 'Actions', render: (_: any, row: any) => <button className="btn-sm primary" onClick={() => navigate(`/clients/${row.id}`)}>View</button> },  
+    { key: 'actions', header: 'Actions', render: (_: any, row: any) => <button className="btn-sm primary" onClick={() => navigate(`/dashboard/clients/${row.id}`)}>View</button> },  
   ];  
   
   return (  

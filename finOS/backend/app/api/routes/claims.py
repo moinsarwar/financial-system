@@ -5,8 +5,13 @@ from fastapi import (
     Query,
     Request,
     status,
+    Body,
 )
 from sqlalchemy.orm import Session
+from app.models.claim import Claim
+from app.models.document import Document
+from app.services.workflow_service import CLAIM_STEPS
+from datetime import datetime, timezone
 
 from app.api.dependencies import (
     get_current_user,
@@ -25,6 +30,7 @@ from app.services.claim_service import (
     get_claim,
     get_claims,
     resolve_claim_service,
+    add_claim_message,
 )
 from app.services.mapper_service import map_claim_response
 
@@ -221,3 +227,75 @@ def resolve_claim_route(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
+
+
+@router.post(
+    "/{claim_id}/message",
+    response_model=ClaimResponse,
+)
+def post_claim_message(
+    claim_id: str,
+    message: str = Body(..., embed=True),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        claim = add_claim_message(
+            db=db,
+            claim_id=claim_id,
+            message=message,
+            current_user=current_user,
+        )
+        return map_claim_response(db, claim)
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+
+@router.post(
+    "/{claim_id}/reset",
+    response_model=ClaimResponse,
+)
+def reset_claim_route(
+    claim_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    # Reset claim states
+    claim.current_step = "Event Reported"
+    claim.step_index = 0
+    claim.steps = CLAIM_STEPS.copy()
+    claim.outcome = None
+    claim.resolution_reason_code = None
+    claim.resolution_notes = None
+    claim.resolved_at = None
+    claim.resolved_by_user_id = None
+    
+    # Reset timeline
+    claim.timeline = [{
+        "time": datetime.now(timezone.utc).isoformat(),
+        "event": "Claim reset to Draft for demonstration.",
+        "user": current_user.id
+    }]
+    
+    # Clear uploaded documents associated with this claim to make it a clean reset
+    db.query(Document).filter(
+        Document.ref_id == claim_id,
+        Document.ref_type == "claim"
+    ).delete()
+    
+    db.commit()
+    db.refresh(claim)
+    return map_claim_response(db, claim)
+

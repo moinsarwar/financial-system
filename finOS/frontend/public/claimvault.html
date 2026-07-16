@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>ClaimVault – Pakistan Insurance</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <style>
+        /* ----- Base & Reset ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: #f4f7fc;
+            color: #1a2332;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e9edf4;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #b0c4de;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8aa9d9;
+        }
+
+        /* ----- Sidebar ----- */
+        .sidebar {
+            width: 260px;
+            background: #0f1a2e;
+            color: #c8d6e5;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 20px 20px;
+            flex-shrink: 0;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
+            z-index: 20;
+            transition: transform 0.3s ease;
+        }
+        .sidebar .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 36px;
+            letter-spacing: -0.5px;
+        }
+        .sidebar .logo i {
+            color: #4f8cff;
+            font-size: 28px;
+        }
+        .sidebar .logo span {
+            background: linear-gradient(135deg, #4f8cff, #7c6cf0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar .nav-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #6a7f9c;
+            margin: 18px 0 10px 6px;
+            font-weight: 600;
+        }
+
+        .sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 2px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #9aafc9;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .sidebar .nav-item i {
+            width: 20px;
+            font-size: 16px;
+            color: #6a7f9c;
+            transition: 0.2s;
+        }
+        .sidebar .nav-item:hover {
+            background: #1d2b42;
+            color: #e8edf5;
+        }
+        .sidebar .nav-item:hover i {
+            color: #b0cbe5;
+        }
+        .sidebar .nav-item.active {
+            background: #1d2b42;
+            color: #fff;
+            box-shadow: inset 3px 0 0 #4f8cff;
+        }
+        .sidebar .nav-item.active i {
+            color: #4f8cff;
+        }
+        .sidebar .nav-item .badge {
+            margin-left: auto;
+            background: #4f8cff;
+            color: #fff;
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .sidebar .bottom-nav {
+            margin-top: auto;
+            border-top: 1px solid #1d2b42;
+            padding-top: 18px;
+        }
+
+        /* Mobile hamburger */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            z-index: 30;
+            background: #0f1a2e;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .hamburger:hover {
+            background: #1d2b42;
+        }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 15;
+        }
+
+        /* ----- Main Content ----- */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background: #f4f7fc;
+            transition: margin-left 0.3s;
+        }
+
+        /* Top Bar */
+        .topbar {
+            background: #ffffff;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e2e9f2;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .topbar .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f1a2e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .topbar .page-title small {
+            font-weight: 400;
+            font-size: 14px;
+            color: #6f8aaa;
+            margin-left: 6px;
+        }
+        .topbar .user-area {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .topbar .user-area .role-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f4fa;
+            padding: 4px 8px;
+            border-radius: 30px;
+            border: 1px solid #dce4ed;
+        }
+        .topbar .user-area .role-toggle button {
+            background: transparent;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6f8aaa;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .topbar .user-area .role-toggle button.active {
+            background: #4f8cff;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(79, 140, 255, 0.3);
+        }
+        .topbar .user-area .role-toggle button:not(.active):hover {
+            background: #e4eaf2;
+        }
+        .topbar .user-area .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f8cff, #7c6cf0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: default;
+        }
+        .topbar .user-area .notif {
+            position: relative;
+            cursor: pointer;
+            color: #6f8aaa;
+            font-size: 18px;
+        }
+        .topbar .user-area .notif .dot {
+            position: absolute;
+            top: -3px;
+            right: -4px;
+            width: 8px;
+            height: 8px;
+            background: #f2565a;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px 32px;
+        }
+
+        /* ----- Cards & Layout ----- */
+        .page-section {
+            display: none;
+            animation: fadeUp 0.35s ease;
+        }
+        .page-section.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px 22px;
+            box-shadow: 0 2px 8px rgba(0, 20, 50, 0.05);
+            border: 1px solid #e9edf4;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .stat-card:hover {
+            box-shadow: 0 6px 18px rgba(0, 20, 50, 0.12);
+            border-color: #b0cbe5;
+            transform: translateY(-2px);
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #6f8aaa;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f1a2e;
+            margin-top: 4px;
+        }
+        .stat-card .value .sub {
+            font-size: 14px;
+            font-weight: 400;
+            color: #6f8aaa;
+            margin-left: 6px;
+        }
+        .stat-card .icon-wrap {
+            float: right;
+            font-size: 28px;
+            color: #4f8cff;
+            opacity: 0.6;
+        }
+
+        /* Claim List */
+        .claim-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 28px 0 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .claim-list-header h3 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #0f1a2e;
+        }
+        .btn {
+            padding: 8px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: #4f8cff;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #3a77e6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(79, 140, 255, 0.35);
+        }
+        .btn-outline {
+            background: transparent;
+            color: #4f8cff;
+            border: 1.5px solid #4f8cff;
+        }
+        .btn-outline:hover {
+            background: #f0f5ff;
+        }
+        .btn-success {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        .btn-warning {
+            background: #f39c12;
+            color: #fff;
+        }
+        .btn-warning:hover {
+            background: #d68910;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        .btn-sm {
+            padding: 5px 14px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+        .btn-ghost {
+            background: transparent;
+            color: #6f8aaa;
+            padding: 6px 10px;
+        }
+        .btn-ghost:hover {
+            background: #e9edf4;
+        }
+        .btn-delay {
+            background: #f39c12;
+            color: #fff;
+        }
+        .btn-delay:hover {
+            background: #d68910;
+        }
+        .btn-resume {
+            background: #2ecc71;
+            color: #fff;
+        }
+        .btn-resume:hover {
+            background: #27ae60;
+        }
+
+        .claim-table-wrap {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e9edf4;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04);
+        }
+        .claim-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 700px;
+        }
+        .claim-table th {
+            background: #f8faff;
+            padding: 14px 18px;
+            text-align: left;
+            font-weight: 600;
+            color: #3d5470;
+            border-bottom: 1px solid #e9edf4;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .claim-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid #f0f3f8;
+            vertical-align: middle;
+        }
+        .claim-table tr:last-child td {
+            border-bottom: none;
+        }
+        .claim-table tr:hover td {
+            background: #fafcff;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge.draft {
+            background: #e9edf4;
+            color: #5a6f8a;
+        }
+        .status-badge.validation {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-badge.submitted {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .status-badge.under-review {
+            background: #d6d8ff;
+            color: #2d2f7a;
+        }
+        .status-badge.communication {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-badge.approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.rejected {
+            background: #f5c6cb;
+            color: #721c24;
+        }
+        .status-badge.settled {
+            background: #c3e6cb;
+            color: #0b4b1a;
+        }
+
+        .flag-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .flag-badge.ontrack {
+            background: #d4edda;
+            color: #155724;
+        }
+        .flag-badge.delayed {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .flag-badge.overdue {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .mini-progress {
+            width: 100px;
+            height: 6px;
+            background: #e9edf4;
+            border-radius: 10px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .mini-progress .bar {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #4f8cff, #7c6cf0);
+            transition: width 0.5s;
+        }
+
+        .claim-type-tag {
+            font-size: 11px;
+            background: #eef3fa;
+            padding: 2px 12px;
+            border-radius: 12px;
+            color: #3d5470;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        /* ----- Detail View ----- */
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .detail-header .left h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f1a2e;
+        }
+        .detail-header .left .sub {
+            color: #6f8aaa;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .detail-header .right {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e9edf4;
+            padding: 22px 24px;
+            box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04);
+        }
+        .card .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0f1a2e;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card .card-title i {
+            color: #4f8cff;
+        }
+
+        .progress-visual {
+            margin: 6px 0 10px;
+        }
+        .progress-visual .track {
+            width: 100%;
+            height: 10px;
+            background: #e9edf4;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-visual .track .fill {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #4f8cff, #7c6cf0);
+            transition: width 0.7s ease;
+            width: 0%;
+        }
+        .progress-visual .labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #6f8aaa;
+            margin-top: 5px;
+        }
+        .progress-visual .labels .current {
+            color: #0f1a2e;
+            font-weight: 600;
+        }
+
+        .stage-timeline {
+            display: flex;
+            justify-content: space-between;
+            margin: 18px 0 6px;
+            position: relative;
+        }
+        .stage-timeline::before {
+            content: '';
+            position: absolute;
+            top: 14px;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: #e9edf4;
+            z-index: 0;
+        }
+        .stage-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+            cursor: default;
+        }
+        .stage-item .dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e9edf4;
+            border: 3px solid #fff;
+            box-shadow: 0 0 0 2px #e9edf4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #8aa0bc;
+            transition: 0.3s;
+        }
+        .stage-item.active .dot {
+            background: #4f8cff;
+            border-color: #4f8cff;
+            box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.3);
+            color: #fff;
+        }
+        .stage-item.done .dot {
+            background: #2ecc71;
+            border-color: #2ecc71;
+            color: #fff;
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.25);
+        }
+        .stage-item .label {
+            font-size: 10px;
+            font-weight: 500;
+            color: #6f8aaa;
+            margin-top: 6px;
+            text-align: center;
+            max-width: 60px;
+            line-height: 1.2;
+        }
+        .stage-item.active .label {
+            color: #0f1a2e;
+            font-weight: 600;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f3f8;
+            font-size: 14px;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-row .label {
+            color: #6f8aaa;
+            font-weight: 500;
+        }
+        .detail-row .value {
+            font-weight: 500;
+            color: #0f1a2e;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        /* Document Folder */
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .doc-item {
+            background: #f8faff;
+            border: 1px solid #e9edf4;
+            border-radius: 10px;
+            padding: 14px 12px;
+            text-align: center;
+            transition: 0.2s;
+            cursor: default;
+        }
+        .doc-item:hover {
+            background: #f0f5ff;
+            border-color: #b0cbe5;
+        }
+        .doc-item i {
+            font-size: 28px;
+            color: #4f8cff;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .doc-item .name {
+            font-size: 12px;
+            font-weight: 500;
+            color: #0f1a2e;
+            word-break: break-word;
+        }
+        .doc-item .meta {
+            font-size: 10px;
+            color: #8aa0bc;
+            margin-top: 4px;
+        }
+        .doc-item .doc-type {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #e9edf4;
+            padding: 2px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 4px;
+            color: #3d5470;
+        }
+
+        /* Communication */
+        .comm-list {
+            max-height: 240px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .comm-item {
+            display: flex;
+            gap: 14px;
+            padding: 12px 14px;
+            background: #f8faff;
+            border-radius: 10px;
+            border-left: 3px solid #4f8cff;
+        }
+        .comm-item.incoming {
+            border-left-color: #f39c12;
+        }
+        .comm-item .comm-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e9edf4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3d5470;
+            flex-shrink: 0;
+        }
+        .comm-item.incoming .comm-icon {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .comm-item .comm-body {
+            flex: 1;
+        }
+        .comm-item .comm-body .comm-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #6f8aaa;
+            margin-bottom: 4px;
+        }
+        .comm-item .comm-body .comm-header .from {
+            font-weight: 600;
+            color: #0f1a2e;
+        }
+        .comm-item .comm-body .comm-text {
+            font-size: 14px;
+            color: #1a2332;
+            line-height: 1.4;
+        }
+        .comm-input-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .comm-input-row input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid #e2e9f2;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+        .comm-input-row input:focus {
+            border-color: #4f8cff;
+            box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.15);
+        }
+
+        /* Next Action Box */
+        .next-action {
+            background: #eaf3ff;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-top: 12px;
+            border-left: 4px solid #4f8cff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .next-action .action-icon {
+            font-size: 20px;
+            color: #4f8cff;
+        }
+        .next-action .action-text {
+            flex: 1;
+            font-size: 14px;
+            color: #0f1a2e;
+        }
+        .next-action .action-text strong {
+            font-weight: 700;
+        }
+        .next-action .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .next-action.rejected {
+            background: #f8d7da;
+            border-left-color: #e74c3c;
+        }
+        .next-action.rejected .action-icon {
+            color: #e74c3c;
+        }
+
+        /* Messages Table */
+        .msg-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 600px;
+        }
+        .msg-table th {
+            background: #f8faff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #3d5470;
+            border-bottom: 1px solid #e9edf4;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .msg-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f3f8;
+            vertical-align: middle;
+        }
+        .msg-table tr:hover td {
+            background: #fafcff;
+        }
+        .msg-table .msg-from {
+            font-weight: 600;
+        }
+        .msg-table .msg-date {
+            color: #6f8aaa;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 26, 46, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 20px;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal {
+            background: #fff;
+            border-radius: 20px;
+            max-width: 720px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 32px 36px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.96) translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #0f1a2e;
+        }
+        .modal .form-group {
+            margin-bottom: 18px;
+        }
+        .modal .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #3d5470;
+            margin-bottom: 5px;
+        }
+        .modal .form-group input,
+        .modal .form-group select,
+        .modal .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #e2e9f2;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+            background: #fafcff;
+        }
+        .modal .form-group input:focus,
+        .modal .form-group select:focus,
+        .modal .form-group textarea:focus {
+            border-color: #4f8cff;
+            box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.12);
+            background: #fff;
+        }
+        .modal .form-group textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+        .modal .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .modal .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e9edf4;
+        }
+
+        /* Utilities */
+        .text-center { text-align: center; }
+        .mt-12 { margin-top: 12px; }
+        .mt-18 { margin-top: 18px; }
+        .mb-12 { margin-bottom: 12px; }
+        .gap-8 { gap: 8px; }
+        .flex { display: flex; }
+        .flex-center { align-items: center; }
+        .flex-between { justify-content: space-between; }
+        .flex-wrap { flex-wrap: wrap; }
+        .w-full { width: 100%; }
+
+        .empty-state {
+            padding: 40px 20px;
+            text-align: center;
+            color: #8aa0bc;
+        }
+        .empty-state i {
+            font-size: 48px;
+            color: #d0dcec;
+            margin-bottom: 12px;
+        }
+        .empty-state p {
+            font-size: 15px;
+        }
+
+        /* Prototype Banner */
+        #prototypeBanner {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 1200;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            max-width: 430px;
+            padding: 10px 14px;
+            border: 1px solid #f0cf73;
+            border-radius: 12px;
+            background: #fff8df;
+            color: #6f5200;
+            box-shadow: 0 8px 24px rgba(15, 26, 46, 0.16);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .nav-item:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid rgba(79, 140, 255, 0.35);
+            outline-offset: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+                width: 280px;
+                z-index: 25;
+                border-radius: 0;
+                box-shadow: 2px 0 20px rgba(0,0,0,0.3);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
+            .main {
+                margin-left: 0;
+            }
+            .topbar {
+                padding: 12px 16px;
+                padding-left: 70px;
+                align-items: flex-start;
+            }
+            .topbar .page-title {
+                font-size: 17px;
+            }
+            .topbar .page-title small {
+                font-size: 12px;
+            }
+            .topbar .user-area {
+                width: 100%;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+            .topbar .user-area .role-toggle button {
+                font-size: 10px;
+                padding: 3px 10px;
+            }
+            .topbar .user-area .avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .content {
+                padding: 16px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .stat-card {
+                padding: 14px 16px;
+            }
+            .stat-card .value {
+                font-size: 22px;
+            }
+            .stat-card .label {
+                font-size: 12px;
+            }
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .card {
+                padding: 16px 18px;
+            }
+            .claim-list-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .claim-list-header h3 {
+                font-size: 16px;
+            }
+            .claim-list-header .btn {
+                align-self: flex-start;
+            }
+            .btn {
+                padding: 6px 14px;
+                font-size: 12px;
+            }
+            .btn-sm {
+                padding: 4px 10px;
+                font-size: 11px;
+            }
+            .stage-timeline {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .stage-item .label {
+                font-size: 8px;
+                max-width: 40px;
+            }
+            .stage-item .dot {
+                width: 22px;
+                height: 22px;
+                font-size: 9px;
+            }
+            .stage-timeline::before {
+                display: none;
+            }
+            .next-action {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .next-action .action-buttons {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .comm-input-row {
+                flex-direction: column;
+            }
+            .comm-input-row input {
+                width: 100%;
+            }
+            .comm-input-row .btn {
+                align-self: flex-start;
+            }
+            .detail-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .detail-header .right {
+                justify-content: flex-start;
+            }
+            .modal {
+                padding: 20px 16px;
+            }
+            .modal .form-row {
+                grid-template-columns: 1fr;
+            }
+            .doc-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            #prototypeBanner {
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
+                max-width: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .stat-card .value {
+                font-size: 20px;
+            }
+            .topbar .page-title {
+                font-size: 15px;
+            }
+            .topbar .user-area .role-toggle button {
+                font-size: 9px;
+                padding: 2px 8px;
+            }
+            .topbar .user-area .notif {
+                font-size: 16px;
+            }
+            .topbar .user-area .avatar {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
+            }
+            .content {
+                padding: 12px;
+            }
+            .claim-table-wrap {
+                overflow-x: auto;
+            }
+            .claim-table {
+                font-size: 12px;
+                min-width: 600px;
+            }
+            .claim-table th, .claim-table td {
+                padding: 8px 10px;
+            }
+            .msg-table {
+                font-size: 12px;
+                min-width: 400px;
+            }
+            .msg-table th, .msg-table td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hamburger -->
+    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle sidebar">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="fas fa-shield-alt"></i>
+            <span>ClaimVault</span>
+        </div>
+
+        <div class="nav-label">Main</div>
+        <div class="nav-item active" data-page="dashboard">
+            <i class="fas fa-th-large"></i>
+            <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-page="claims">
+            <i class="fas fa-file-invoice"></i>
+            <span>All Claims</span>
+            <span class="badge" id="claimCountBadge">0</span>
+        </div>
+        <div class="nav-item" data-page="new-claim">
+            <i class="fas fa-plus-circle"></i>
+            <span>New Claim</span>
+        </div>
+        <div class="nav-item" data-page="messages">
+            <i class="fas fa-envelope"></i>
+            <span>Messages</span>
+            <span class="badge" id="msgBadge">0</span>
+        </div>
+
+        <div class="nav-label" style="margin-top:24px;">Insurance</div>
+        <div class="nav-item" data-page="health">
+            <i class="fas fa-heartbeat"></i>
+            <span>Health</span>
+        </div>
+        <div class="nav-item" data-page="car">
+            <i class="fas fa-car"></i>
+            <span>Car / Motorcycle</span>
+        </div>
+        <div class="nav-item" data-page="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" data-page="critical">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Critical Health</span>
+        </div>
+        <div class="nav-item" data-page="accident">
+            <i class="fas fa-bolt"></i>
+            <span>Accident</span>
+        </div>
+        <div class="nav-item" data-page="death">
+            <i class="fas fa-cross"></i>
+            <span>Accidental Death</span>
+        </div>
+        <div class="nav-item" data-page="other">
+            <i class="fas fa-ellipsis-h"></i>
+            <span>Other</span>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item" data-page="settings" style="opacity:0.6;">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="page-title" id="pageTitle">
+                Dashboard <small>overview</small>
+            </div>
+            <div class="user-area">
+                <span class="notif" id="bellIcon">
+                    <i class="fas fa-bell"></i>
+                    <span class="dot"></span>
+                </span>
+                <div class="role-toggle" id="roleToggle">
+                    <button class="active" data-role="admin">Admin</button>
+                    <button data-role="insured">Insured</button>
+                </div>
+                <div class="avatar" id="userAvatar">AD</div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content" id="mainContent">
+
+            <!-- ============================================================ -->
+            <!-- DASHBOARD -->
+            <!-- ============================================================ -->
+            <section class="page-section active" id="page-dashboard">
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card" data-filter="all">
+                        <div class="icon-wrap"><i class="fas fa-file-invoice"></i></div>
+                        <div class="label">Total Claims</div>
+                        <div class="value" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-card" data-filter="in-progress">
+                        <div class="icon-wrap"><i class="fas fa-hourglass-half"></i></div>
+                        <div class="label">In Progress</div>
+                        <div class="value" id="statInProgress">0</div>
+                    </div>
+                    <div class="stat-card" data-filter="approved-settled">
+                        <div class="icon-wrap"><i class="fas fa-check-circle" style="color:#2ecc71;"></i></div>
+                        <div class="label">Approved / Settled</div>
+                        <div class="value" id="statApproved">0</div>
+                    </div>
+                    <div class="stat-card" data-filter="rejected">
+                        <div class="icon-wrap"><i class="fas fa-times-circle" style="color:#e74c3c;"></i></div>
+                        <div class="label">Rejected</div>
+                        <div class="value" id="statRejected">0</div>
+                    </div>
+                </div>
+
+                <div class="claim-list-header">
+                    <h3><i class="fas fa-list-ul" style="color:#4f8cff;margin-right:8px;"></i>Recent Claims</h3>
+                    <button class="btn btn-primary btn-sm" id="newClaimBtn" data-page="new-claim">
+                        <i class="fas fa-plus"></i> New Claim
+                    </button>
+                </div>
+                <div class="claim-table-wrap" id="recentClaimsWrap">
+                    <!-- rendered by JS -->
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- ALL CLAIMS -->
+            <!-- ============================================================ -->
+            <section class="page-section" id="page-claims">
+                <div class="claim-list-header">
+                    <h3><i class="fas fa-file-invoice" style="color:#4f8cff;margin-right:8px;"></i>All Claims</h3>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <select id="filterType" style="padding:6px 12px;border-radius:8px;border:1px solid #e2e9f2;font-size:13px;background:#fff;outline:none;">
+                            <option value="all">All Types</option>
+                            <option value="health">Health</option>
+                            <option value="car">Car / Motorcycle</option>
+                            <option value="home">Home</option>
+                            <option value="critical">Critical Health</option>
+                            <option value="accident">Accident</option>
+                            <option value="accidental-death">Accidental Death</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <select id="filterStatus" style="padding:6px 12px;border-radius:8px;border:1px solid #e2e9f2;font-size:13px;background:#fff;outline:none;">
+                            <option value="all">All Status</option>
+                            <option value="draft">Draft</option>
+                            <option value="validation">Validation</option>
+                            <option value="submitted">Submitted</option>
+                            <option value="under-review">Under Review</option>
+                            <option value="communication">Communication</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="settled">Settled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="claim-table-wrap" id="allClaimsWrap">
+                    <!-- rendered by JS -->
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- NEW CLAIM -->
+            <!-- ============================================================ -->
+            <section class="page-section" id="page-new-claim">
+                <h3 style="margin-bottom:20px;"><i class="fas fa-plus-circle" style="color:#4f8cff;margin-right:10px;"></i>Create New Claim</h3>
+                <div class="card" style="max-width:720px;">
+                    <form id="newClaimForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Insurance Type *</label>
+                                <select id="ncType" required>
+                                    <option value="health">Health</option>
+                                    <option value="car">Car / Motorcycle</option>
+                                    <option value="home">Home</option>
+                                    <option value="critical">Critical Health</option>
+                                    <option value="accident">Accident</option>
+                                    <option value="accidental-death">Accidental Death</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Insurance Company *</label>
+                                <select id="ncCompany" required>
+                                    <option value="State Life">State Life Insurance</option>
+                                    <option value="EFU">EFU Insurance</option>
+                                    <option value="Jubilee">Jubilee General</option>
+                                    <option value="Alliance">Alliance Insurance</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Policy Number *</label>
+                                <input type="text" id="ncPolicy" placeholder="e.g. POL-2026-001" required />
+                            </div>
+                            <div class="form-group">
+                                <label>Policy Holder (CNIC / Name) *</label>
+                                <input type="text" id="ncHolder" placeholder="Full name or CNIC" required />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Claim Amount (PKR) *</label>
+                                <input type="number" id="ncAmount" placeholder="0" required min="1" step="1" />
+                            </div>
+                            <div class="form-group">
+                                <label>Incident Date *</label>
+                                <input type="date" id="ncDate" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="ncDesc" placeholder="Brief description of the incident..."></textarea>
+                        </div>
+                        <div class="modal-actions" style="border-top:none;padding-top:0;margin-top:8px;">
+                            <button type="button" class="btn btn-outline" onclick="document.getElementById('ncFormReset').click()">Reset</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Create Claim</button>
+                        </div>
+                        <button type="reset" id="ncFormReset" style="display:none;"></button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- MESSAGES -->
+            <!-- ============================================================ -->
+            <section class="page-section" id="page-messages">
+                <div class="claim-list-header">
+                    <h3><i class="fas fa-envelope" style="color:#4f8cff;margin-right:8px;"></i>Message Center</h3>
+                </div>
+                <div class="claim-table-wrap" id="messagesWrap">
+                    <!-- rendered by JS -->
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- INSURANCE TYPE PAGES (filtered view) -->
+            <!-- ============================================================ -->
+            <section class="page-section" id="page-health"><div class="claim-list-header"><h3><i class="fas fa-heartbeat" style="color:#4f8cff;margin-right:8px;"></i>Health Claims</h3></div><div class="claim-table-wrap" id="type-health-wrap"></div></section>
+            <section class="page-section" id="page-car"><div class="claim-list-header"><h3><i class="fas fa-car" style="color:#4f8cff;margin-right:8px;"></i>Car / Motorcycle Claims</h3></div><div class="claim-table-wrap" id="type-car-wrap"></div></section>
+            <section class="page-section" id="page-home"><div class="claim-list-header"><h3><i class="fas fa-home" style="color:#4f8cff;margin-right:8px;"></i>Home Claims</h3></div><div class="claim-table-wrap" id="type-home-wrap"></div></section>
+            <section class="page-section" id="page-critical"><div class="claim-list-header"><h3><i class="fas fa-exclamation-triangle" style="color:#4f8cff;margin-right:8px;"></i>Critical Health Claims</h3></div><div class="claim-table-wrap" id="type-critical-wrap"></div></section>
+            <section class="page-section" id="page-accident"><div class="claim-list-header"><h3><i class="fas fa-bolt" style="color:#4f8cff;margin-right:8px;"></i>Accident Claims</h3></div><div class="claim-table-wrap" id="type-accident-wrap"></div></section>
+            <section class="page-section" id="page-death"><div class="claim-list-header"><h3><i class="fas fa-cross" style="color:#4f8cff;margin-right:8px;"></i>Accidental Death Claims</h3></div><div class="claim-table-wrap" id="type-accidental-death-wrap"></div></section>
+            <section class="page-section" id="page-other"><div class="claim-list-header"><h3><i class="fas fa-ellipsis-h" style="color:#4f8cff;margin-right:8px;"></i>Other Claims</h3></div><div class="claim-table-wrap" id="type-other-wrap"></div></section>
+
+            <!-- ============================================================ -->
+            <!-- CLAIM DETAIL -->
+            <!-- ============================================================ -->
+            <section class="page-section" id="page-detail">
+                <div id="detailContainer">
+                    <!-- rendered by JS -->
+                </div>
+            </section>
+
+        </div><!-- /content -->
+    </div><!-- /main -->
+
+    <!-- ===== MODAL ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="modalContent">
+            <!-- dynamic -->
+        </div>
+    </div>
+
+    <!-- ===== PROTOTYPE BANNER ===== -->
+    <div id="prototypeBanner">
+        <i class="fas fa-flask"></i>
+        <span><strong>Prototype Simulation</strong> — synthetic data, simulated workflows and no live insurer integration.</span>
+    </div>
+
+    <script>
+        // Check authorization before script executes
+        (function() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                try {
+                    const u = JSON.parse(userStr);
+                    if (u.role === 'client') {
+                        alert("Access Denied: ClaimVault Simulation is restricted to operations staff.");
+                        window.location.href = '/dashboard';
+                        return;
+                    }
+                } catch(e) {}
+            }
+        })();
+
+        // ================================================================
+        // DATA LAYER
+        // ================================================================
+        const originalFetch = window.fetch;
+        window.fetch = async function(url, options = {}) {
+            let finalUrl = url;
+            if (url && url.startsWith('/api')) {
+                finalUrl = 'http://localhost:8000' + url;
+            }
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return originalFetch(finalUrl, options);
+        };
+
+        let claims = [];
+        let nextId = 1;
+        let currentDetailId = null;
+        let currentPage = 'dashboard';
+        let currentRole = 'admin';
+        const userStr = localStorage.getItem('user');
+        let loggedInUserClientName = 'Demo Client';
+        let loggedInUserInitials = 'DC';
+        if (userStr) {
+            try {
+                const u = JSON.parse(userStr);
+                loggedInUserClientName = u.full_name || 'Demo Client';
+                const parts = loggedInUserClientName.split(' ');
+                if (parts.length > 1) {
+                    loggedInUserInitials = (parts[0][0] + parts[1][0]).toUpperCase();
+                } else if (parts.length > 0) {
+                    loggedInUserInitials = (parts[0][0] + (parts[0][1] || '')).toUpperCase();
+                }
+            } catch(e) {}
+        }
+        const LOGGED_IN_USER = loggedInUserClientName;
+
+        const STATUS_PROGRESS = {
+            'draft': 5,
+            'validation': 20,
+            'submitted': 45,
+            'under-review': 65,
+            'communication': 80,
+            'approved': 92,
+            'rejected': 92,
+            'settled': 100,
+        };
+
+        const STATUS_LABELS = {
+            'draft': 'Draft',
+            'validation': 'Validation',
+            'submitted': 'Submitted',
+            'under-review': 'Under Review',
+            'communication': 'Communication',
+            'approved': 'Approved',
+            'rejected': 'Rejected',
+            'settled': 'Settled',
+        };
+
+        const STATUS_ORDER = ['draft', 'validation', 'submitted', 'under-review', 'communication', 'approved', 'settled'];
+        const FINAL_STATUSES = new Set(['approved', 'rejected', 'settled']);
+
+        // ================================================================
+        // ESCAPE HTML (to prevent injection)
+        // ================================================================
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        // ================================================================
+        // DOCUMENT TEMPLATES
+        // ================================================================
+        function getDefaultDocs(type) {
+            const base = [
+                { name: 'Policy Document', type: 'policy', icon: 'fa-file-pdf' },
+                { name: 'Application Form', type: 'application', icon: 'fa-file-alt' },
+                { name: 'CNIC Copy', type: 'cnic', icon: 'fa-id-card' },
+            ];
+            const extra = {
+                'health': [{ name: 'Medical Records', type: 'medical', icon: 'fa-notes-medical' }],
+                'car': [{ name: 'Accident Report', type: 'report', icon: 'fa-file-alt' }, { name: 'Photos', type: 'photos',
+                    icon: 'fa-images' }],
+                'home': [{ name: 'Damage Assessment', type: 'assessment', icon: 'fa-clipboard-list' }],
+                'critical': [{ name: 'Diagnosis Report', type: 'diagnosis', icon: 'fa-file-medical' }],
+                'accident': [{ name: 'Police Report', type: 'police', icon: 'fa-file-invoice' }],
+                'accidental-death': [{ name: 'Death Certificate', type: 'certificate', icon: 'fa-certificate' },
+                { name: 'Police Report', type: 'police', icon: 'fa-file-invoice' }],
+                'other': [{ name: 'Supporting Documents', type: 'support', icon: 'fa-folder-open' }],
+            };
+            return [...base, ...(extra[type] || [])];
+        }
+
+        // ================================================================
+        // SEED DATA (removed ordinary 'death', changed description)
+        // ================================================================
+        function seedClaims() {
+            const types = ['health', 'car', 'home', 'critical', 'accident', 'accidental-death', 'other'];
+            const holders = ['Ahmed Khan', 'Sana Ali', 'Usman Malik', 'Fatima Noor', 'Bilal Ahmed', 'Zara Tariq',
+                'Hassan Raza', 'Aisha Siddiqui'
+            ];
+            const companies = ['State Life', 'EFU', 'Jubilee', 'Alliance', 'State Life', 'EFU', 'Jubilee', 'Alliance'];
+            const statuses = ['draft', 'validation', 'submitted', 'under-review', 'communication', 'approved', 'settled',
+                'rejected'
+            ];
+            const descs = [
+                'Emergency hospitalisation due to severe chest pain.',
+                'Car accident on M-2 motorway, extensive damage.',
+                'Fire damage to home in Lahore.',
+                'Diagnosed with stage 2 breast cancer, treatment ongoing.',
+                'Slip and fall at a local market, fractured wrist.',
+                'Fatal accident on GT Road, policyholder deceased.',
+                'Loss of insured personal property during domestic travel.',
+                'Theft of personal property from vehicle in Karachi.'
+            ];
+
+            for (let i = 0; i < 10; i++) {
+                const type = types[i % types.length];
+                const status = statuses[i % statuses.length];
+                const holder = holders[i % holders.length];
+                const company = companies[i % companies.length];
+                const amount = (Math.floor(Math.random() * 80) + 5) * 10000;
+                const d = new Date();
+                d.setDate(d.getDate() - Math.floor(Math.random() * 60) - 5);
+
+                const claim = {
+                    id: 'CLM-' + String(nextId++).padStart(4, '0'),
+                    type: type,
+                    policyNumber: 'POL-' + String(2026) + '-' + String(Math.floor(Math.random() * 9000) + 1000),
+                    policyHolder: holder,
+                    claimAmount: amount,
+                    incidentDate: d.toISOString().split('T')[0],
+                    status: status,
+                    description: descs[i % descs.length],
+                    insuranceCompany: company,
+                    documents: getDefaultDocs(type).map((d, idx) => ({
+                        ...d,
+                        uploaded: idx < 2 ? true : Math.random() > 0.4,
+                        uploadDate: new Date(Date.now() - Math.random() * 86400000 * 10).toISOString().split('T')[0],
+                    })),
+                    communications: [
+                        { from: 'System', to: 'Policyholder', message: 'Claim initiated successfully.',
+                            date: new Date(Date.now() - 86400000 * 5).toISOString() },
+                        { from: 'Insurance Co.', to: 'System', message: 'We have received your claim and are reviewing it.',
+                            date: new Date(Date.now() - 86400000 * 3).toISOString() },
+                    ],
+                    createdAt: new Date(Date.now() - Math.random() * 86400000 * 30).toISOString(),
+                    statusChangedAt: new Date(Date.now() - Math.random() * 86400000 * 5).toISOString(),
+                    flag: 'ontrack',
+                };
+                if (i % 3 === 0) {
+                    claim.communications.push({
+                        from: 'Policyholder',
+                        to: 'Insurance Co.',
+                        message: 'Please let me know if you need any additional documents.',
+                        date: new Date(Date.now() - 86400000 * 1).toISOString()
+                    });
+                }
+                if (i === 0) {
+                    claim.policyHolder = LOGGED_IN_USER;
+                    claim.insuranceCompany = 'State Life';
+                    claim.status = 'draft';
+                    claim.statusChangedAt = new Date(Date.now() - 86400000 * 2).toISOString();
+                }
+                // ensure at least one rejected seed
+                if (i === 3) {
+                    claim.status = 'rejected';
+                    claim.statusChangedAt = new Date(Date.now() - 86400000 * 4).toISOString();
+                }
+                claims.push(claim);
+            }
+        }
+        const getFlag = (claim) => {
+          if (FINAL_STATUSES.has(claim.current_step)) return 'ontrack';
+          const changedAt = new Date(claim.updated_at || claim.created_at || Date.now()).getTime();
+          const elapsedDays = Math.max(0, (Date.now() - changedAt) / 86400000);
+          if (elapsedDays < 3) return 'ontrack';
+          if (elapsedDays < 7) return 'delayed';
+          return 'overdue';
+        };
+
+        async function loadRealClaims() {
+            try {
+                const response = await fetch('/api/claims');
+                if (!response.ok) throw new Error('API fetch failed');
+                const apiClaims = await response.json();
+                
+                let apiProducts = [];
+                try {
+                    const prodRes = await fetch('/api/products?status=active');
+                    if (prodRes.ok) apiProducts = await prodRes.json();
+                } catch(pe) {
+                    console.error("Failed to load products", pe);
+                }
+
+                // Fetch documents and filter per claim later
+                let apiDocs = [];
+                try {
+                    const docRes = await fetch('/api/documents');
+                    if (docRes.ok) apiDocs = await docRes.json();
+                } catch(de) {
+                    console.error("Failed to load documents", de);
+                }
+
+                claims = apiClaims.map(c => {
+                    let mappedStatus = 'draft';
+                    if (c.current_step === 'Event Reported') mappedStatus = 'draft';
+                    else if (c.current_step === 'Evidence Collated') mappedStatus = 'validation';
+                    else if (c.current_step === 'Submitted to Insurer') mappedStatus = 'submitted';
+                    else if (c.current_step === 'Under Review') mappedStatus = 'under-review';
+                    else if (c.current_step === 'Decision Advised') mappedStatus = 'communication';
+                    else if (c.current_step === 'Payment Confirmed') mappedStatus = 'settled';
+                    else if (c.current_step === 'Authorization Denied') mappedStatus = 'rejected';
+                    else if (c.current_step === 'Partially Approved') mappedStatus = 'approved';
+                    else if (c.current_step === 'Fraud Review') mappedStatus = 'rejected';
+
+                    let mappedType = 'other';
+                    const typeLower = (c.type || '').toLowerCase();
+                    if (typeLower.includes('critical')) mappedType = 'critical';
+                    else if (typeLower.includes('health')) mappedType = 'health';
+                    else if (typeLower.includes('car') || typeLower.includes('motorcycle')) mappedType = 'car';
+                    else if (typeLower.includes('home')) mappedType = 'home';
+                    else if (typeLower.includes('accidental-death')) mappedType = 'accidental-death';
+                    else if (typeLower.includes('accident')) mappedType = 'accident';
+
+                    const matchedProduct = apiProducts.find(p => p.id === c.policy_id);
+                    const policyNumber = matchedProduct ? (matchedProduct.policy_number || 'POL-2026-9999') : (c.policy_id || 'POL-2026-1000');
+                    const company = matchedProduct ? matchedProduct.product_label : (c.product_label || 'State Life');
+
+                    const claimDocs = apiDocs.filter(ad => ad.ref_id === c.id && ad.ref_type === 'claim');
+                    const mappedDocs = getDefaultDocs(mappedType).map(reqDoc => {
+                        const matchedDoc = claimDocs.find(ad => ad.type === reqDoc.type);
+                        return {
+                            ...reqDoc,
+                            uploaded: !!matchedDoc,
+                            uploadDate: matchedDoc ? matchedDoc.uploaded_at.split('T')[0] : null,
+                            status: matchedDoc ? matchedDoc.status : 'pending',
+                            id: matchedDoc ? matchedDoc.id : null
+                        };
+                    });
+
+                    const mappedCommunications = (c.timeline || []).map(t => {
+                        const isMsg = t.event.startsWith('Message: ');
+                        const msgContent = isMsg ? t.event.substring(9) : t.event;
+                        return {
+                            from: isMsg ? t.user : 'System',
+                            to: isMsg ? 'All' : 'Log',
+                            message: msgContent,
+                            date: t.time
+                        };
+                    });
+
+                    return {
+                        id: c.id,
+                        type: mappedType,
+                        policyNumber: policyNumber,
+                        policyHolder: c.client_name || 'Insured Client',
+                        claimAmount: Number(c.amount) || 0,
+                        incidentDate: c.created_at ? c.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+                        status: mappedStatus,
+                        description: c.description || '',
+                        insuranceCompany: company,
+                        documents: mappedDocs,
+                        communications: mappedCommunications,
+                        createdAt: c.created_at || new Date().toISOString(),
+                        statusChangedAt: c.updated_at || c.created_at || new Date().toISOString(),
+                        flag: getFlag(c),
+                        dbClientId: c.client_id,
+                        dbPolicyId: c.policy_id
+                    };
+                });
+
+                if (currentRole === 'insured') {
+                    const userStr = localStorage.getItem('user');
+                    let filterClientId = 'c1';
+                    let filterClientName = 'Demo Client';
+                    if (userStr) {
+                        try {
+                            const u = JSON.parse(userStr);
+                            if (u.role === 'client') {
+                                filterClientId = u.client_id || u.id;
+                                filterClientName = u.full_name;
+                            }
+                        } catch(e) {}
+                    }
+                    claims = claims.filter(c => c.dbClientId === filterClientId || c.policyHolder === filterClientName);
+                }
+
+                updateFlags();
+                renderDashboard();
+                renderAllClaims();
+                if (currentDetailId) {
+                    showClaimDetail(currentDetailId);
+                }
+            } catch (err) {
+                console.error("Failed to load real claims from API:", err);
+            }
+        }
+        loadRealClaims();
+
+        // ================================================================
+        // FLAG COMPUTATION (with override support)
+        // ================================================================
+        function calculateAutomaticFlag(claim) {
+            if (FINAL_STATUSES.has(claim.status)) return 'ontrack';
+            const changedAt = new Date(claim.statusChangedAt || claim.createdAt || Date.now()).getTime();
+            const elapsedDays = Math.max(0, (Date.now() - changedAt) / 86400000);
+            if (elapsedDays < 3) return 'ontrack';
+            if (elapsedDays < 7) return 'delayed';
+            return 'overdue';
+        }
+
+        function computeFlag(claim) {
+            return claim.flagOverride || calculateAutomaticFlag(claim);
+        }
+
+        function updateFlags() {
+            claims.forEach(claim => {
+                claim.flag = computeFlag(claim);
+            });
+        }
+        updateFlags();
+
+        // ================================================================
+        // RENDER HELPERS (with escaping)
+        // ================================================================
+        function getStatusBadge(status) {
+            return `<span class="status-badge ${status}"><span class="dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;"></span> ${STATUS_LABELS[status] || status}</span>`;
+        }
+
+        function getFlagBadge(flag) {
+            const labels = { 'ontrack': 'On Track', 'delayed': 'Delayed', 'overdue': 'Overdue' };
+            return `<span class="flag-badge ${flag}">${labels[flag] || 'On Track'}</span>`;
+        }
+
+        function getTypeLabel(type) {
+            const map = {
+                'health': 'Health',
+                'car': 'Car / Motorcycle',
+                'home': 'Home',
+                'critical': 'Critical Health',
+                'accident': 'Accident',
+                'accidental-death': 'Accidental Death',
+                'other': 'Other'
+            };
+            return map[type] || type;
+        }
+
+        function getTypeIcon(type) {
+            const map = {
+                'health': 'fa-heartbeat',
+                'car': 'fa-car',
+                'home': 'fa-home',
+                'critical': 'fa-exclamation-triangle',
+                'accident': 'fa-bolt',
+                'accidental-death': 'fa-cross',
+                'other': 'fa-ellipsis-h',
+            };
+            return map[type] || 'fa-file';
+        }
+
+        function renderClaimRow(c, isAdmin) {
+            const progress = STATUS_PROGRESS[c.status] || 0;
+            return `
+                <tr data-id="${escapeHtml(c.id)}" class="claim-row" style="cursor:pointer;">
+                    <td><strong>${escapeHtml(c.id)}</strong></td>
+                    <td><span class="claim-type-tag"><i class="fas ${getTypeIcon(c.type)}" style="margin-right:4px;"></i> ${getTypeLabel(c.type)}</span></td>
+                    <td>${escapeHtml(c.policyNumber)}</td>
+                    <td>${escapeHtml(c.policyHolder)}</td>
+                    <td>Rs. ${Number(c.claimAmount).toLocaleString()}</td>
+                    <td>${getStatusBadge(c.status)}</td>
+                    <td>
+                        <div class="mini-progress"><div class="bar" style="width:${progress}%;"></div></div>
+                        <span style="font-size:11px;color:#6f8aaa;margin-left:6px;">${progress}%</span>
+                    </td>
+                    <td>${escapeHtml(c.incidentDate)}</td>
+                    <td>${getFlagBadge(c.flag)}</td>
+                    ${isAdmin ? `<td>${escapeHtml(c.insuranceCompany || '—')}</td>` : ''}
+                </tr>
+            `;
+        }
+
+        function renderClaimTable(claimsArray, wrapId, isAdmin = true) {
+            const wrap = document.getElementById(wrapId);
+            if (!wrap) return;
+            if (!claimsArray || claimsArray.length === 0) {
+                wrap.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>No claims found.</p></div>`;
+                return;
+            }
+            let html = `<table class="claim-table"><thead><tr>
+                <th>Claim ID</th><th>Type</th><th>Policy #</th><th>Policy Holder</th><th>Amount</th><th>Status</th><th>Progress</th><th>Incident Date</th>
+                <th>Status Flag</th>
+                ${isAdmin ? '<th>Insurer</th>' : ''}
+            </tr></thead><tbody>`;
+            claimsArray.forEach(c => { html += renderClaimRow(c, isAdmin); });
+            html += `</tbody></table>`;
+            wrap.innerHTML = html;
+            wrap.querySelectorAll('.claim-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    const id = row.dataset.id;
+                    showClaimDetail(id);
+                });
+            });
+        }
+
+        // ================================================================
+        // RENDER MESSAGES (fixed badge reset)
+        // ================================================================
+        function renderMessages() {
+            const wrap = document.getElementById('messagesWrap');
+            let allMessages = [];
+            let filteredClaims = claims;
+            if (currentRole === 'insured') {
+                filteredClaims = claims.filter(c => c.policyHolder === LOGGED_IN_USER);
+            }
+            filteredClaims.forEach(c => {
+                if (c.communications && c.communications.length) {
+                    c.communications.forEach(comm => {
+                        allMessages.push({
+                            claimId: c.id,
+                            from: comm.from,
+                            to: comm.to,
+                            message: comm.message,
+                            date: comm.date
+                        });
+                    });
+                }
+            });
+            allMessages.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (allMessages.length === 0) {
+                document.getElementById('msgBadge').textContent = '0';
+                wrap.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>No messages.</p></div>`;
+                return;
+            }
+
+            let html = `<div class="claim-table-wrap"><table class="msg-table"><thead><tr>
+                <th>Claim</th><th>From</th><th>To</th><th>Message</th><th>Date</th>
+            </tr></thead><tbody>`;
+            allMessages.forEach(m => {
+                html += `<tr>
+                    <td><strong>${escapeHtml(m.claimId)}</strong></td>
+                    <td class="msg-from">${escapeHtml(m.from)}</td>
+                    <td>${escapeHtml(m.to)}</td>
+                    <td>${escapeHtml(m.message)}</td>
+                    <td class="msg-date">${new Date(m.date).toLocaleString()}</td>
+                </tr>`;
+            });
+            html += `</tbody></table></div>`;
+            wrap.innerHTML = html;
+            document.getElementById('msgBadge').textContent = allMessages.length;
+        }
+
+        // ================================================================
+        // RENDER DASHBOARD
+        // ================================================================
+        function renderDashboard() {
+            let filteredClaims = claims;
+            if (currentRole === 'insured') {
+                filteredClaims = claims.filter(c => c.policyHolder === LOGGED_IN_USER);
+            }
+            const total = filteredClaims.length;
+            const inProgress = filteredClaims.filter(c => !['approved', 'rejected', 'settled'].includes(c.status)).length;
+            const approved = filteredClaims.filter(c => ['approved', 'settled'].includes(c.status)).length;
+            const rejected = filteredClaims.filter(c => c.status === 'rejected').length;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statInProgress').textContent = inProgress;
+            document.getElementById('statApproved').textContent = approved;
+            document.getElementById('statRejected').textContent = rejected;
+
+            const recent = [...filteredClaims].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
+            renderClaimTable(recent, 'recentClaimsWrap', currentRole === 'admin');
+
+            document.getElementById('claimCountBadge').textContent = filteredClaims.length;
+        }
+
+        // ================================================================
+        // RENDER ALL CLAIMS (with filters)
+        // ================================================================
+        function renderAllClaims() {
+            const typeFilter = document.getElementById('filterType')?.value || 'all';
+            const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+            let filtered = [...claims];
+            if (currentRole === 'insured') {
+                filtered = filtered.filter(c => c.policyHolder === LOGGED_IN_USER);
+            }
+            if (typeFilter !== 'all') filtered = filtered.filter(c => c.type === typeFilter);
+            if (window._statFilter) {
+                if (window._statFilter === 'in-progress') {
+                    filtered = filtered.filter(c => !['approved', 'rejected', 'settled'].includes(c.status));
+                } else if (window._statFilter === 'approved-settled') {
+                    filtered = filtered.filter(c => ['approved', 'settled'].includes(c.status));
+                } else if (window._statFilter === 'rejected') {
+                    filtered = filtered.filter(c => c.status === 'rejected');
+                }
+                window._statFilter = null;
+                document.getElementById('filterStatus').value = 'all';
+            } else if (statusFilter !== 'all') {
+                filtered = filtered.filter(c => c.status === statusFilter);
+            }
+            renderClaimTable(filtered, 'allClaimsWrap', currentRole === 'admin');
+        }
+
+        // ================================================================
+        // RENDER TYPE PAGES (fixed for accidental-death)
+        // ================================================================
+        function renderTypePages() {
+            const pageMap = {
+                health: 'type-health-wrap',
+                car: 'type-car-wrap',
+                home: 'type-home-wrap',
+                critical: 'type-critical-wrap',
+                accident: 'type-accident-wrap',
+                'accidental-death': 'type-accidental-death-wrap',
+                other: 'type-other-wrap'
+            };
+            Object.entries(pageMap).forEach(([type, wrapId]) => {
+                let filtered = claims.filter(claim => claim.type === type);
+                if (currentRole === 'insured') {
+                    filtered = filtered.filter(claim => claim.policyHolder === LOGGED_IN_USER);
+                }
+                renderClaimTable(filtered, wrapId, currentRole === 'admin');
+            });
+        }
+
+        // ================================================================
+        // NEXT ACTION WITH REAL BUTTONS AND CLEAR INSTRUCTION
+        // ================================================================
+        function getNextActionHtml(claim, isAdmin) {
+            const status = claim.status;
+            let html = `<div class="next-action">`;
+            html += `<div class="action-icon"><i class="fas fa-arrow-right"></i></div>`;
+            html += `<div class="action-text"><strong>Next action:</strong> `;
+
+            if (isAdmin) {
+                const nextStatus = STATUS_ORDER[STATUS_ORDER.indexOf(status) + 1];
+                const canAdvance = nextStatus && status !== 'settled' && status !== 'rejected';
+                let instruction = '';
+                if (canAdvance) {
+                    instruction = `Advance claim from "${STATUS_LABELS[status]}" to "${STATUS_LABELS[nextStatus]}".`;
+                } else if (status === 'settled') {
+                    instruction = 'Claim is settled. No further action required.';
+                } else if (status === 'rejected') {
+                    instruction = 'Claim is rejected. No further progression available.';
+                } else {
+                    instruction = 'No further actions available.';
+                }
+                html += `<span>${instruction}</span>`;
+                html += `<div class="action-buttons">`;
+                if (canAdvance) {
+                    html += `<button class="btn btn-primary btn-sm" onclick="advanceClaim('${claim.id}')"><i class="fas fa-arrow-right"></i> Advance</button>`;
+                }
+                html +=
+                    `<button class="btn btn-outline btn-sm" onclick="resetClaim('${claim.id}')"><i class="fas fa-undo"></i> Reset</button>`;
+                // Mark Delayed/Resume
+                if (claim.flag === 'ontrack' && !FINAL_STATUSES.has(status)) {
+                    html +=
+                        `<button class="btn btn-delay btn-sm" onclick="setDelay('${claim.id}')"><i class="fas fa-pause"></i> Mark Delayed</button>`;
+                }
+                if (claim.flag === 'delayed' || claim.flag === 'overdue') {
+                    html +=
+                        `<button class="btn btn-resume btn-sm" onclick="setOntrack('${claim.id}')"><i class="fas fa-play"></i> Resume</button>`;
+                }
+                // Auto button appears if flagOverride is set
+                if (claim.flagOverride) {
+                    html +=
+                        `<button class="btn btn-outline btn-sm" onclick="clearFlagOverride('${claim.id}')"><i class="fas fa-undo-alt"></i> Auto</button>`;
+                }
+                // Reject button (only if not final)
+                if (!FINAL_STATUSES.has(status)) {
+                    html +=
+                        `<button class="btn btn-danger btn-sm" onclick="rejectClaim('${claim.id}')"><i class="fas fa-times"></i> Reject</button>`;
+                }
+                html +=
+                    `<button class="btn btn-success btn-sm" onclick="simulateFullClaim('${claim.id}')"><i class="fas fa-rocket"></i> Simulate Full</button>`;
+                html += `</div>`;
+                html += `</div></div>`;
+                return html;
+            } else {
+                // Insured side - keep existing text and buttons
+                let buttons = '';
+                let text = '';
+                switch (status) {
+                    case 'draft':
+                    case 'validation':
+                        const pending = claim.documents ? claim.documents.filter(d => !d.uploaded).length : 0;
+                        text =
+                        `Upload required documents (${pending} pending) then submit to insurer.`;
+                        buttons =
+                            `<button class="btn btn-success btn-sm" onclick="insuredUpload('${claim.id}')"><i class="fas fa-upload"></i> Upload All</button>`;
+                        buttons +=
+                            ` <button class="btn btn-primary btn-sm" onclick="submitClaim('${claim.id}')"><i class="fas fa-paper-plane"></i> Submit to Insurer</button>`;
+                        break;
+                    case 'submitted':
+                        text = 'Awaiting insurer review. Check back later.';
+                        buttons = '';
+                        break;
+                    case 'under-review':
+                        text = 'Insurer is reviewing. You may send a message.';
+                        buttons =
+                            `<button class="btn btn-outline btn-sm" onclick="document.getElementById('commInput').focus()"><i class="fas fa-comment"></i> Send Message</button>`;
+                        break;
+                    case 'communication':
+                        text = 'Insurer requested additional info. Please respond.';
+                        buttons =
+                            `<button class="btn btn-outline btn-sm" onclick="document.getElementById('commInput').focus()"><i class="fas fa-reply"></i> Reply</button>`;
+                        break;
+                    case 'approved':
+                        text = 'Claim approved! Settlement will be processed.';
+                        buttons = '';
+                        break;
+                    case 'settled':
+                        text = 'Claim settled. No further action.';
+                        buttons = '';
+                        break;
+                    case 'rejected':
+                        text = 'Claim rejected. You may contact insurer.';
+                        buttons = '';
+                        break;
+                    default:
+                        text = 'Check status.';
+                        buttons = '';
+                }
+                html += text;
+                if (buttons) {
+                    html += ` <div class="action-buttons" style="display:inline-flex;gap:8px;margin-left:8px;">${buttons}</div>`;
+                }
+                html += `</div></div>`;
+                return html;
+            }
+        }
+
+        // ================================================================
+        // CLAIM DETAIL (fixed rejected timeline)
+        // ================================================================
+        function showClaimDetail(id) {
+            const claim = claims.find(c => c.id === id);
+            if (!claim) return;
+            if (currentRole === 'insured' && claim.policyHolder !== LOGGED_IN_USER) {
+                alert('You are not authorized to view this claim.');
+                return;
+            }
+            currentDetailId = id;
+            navigateTo('detail');
+
+            const container = document.getElementById('detailContainer');
+            const progress = STATUS_PROGRESS[claim.status] || 0;
+            const isAdmin = currentRole === 'admin';
+            const isRejected = claim.status === 'rejected';
+
+            // Timeline stages (excluding rejected)
+            const stages = ['draft', 'validation', 'submitted', 'under-review', 'communication', 'approved', 'settled'];
+            let currentIdx = stages.indexOf(claim.status);
+            if (isRejected) {
+                currentIdx = stages.indexOf('under-review'); // show up to under-review as completed
+            }
+
+            let timelineHtml = '';
+            stages.forEach((s, idx) => {
+                let cls = 'stage-item';
+                // For rejected, mark all stages up to under-review as done
+                const stageCompleted = isRejected ? idx <= currentIdx : idx < currentIdx;
+                if (stageCompleted) {
+                    cls += ' done';
+                } else if (idx === currentIdx) {
+                    cls += ' active';
+                }
+                const label = STATUS_LABELS[s] || s;
+                const dotContent = stageCompleted
+                    ? '<i class="fas fa-check" style="font-size:10px;"></i>'
+                    : (idx === currentIdx
+                        ? (Math.floor(progress / 10) || '')
+                        : '');
+                timelineHtml += `
+                    <div class="${cls}">
+                        <div class="dot">${dotContent}</div>
+                        <div class="label">${label}</div>
+                    </div>
+                `;
+            });
+
+            // Outcome banner for rejected
+            const outcomeHtml = isRejected ?
+                `<div class="next-action rejected">
+                    <div class="action-icon"><i class="fas fa-times-circle"></i></div>
+                    <div class="action-text"><strong>Outcome:</strong> Claim rejected in the simulated insurer review process.</div>
+                </div>` :
+                '';
+
+            // Documents
+            let docHtml = '';
+            if (claim.documents && claim.documents.length) {
+                claim.documents.forEach(d => {
+                    const uploaded = d.uploaded !== false;
+                    docHtml += `
+                        <div class="doc-item" style="${uploaded ? '' : 'opacity:0.5;'}">
+                            <i class="fas ${d.icon || 'fa-file'}"></i>
+                            <div class="name">${escapeHtml(d.name)}</div>
+                            <div class="meta">${uploaded ? '✅ Uploaded ' + (d.uploadDate || '') : '⏳ Pending'}</div>
+                            <span class="doc-type">${escapeHtml(d.type)}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                docHtml = `<div class="empty-state" style="padding:16px 0;"><p>No documents.</p></div>`;
+            }
+
+            // Communications (escape user-controlled fields)
+            let commHtml = '';
+            if (claim.communications && claim.communications.length) {
+                claim.communications.forEach(comm => {
+                    const isIncoming = comm.from === 'Insurance Co.' || comm.from === 'System';
+                    commHtml += `
+                        <div class="comm-item ${isIncoming ? 'incoming' : ''}">
+                            <div class="comm-icon"><i class="fas ${isIncoming ? 'fa-building' : 'fa-user'}"></i></div>
+                            <div class="comm-body">
+                                <div class="comm-header">
+                                    <span class="from">${escapeHtml(comm.from)}</span>
+                                    <span>${new Date(comm.date).toLocaleString()}</span>
+                                </div>
+                                <div class="comm-text">${escapeHtml(comm.message)}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                commHtml = `<div class="empty-state" style="padding:12px 0;"><p>No communications yet.</p></div>`;
+            }
+
+            // Days in status (avoid negative)
+            const daysInStatus = Math.max(0, Math.floor((Date.now() - new Date(claim.statusChangedAt).getTime()) / 86400000));
+
+            const policyDetails = [
+                { label: 'Policy Number', value: escapeHtml(claim.policyNumber) },
+                { label: 'Policy Holder', value: escapeHtml(claim.policyHolder) },
+                { label: 'Insurance Type', value: getTypeLabel(claim.type) },
+                { label: 'Insurance Company', value: escapeHtml(claim.insuranceCompany || '—') },
+                { label: 'Claim Amount (PKR)', value: 'Rs. ' + Number(claim.claimAmount).toLocaleString() },
+                { label: 'Incident Date', value: escapeHtml(claim.incidentDate) },
+                { label: 'Status', value: STATUS_LABELS[claim.status] || claim.status },
+                { label: 'Status Flag', value: getFlagBadge(claim.flag) },
+                { label: 'Days in Status', value: daysInStatus + ' days' },
+                { label: 'Description', value: escapeHtml(claim.description || '—') },
+                { label: 'Created', value: new Date(claim.createdAt).toLocaleDateString() },
+            ];
+
+            let policyRows = policyDetails.map(d =>
+                `<div class="detail-row"><span class="label">${d.label}</span><span class="value">${d.value}</span></div>`
+            ).join('');
+
+            const nextActionHtml = getNextActionHtml(claim, isAdmin);
+
+            container.innerHTML = `
+                <div class="detail-header">
+                    <div class="left">
+                        <h2>${escapeHtml(claim.id)} <span style="font-weight:400;font-size:16px;color:#6f8aaa;">— ${getTypeLabel(claim.type)}</span></h2>
+                        <div class="sub">${escapeHtml(claim.policyHolder)} • ${escapeHtml(claim.policyNumber)} • ${escapeHtml(claim.insuranceCompany || '')}</div>
+                    </div>
+                    <div class="right">
+                        <span style="align-self:center;">${getStatusBadge(claim.status)} ${getFlagBadge(claim.flag)}</span>
+                    </div>
+                </div>
+
+                ${nextActionHtml}
+                ${outcomeHtml}
+
+                <div class="progress-visual" style="margin-bottom:20px;">
+                    <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:500;">
+                        <span>Progress</span>
+                        <span>${isRejected ? '—' : progress + '%'}</span>
+                    </div>
+                    <div class="track">
+                        <div class="fill" style="width:${isRejected ? 0 : progress}%;"></div>
+                    </div>
+                    <div class="stage-timeline">${timelineHtml}</div>
+                </div>
+
+                <div class="detail-grid">
+                    <div>
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-info-circle"></i> Policy Details</div>
+                            ${policyRows}
+                        </div>
+                        <div class="card" style="margin-top:18px;">
+                            <div class="card-title"><i class="fas fa-folder"></i> Document Folder 
+                                <span style="font-size:12px;font-weight:400;color:#6f8aaa;margin-left:6px;">
+                                    (${claim.documents ? claim.documents.filter(d => d.uploaded !== false).length : 0}/${claim.documents ? claim.documents.length : 0} uploaded)
+                                </span>
+                            </div>
+                            <div class="doc-grid">${docHtml}</div>
+                            ${isAdmin ? `
+                            <div style="margin-top:12px;">
+                                <button class="btn btn-sm btn-outline" onclick="simulateUpload('${claim.id}')">
+                                    <i class="fas fa-upload"></i> Simulate Upload All
+                                </button>
+                            </div>` : ''}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="card">
+                            <div class="card-title"><i class="fas fa-comments"></i> Communication</div>
+                            <div class="comm-list">${commHtml}</div>
+                            <div class="comm-input-row">
+                                <input type="text" id="commInput" placeholder="Type a message..." />
+                                <button class="btn btn-primary btn-sm" onclick="sendComm('${claim.id}')">
+                                    <i class="fas fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+                            ${isAdmin ? `
+                            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                                <button class="btn btn-sm btn-outline" onclick="simulateComm('${claim.id}','Insurance Co.','We are reviewing your submitted documents.')">
+                                    <i class="fas fa-robot"></i> Simulate Insurer
+                                </button>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('mainContent').scrollTop = 0;
+        }
+
+        // ================================================================
+        // ACTIONS (with all fixes)
+        // ================================================================
+
+        async function uploadAllDocs(id) {
+            const claim = claims.find(c => c.id === id);
+            if (!claim) return;
+            try {
+                const pendingDocs = claim.documents.filter(d => !d.uploaded);
+                if (pendingDocs.length === 0) {
+                    alert("All documents already uploaded.");
+                    return;
+                }
+                const clientId = claim.dbClientId || 'client1';
+                for (let doc of pendingDocs) {
+                    const formData = new FormData();
+                    formData.append('client_id', clientId);
+                    formData.append('name', doc.name);
+                    formData.append('doc_type', doc.type);
+                    formData.append('ref_id', id);
+                    formData.append('ref_type', 'claim');
+                    
+                    const dummyBlob = new Blob(["Simulated document content"], { type: 'text/plain' });
+                    const file = new File([dummyBlob], `${doc.type}.txt`, { type: 'text/plain' });
+                    formData.append('file', file);
+
+                    await fetch('/api/documents/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                }
+                await fetch(`/api/claims/${id}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: "System: All documents have been uploaded successfully." })
+                });
+                alert("All documents uploaded and registered in database!");
+                await loadRealClaims();
+            } catch (err) {
+                alert("Upload simulation failed: " + err.message);
+            }
+        }
+
+        async function ensureDecisionAdvised(id) {
+            const res = await fetch(`/api/claims/${id}`);
+            if (!res.ok) return false;
+            let cData = await res.json();
+            
+            const stepsOrder = [
+                'Event Reported',
+                'Evidence Collated',
+                'Submitted to Insurer',
+                'Under Review',
+                'Decision Advised'
+            ];
+            
+            let curStep = cData.current_step;
+            while (curStep !== 'Decision Advised' && stepsOrder.includes(curStep)) {
+                const advRes = await fetch(`/api/claims/${id}/advance`, { method: 'POST' });
+                if (!advRes.ok) return false;
+                
+                const nextRes = await fetch(`/api/claims/${id}`);
+                if (!nextRes.ok) return false;
+                cData = await nextRes.json();
+                curStep = cData.current_step;
+            }
+            return curStep === 'Decision Advised';
+        }
+
+        async function advanceClaim(id) {
+            if (currentRole !== 'admin') return;
+            const claim = claims.find(c => c.id === id);
+            if (!claim) return;
+            try {
+                if (claim.status === 'communication') {
+                    const response = await fetch(`/api/claims/${id}/resolve`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            outcome: 'Payment Confirmed',
+                            reason_code: 'claim_validated',
+                            notes: 'Approved via ClaimVault Simulation Dashboard'
+                        })
+                    });
+                    if (!response.ok) throw new Error('Resolve API failed');
+                } else {
+                    const response = await fetch(`/api/claims/${id}/advance`, { method: 'POST' });
+                    if (!response.ok) throw new Error('Advance API failed');
+                }
+                alert('Claim advanced successfully in database!');
+                await loadRealClaims();
+            } catch (err) {
+                alert('Failed to advance claim: ' + err.message);
+            }
+        }
+
+        async function resetClaim(id) {
+            if (currentRole !== 'admin') return;
+            const claim = claims.find(c => c.id === id);
+            if (!claim) return;
+            if (!confirm(`Reset claim ${claim.id} to Draft in the database?`)) return;
+            try {
+                const response = await fetch(`/api/claims/${id}/reset`, { method: 'POST' });
+                if (!response.ok) throw new Error('Reset API failed');
+                alert("Claim reset successfully in the database!");
+                await loadRealClaims();
+            } catch (err) {
+                alert("Failed to reset claim: " + err.message);
+            }
+        }
+
+        function setDelay(id) {
+            alert("Timing/delay flags are computed dynamically based on the claim's actual database timestamp.");
+        }
+
+        function setOntrack(id) {
+            alert("Timing/delay flags are computed dynamically based on the claim's actual database timestamp.");
+        }
+
+        function clearFlagOverride(id) {
+            alert("Timing/delay flags are computed dynamically based on the claim's actual database timestamp.");
+        }
+
+        async function rejectClaim(id) {
+            if (currentRole !== 'admin') return;
+            const claim = claims.find(c => c.id === id);
+            if (!claim) return;
+            if (!confirm(`Reject claim ${id} in this demonstration?`)) return;
+            try {
+                if (claim.status !== 'communication' && !['approved', 'settled', 'rejected'].includes(claim.status)) {
+                    const ok = await ensureDecisionAdvised(id);
+                    if (!ok) {
+                        alert("Could not transition claim to 'Decision Advised' stage for rejection.");
+                        return;
+                    }
+                }
+                const response = await fetch(`/api/claims/${id}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        outcome: 'Authorization Denied',
+                        reason_code: 'coverage_not_met',
+                        notes: 'Rejected via ClaimVault Simulation Dashboard'
+                    })
+                });
+                if (!response.ok) throw new Error('Reject API failed');
+                alert('Claim rejected successfully in database!');
+                await loadRealClaims();
+            } catch (err) {
+                alert('Failed to reject claim: ' + err.message);
+            }
+        }
+
+        async function simulateFullClaim(id) {
+            if (currentRole !== 'admin') return;
+            if (!confirm(`Run the complete stakeholder demonstration for ${id}?`)) return;
+            try {
+                const claim = claims.find(c => c.id === id);
+                if (!claim) return;
+                
+                await uploadAllDocs(id);
+                
+                let currentStatus = claim.status;
+                while (['draft', 'validation', 'submitted', 'under-review', 'communication'].includes(currentStatus)) {
+                    if (currentStatus === 'communication') {
+                        await fetch(`/api/claims/${id}/resolve`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                outcome: 'Payment Confirmed',
+                                reason_code: 'claim_validated',
+                                notes: 'Settled via complete simulation'
+                            })
+                        });
+                        break;
+                    } else {
+                        await fetch(`/api/claims/${id}/advance`, { method: 'POST' });
+                        const res = await fetch(`/api/claims/${id}`);
+                        const cData = await res.json();
+                        if (cData.current_step === 'Event Reported') currentStatus = 'draft';
+                        else if (cData.current_step === 'Evidence Collated') currentStatus = 'validation';
+                        else if (cData.current_step === 'Submitted to Insurer') currentStatus = 'submitted';
+                        else if (cData.current_step === 'Under Review') currentStatus = 'under-review';
+                        else if (cData.current_step === 'Decision Advised') currentStatus = 'communication';
+                        else break;
+                    }
+                }
+                alert('Simulation lifecycle completed successfully!');
+                await loadRealClaims();
+            } catch (err) {
+                alert('Simulation failed: ' + err.message);
+            }
+        }
+
+        async function submitClaim(id) {
+            const claim = claims.find(c => c.id === id);
+            if (!claim) return;
+            try {
+                if (claim.status === 'draft') {
+                    await fetch(`/api/claims/${id}/advance`, { method: 'POST' });
+                }
+                const res = await fetch(`/api/claims/${id}/advance`, { method: 'POST' });
+                if (!res.ok) throw new Error('API Submit to insurer failed.');
+                alert('Claim submitted to insurer successfully!');
+                await loadRealClaims();
+            } catch (err) {
+                alert('Failed to submit claim: ' + err.message);
+            }
+        }
+
+        async function insuredUpload(id) {
+            await uploadAllDocs(id);
+        }
+
+        async function sendComm(id) {
+            const input = document.getElementById('commInput');
+            if (!input) return;
+            const msg = input.value.trim();
+            if (!msg) return;
+            try {
+                const response = await fetch(`/api/claims/${id}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                if (!response.ok) throw new Error('API message post failed');
+                input.value = '';
+                await loadRealClaims();
+            } catch (err) {
+                alert('Failed to send message: ' + err.message);
+            }
+        }
+
+        async function simulateComm(id, from, message) {
+            try {
+                const response = await fetch(`/api/claims/${id}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: `Message: ${(message || 'We are reviewing your submitted documents.')}` })
+                });
+                if (!response.ok) throw new Error('API simulated message post failed');
+                await loadRealClaims();
+            } catch (err) {
+                alert('Failed to simulate communication: ' + err.message);
+            }
+        }
+
+        async function simulateUpload(id) {
+            await uploadAllDocs(id);
+        }
+
+        // ================================================================
+        // NEW CLAIM FORM
+        // ================================================================
+        document.getElementById('newClaimForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const type = document.getElementById('ncType').value;
+            const company = document.getElementById('ncCompany').value;
+            const policy = document.getElementById('ncPolicy').value.trim();
+            const holder = document.getElementById('ncHolder').value.trim();
+            const amount = parseFloat(document.getElementById('ncAmount').value);
+            const date = document.getElementById('ncDate').value;
+            const desc = document.getElementById('ncDesc').value.trim();
+
+            if (!policy || !holder || !amount || !date) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            let finalHolder = holder;
+            if (currentRole === 'insured') {
+                finalHolder = LOGGED_IN_USER;
+                document.getElementById('ncHolder').value = LOGGED_IN_USER;
+            }
+
+            // Map UI type to database type
+            let dbType = 'Other';
+            if (type === 'health') dbType = 'Health';
+            else if (type === 'critical') dbType = 'Critical Health';
+            else if (type === 'car') dbType = 'Car / Motorcycle';
+            else if (type === 'home') dbType = 'Home';
+            else if (type === 'accident') dbType = 'Accident';
+            else if (type === 'accidental-death') dbType = 'Accidental Death';
+
+            try {
+                // Fetch active products
+                const prodRes = await fetch('/api/products?status=active');
+                if (!prodRes.ok) throw new Error('Failed to load active policies from database.');
+                const productsList = await prodRes.json();
+
+                let matchedProduct = productsList.find(p => p.policy_number === policy);
+                if (!matchedProduct) {
+                    matchedProduct = productsList.find(p => p.client_name && p.client_name.toLowerCase().includes(finalHolder.toLowerCase()));
+                }
+                if (!matchedProduct) {
+                    matchedProduct = productsList[0];
+                }
+                if (!matchedProduct) {
+                    throw new Error("No active policies exist in the system database. Please create a policy or application first.");
+                }
+
+                const payload = {
+                    client_id: matchedProduct.client_id,
+                    policy_id: matchedProduct.id,
+                    type: dbType,
+                    amount: amount,
+                    description: desc || 'Claim created via simulation'
+                };
+
+                const response = await fetch('/api/claims', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errDetail = await response.json();
+                    throw new Error(errDetail.detail || 'Failed to submit claim to database');
+                }
+
+                alert('Claim submitted to database successfully!');
+                document.getElementById('newClaimForm').reset();
+                if (currentRole === 'insured') {
+                    document.getElementById('ncHolder').value = LOGGED_IN_USER;
+                }
+                loadRealClaims();
+                navigateTo('dashboard');
+            } catch (err) {
+                alert('Error creating claim: ' + err.message);
+                console.error(err);
+            }
+        });
+
+        // ================================================================
+        // NAVIGATION
+        // ================================================================
+        function navigateTo(page) {
+            document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('page-' + page);
+            if (target) target.classList.add('active');
+
+            document.querySelectorAll('.sidebar .nav-item').forEach(el => el.classList.remove('active'));
+            const navItem = document.querySelector(`.sidebar .nav-item[data-page="${page}"]`);
+            if (navItem) navItem.classList.add('active');
+
+            const titleMap = {
+                'dashboard': 'Dashboard',
+                'claims': 'All Claims',
+                'new-claim': 'New Claim',
+                'messages': 'Messages',
+                'health': 'Health Insurance',
+                'car': 'Car / Motorcycle',
+                'home': 'Home Insurance',
+                'critical': 'Critical Health',
+                'accident': 'Accident',
+                'death': 'Accidental Death',
+                'other': 'Other Insurance',
+                'detail': 'Claim Detail',
+                'settings': 'Settings',
+            };
+            const title = titleMap[page] || page;
+            const roleSuffix = currentRole === 'admin' ? '' : ' (Insured)';
+            document.getElementById('pageTitle').innerHTML = title + ' <small>' + (page === 'dashboard' ? 'overview' : '') +
+                roleSuffix + '</small>';
+            currentPage = page;
+
+            // Close mobile sidebar
+            closeSidebar();
+        }
+
+        // Hamburger logic
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('active');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('active');
+        }
+        document.getElementById('hamburgerBtn')?.addEventListener('click', openSidebar);
+        document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
+
+        // Sidebar clicks with keyboard support
+        document.querySelectorAll('.sidebar .nav-item[data-page]').forEach(item => {
+            item.setAttribute('role', 'button');
+            item.setAttribute('tabindex', '0');
+            item.addEventListener('click', function() {
+                const page = this.dataset.page;
+                if (page === 'settings') {
+                    alert('Settings panel coming soon.');
+                    return;
+                }
+                if (page === 'detail') return;
+                navigateTo(page);
+                if (page === 'claims') renderAllClaims();
+                if (page === 'messages') renderMessages();
+                if (['health', 'car', 'home', 'critical', 'accident', 'death', 'other'].includes(page)) {
+                    renderTypePages();
+                }
+                if (page === 'dashboard') renderDashboard();
+                if (page === 'new-claim' && currentRole === 'insured') {
+                    document.getElementById('ncHolder').value = LOGGED_IN_USER;
+                    document.getElementById('ncHolder').readOnly = true;
+                } else {
+                    document.getElementById('ncHolder').readOnly = false;
+                }
+            });
+            item.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    item.click();
+                }
+            });
+        });
+
+        document.getElementById('newClaimBtn')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            navigateTo('new-claim');
+            if (currentRole === 'insured') {
+                document.getElementById('ncHolder').value = LOGGED_IN_USER;
+                document.getElementById('ncHolder').readOnly = true;
+            }
+        });
+
+        document.getElementById('bellIcon')?.addEventListener('click', function() {
+            navigateTo('messages');
+            renderMessages();
+        });
+
+        document.getElementById('filterType')?.addEventListener('change', renderAllClaims);
+        document.getElementById('filterStatus')?.addEventListener('change', renderAllClaims);
+
+        document.querySelectorAll('.stat-card[data-filter]').forEach(card => {
+            card.addEventListener('click', function() {
+                const filter = this.dataset.filter;
+                navigateTo('claims');
+                document.getElementById('filterStatus').value = 'all';
+                window._statFilter = filter;
+                renderAllClaims();
+            });
+        });
+
+        document.querySelectorAll('#roleToggle button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const role = this.dataset.role;
+                if (role === currentRole) return;
+                currentRole = role;
+                document.querySelectorAll('#roleToggle button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('userAvatar').textContent = role === 'admin' ? 'AD' : loggedInUserInitials;
+                renderAll();
+                navigateTo('dashboard');
+                if (currentRole === 'insured') {
+                    document.getElementById('ncHolder').value = LOGGED_IN_USER;
+                    document.getElementById('ncHolder').readOnly = true;
+                } else {
+                    document.getElementById('ncHolder').value = '';
+                    document.getElementById('ncHolder').readOnly = false;
+                }
+                window._statFilter = null;
+            });
+        });
+
+        // Prevent future incident dates
+        const incidentDateInput = document.getElementById('ncDate');
+        if (incidentDateInput) {
+            incidentDateInput.max = new Date().toISOString().split('T')[0];
+        }
+
+        // ================================================================
+        // RENDER ALL
+        // ================================================================
+        function renderAll() {
+            loadRealClaims();
+            renderTypePages();
+            renderMessages();
+        }
+
+        // ================================================================
+        // INIT
+        // ================================================================
+        renderAll();
+        navigateTo('dashboard');
+        if (currentRole === 'insured') {
+            document.getElementById('ncHolder').value = LOGGED_IN_USER;
+            document.getElementById('ncHolder').readOnly = true;
+        }
+
+        // Expose globals
+        window.showClaimDetail = showClaimDetail;
+        window.advanceClaim = advanceClaim;
+        window.resetClaim = resetClaim;
+        window.submitClaim = submitClaim;
+        window.sendComm = sendComm;
+        window.simulateComm = simulateComm;
+        window.simulateUpload = simulateUpload;
+        window.simulateFullClaim = simulateFullClaim;
+        window.insuredUpload = insuredUpload;
+        window.setDelay = setDelay;
+        window.setOntrack = setOntrack;
+        window.clearFlagOverride = clearFlagOverride;
+        window.rejectClaim = rejectClaim;
+        window.navigateTo = navigateTo;
+        window.renderAll = renderAll;
+
+        console.log('🏛️ ClaimVault – Pakistan Insurance (final clean prototype)');
+    </script>
+</body>
+</html>

@@ -11,6 +11,45 @@ import { SearchFilterBar } from '../components/common/SearchFilterBar';
 import { Modal } from '../components/common/Modal';  
 import { can } from '../utils/permissions';  
 import toast from 'react-hot-toast';  
+
+const getFlag = (claim: any) => {
+  const CLOSED_STEPS = new Set([
+    'Payment Confirmed',
+    'Authorization Denied',
+    'Partially Approved',
+    'Fraud Review',
+  ]);
+  if (CLOSED_STEPS.has(claim.current_step)) return 'ontrack';
+  const changedAt = new Date(claim.updated_at || claim.created_at).getTime();
+  const elapsedDays = Math.max(0, (Date.now() - changedAt) / 86400000);
+  if (elapsedDays < 3) return 'ontrack';
+  if (elapsedDays < 7) return 'delayed';
+  return 'overdue';
+};
+
+const getDefaultDocs = (type: string) => {
+  const base = [
+    { name: 'Policy Document', type: 'policy' },
+    { name: 'Application Form', type: 'application' },
+    { name: 'CNIC Copy', type: 'cnic' },
+  ];
+  const extra: Record<string, Array<{ name: string; type: string }>> = {
+    'Health': [{ name: 'Medical Records', type: 'medical' }],
+    'Critical Health': [{ name: 'Diagnosis Report', type: 'diagnosis' }],
+    'Car / Motorcycle': [
+      { name: 'Accident Report', type: 'report' },
+      { name: 'Photos', type: 'photos' },
+    ],
+    'Home': [{ name: 'Damage Assessment', type: 'assessment' }],
+    'Accident': [{ name: 'Police Report', type: 'police' }],
+    'Accidental Death': [
+      { name: 'Death Certificate', type: 'certificate' },
+      { name: 'Police Report', type: 'police' },
+    ],
+    'Other': [{ name: 'Supporting Documents', type: 'support' }],
+  };
+  return [...base, ...(extra[type] || [])];
+};
   
 export const Claims: React.FC = () => {  
   const { user } = useAuth();  
@@ -37,14 +76,16 @@ export const Claims: React.FC = () => {
   });  
   const clients = clientData.map((c: any) => ({ id: c.id, name: c.name }));  
   
+  const effectiveClientId = user?.role === 'client' ? user.client_id || '' : newClaim.client_id;
+
   // Fetch products for policy selector (only when modal is open)  
   const { data: productData = [] } = useQuery({  
-    queryKey: ['active-products-for-claim', newClaim.client_id],  
+    queryKey: ['active-products-for-claim', effectiveClientId],  
     queryFn: () => getProducts({ status: 'active' }),  
-    enabled: isModalOpen,  
+    enabled: isModalOpen && !!effectiveClientId,  
   });  
   const policies = productData  
-    .filter((p: any) => p.client_id === newClaim.client_id && p.policy_number)  
+    .filter((p: any) => p.client_id === effectiveClientId && p.policy_number)  
     .map((p: any) => ({ id: p.id, label: p.product_label }));  
   
   const { data, isLoading } = useQuery({  
@@ -122,6 +163,16 @@ export const Claims: React.FC = () => {
         </Badge>  
       ),  
     },  
+    {
+      key: 'flag',
+      header: 'Flag',
+      render: (_: any, row: Claim) => {
+        const flag = getFlag(row);
+        const typeMap: Record<string, string> = { ontrack: 'approved', delayed: 'gold', overdue: 'rejected' };
+        const labelMap: Record<string, string> = { ontrack: 'On Track', delayed: 'Delayed', overdue: 'Overdue' };
+        return <Badge type={typeMap[flag]}>{labelMap[flag]}</Badge>;
+      }
+    },
     {  
       key: 'actions',  
       header: 'Actions',  
@@ -131,7 +182,7 @@ export const Claims: React.FC = () => {
           <div className="flex gap-2 flex-wrap">  
             <button  
               className="btn-sm primary"  
-              onClick={() => navigate(`/claims/${row.id}`)}  
+              onClick={() => navigate(`/dashboard/claims/${row.id}`)}  
             >  
               View  
             </button>  
@@ -180,8 +231,53 @@ export const Claims: React.FC = () => {
   
   const stepOptions = ['all', 'Event Reported', 'Evidence Collated', 'Submitted to Insurer', 'Under Review', 'Decision Advised'];  
   
+  const claimsList = data || [];
+  const totalClaims = claimsList.length;
+  const pendingValidation = claimsList.filter((c: any) => c.current_step === 'Evidence Collated').length;
+  const underReview = claimsList.filter((c: any) => c.current_step === 'Under Review' || c.current_step === 'Submitted to Insurer').length;
+  const settled = claimsList.filter((c: any) => c.current_step === 'Payment Confirmed').length;
+
   return (  
     <div>  
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Claims</span>
+            <h3 className="text-2xl font-bold text-gray-800 mt-1">{totalClaims}</h3>
+          </div>
+          <div className="p-3 bg-blue-50 text-blue-500 rounded-lg">
+            <i className="fas fa-file-invoice text-xl"></i>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pending Validation</span>
+            <h3 className="text-2xl font-bold text-gray-800 mt-1">{pendingValidation}</h3>
+          </div>
+          <div className="p-3 bg-yellow-50 text-yellow-500 rounded-lg">
+            <i className="fas fa-clipboard-check text-xl"></i>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Under Review</span>
+            <h3 className="text-2xl font-bold text-gray-800 mt-1">{underReview}</h3>
+          </div>
+          <div className="p-3 bg-purple-50 text-purple-500 rounded-lg">
+            <i className="fas fa-search text-xl"></i>
+          </div>
+        </div>
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Settled</span>
+            <h3 className="text-2xl font-bold text-gray-800 mt-1">{settled}</h3>
+          </div>
+          <div className="p-3 bg-green-50 text-green-500 rounded-lg">
+            <i className="fas fa-check-circle text-xl"></i>
+          </div>
+        </div>
+      </div>
+
       <div className="flex justify-between items-center mb-4">  
         <SearchFilterBar  
           search={search}  
@@ -240,7 +336,7 @@ export const Claims: React.FC = () => {
               className="form-input"  
               value={newClaim.policy_id}  
               onChange={(e) => setNewClaim({ ...newClaim, policy_id: e.target.value })}  
-              disabled={!newClaim.client_id}  
+              disabled={!effectiveClientId}  
             >  
               <option value="">Select policy</option>  
               {policies.map((p: any) => (  
@@ -256,12 +352,13 @@ export const Claims: React.FC = () => {
               onChange={(e) => setNewClaim({ ...newClaim, type: e.target.value })}  
             >  
               <option value="">Select type</option>  
-              <option value="Accident">Accident</option>  
-              <option value="Theft">Theft</option>  
               <option value="Health">Health</option>  
-              <option value="Life">Life</option>  
-              <option value="Property">Property</option>  
-              <option value="Travel">Travel</option>  
+              <option value="Critical Health">Critical Health</option>  
+              <option value="Car / Motorcycle">Car / Motorcycle</option>  
+              <option value="Home">Home</option>  
+              <option value="Accident">Accident</option>  
+              <option value="Accidental Death">Accidental Death</option>  
+              <option value="Other">Other</option>  
             </select>  
           </div>  
           <div className="form-group">  
@@ -282,6 +379,16 @@ export const Claims: React.FC = () => {
               onChange={(e) => setNewClaim({ ...newClaim, description: e.target.value })}  
             />  
           </div>  
+          {newClaim.type && (
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100 text-xs">
+              <span className="font-semibold text-blue-800 block mb-1">Required Documents Checklist:</span>
+              <ul className="list-disc pl-4 text-blue-700 space-y-0.5">
+                {getDefaultDocs(newClaim.type).map((d: any, idx: number) => (
+                  <li key={idx}>{d.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>  
       </Modal>  
     </div>  

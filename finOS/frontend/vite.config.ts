@@ -10,6 +10,8 @@ export default defineConfig({
         server.middlewares.use((req, res, next) => {
           if (req.url === '/') {
             req.url = '/vanilla.html';
+          } else if (req.url === '/dashboard/claim-vault' || req.url === '/dashboard/claim-vault/') {
+            req.url = '/claimvault.html';
           }
           next();
         });

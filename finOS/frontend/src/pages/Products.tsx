@@ -39,7 +39,7 @@ export const Products: React.FC = () => {
       key: 'actions',  
       header: 'Actions',  
       render: (_: any, row: Product) => (  
-        <button className="btn-sm primary" onClick={() => navigate(`/products/${row.id}`)}>  
+        <button className="btn-sm primary" onClick={() => navigate(`/dashboard/products/${row.id}`)}>  
           View  
         </button>  
       ),  

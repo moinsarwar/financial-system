@@ -77,7 +77,7 @@ export const Documents: React.FC = () => {
       key: 'actions',  
       header: 'Actions',  
       render: (_: any, row: Document) => (  
-        <button className="btn-sm primary" onClick={() => navigate(`/documents/${row.id}`)}>  
+        <button className="btn-sm primary" onClick={() => navigate(`/dashboard/documents/${row.id}`)}>  
           Preview  
         </button>  
       ),  

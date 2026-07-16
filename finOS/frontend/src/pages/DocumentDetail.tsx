@@ -27,10 +27,10 @@ export const DocumentDetail: React.FC = () => {
   return (  
     <DetailPanel  
       isOpen={true}  
-      onClose={() => navigate('/documents')}  
+      onClose={() => navigate('/dashboard/documents')}  
       title={data.name}  
       subhead={`${data.type} · ${data.client_name}`}  
-      actions={<button className="btn-sm outline" onClick={() => navigate('/documents')}>Close</button>}  
+      actions={<button className="btn-sm outline" onClick={() => navigate('/dashboard/documents')}>Close</button>}  
     >  
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">  
         <div><span className="font-semibold">Document ID:</span> {data.id}</div>  

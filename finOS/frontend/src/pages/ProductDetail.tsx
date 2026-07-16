@@ -20,10 +20,10 @@ export const ProductDetail: React.FC = () => {
   return (  
     <DetailPanel  
       isOpen={true}  
-      onClose={() => navigate('/products')}  
+      onClose={() => navigate('/dashboard/products')}  
       title={data.policy_number || data.id}  
       subhead={`${data.product_label} · ${data.client_name}`}  
-      actions={<button className="btn-sm outline" onClick={() => navigate('/products')}>Close</button>}  
+      actions={<button className="btn-sm outline" onClick={() => navigate('/dashboard/products')}>Close</button>}  
     >  
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">  
         <div><span className="font-semibold">Product:</span> {data.product_label}</div>  

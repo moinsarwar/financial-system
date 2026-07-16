@@ -90,7 +90,7 @@ export const Applications: React.FC = () => {
         <div className="flex gap-2">  
           <button  
             className="btn-sm primary"  
-            onClick={() => navigate(`/applications/${row.id}`)}  
+            onClick={() => navigate(`/dashboard/applications/${row.id}`)}  
           >  
             View  
           </button>  

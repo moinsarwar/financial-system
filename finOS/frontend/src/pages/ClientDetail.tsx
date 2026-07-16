@@ -20,11 +20,11 @@ export const ClientDetail: React.FC = () => {
   return (  
     <DetailPanel  
       isOpen={true}  
-      onClose={() => navigate('/clients')}  
+      onClose={() => navigate('/dashboard/clients')}  
       title={data.name}  
       subhead={`${data.email}${data.phone ? ` · ${data.phone}` : ''}`}  
       actions={  
-        <button className="btn-sm outline" onClick={() => navigate('/clients')}>  
+        <button className="btn-sm outline" onClick={() => navigate('/dashboard/clients')}>  
           Close  
         </button>  
       }  

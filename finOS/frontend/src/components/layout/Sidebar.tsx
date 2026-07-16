@@ -8,21 +8,22 @@ interface Props { user: User | null; currentPath: string; open: boolean; onClose
   
 const navItems = {  
   operations: [  
-    { to: '/', label: '📊 Dashboard' },  
-    { to: '/clients', label: '👤 Clients' },  
-    { to: '/applications', label: '📋 Applications' },  
-    { to: '/claims', label: '📄 Claims' },  
-    { to: '/products', label: '📦 Products' },  
-    { to: '/documents', label: '📁 Documents' },  
-    { to: '/activity', label: '📜 Activity' },  
+    { to: '/dashboard', label: '📊 Dashboard' },  
+    { to: '/dashboard/clients', label: '👤 Clients' },  
+    { to: '/dashboard/applications', label: '📋 Applications' },  
+    { to: '/dashboard/claims', label: '📄 Claims' },  
+    { to: '/dashboard/products', label: '📦 Products' },  
+    { to: '/dashboard/documents', label: '📁 Documents' },  
+    { to: '/dashboard/activity', label: '📜 Activity' },  
+    { to: '/dashboard/claim-vault', label: '🧪 ClaimVault Simulation' },  
   ],  
   client: [  
-    { to: '/', label: '📊 Dashboard' },  
-    { to: '/applications', label: '📋 My Applications' },  
-    { to: '/claims', label: '📄 My Claims' },  
-    { to: '/products', label: '📦 My Products' },  
-    { to: '/documents', label: '📁 My Documents' },  
-    { to: '/activity', label: '📜 Activity' },  
+    { to: '/dashboard', label: '📊 Dashboard' },  
+    { to: '/dashboard/applications', label: '📋 My Applications' },  
+    { to: '/dashboard/claims', label: '📄 My Claims' },  
+    { to: '/dashboard/products', label: '📦 My Products' },  
+    { to: '/dashboard/documents', label: '📁 My Documents' },  
+    { to: '/dashboard/activity', label: '📜 Activity' },  
   ],  
 };  
   
@@ -38,22 +39,36 @@ export const Sidebar: React.FC<Props> = ({ user, currentPath, open, onClose }) =
   }, [open]);  
   
   if (!user) return null;  
-  const items = user.role === 'client' ? navItems.client : navItems.operations;  
-  // Filter items based on permissions (simple)  
-  const filtered = items.filter(item => {  
-    if (item.to === '/activity') return can(user.role, 'activity.read_all');  
+  const role = user?.role?.toLowerCase() === 'client' ? 'client' : 'operations';  
+  const rawItems = navItems[role] || [];  
+  const filtered = rawItems.filter(item => {  
+    if (item.to === '/dashboard/activity') {
+      return can(user.role, 'activity.read_all');  
+    }
     return true;  
   });  
   
   const content = (  
     <div className="bg-gray-50 border-r border-gray-200 h-full w-48 p-3">  
-      {filtered.map(item => (  
-        <Link key={item.to} to={item.to} onClick={onClose}  
-              className={clsx('block px-3 py-2 rounded-md text-sm font-medium transition',  
-                currentPath === item.to ? 'bg-accent-soft text-primary border-r-2 border-accent' : 'text-gray-600 hover:bg-gray-100')}>  
-          {item.label}  
-        </Link>  
-      ))}  
+      {filtered.map(item => {
+        const isExternal = item.to === '/dashboard/claim-vault';
+        const linkClass = clsx(
+          'block px-3 py-2 rounded-md text-sm font-medium transition',
+          currentPath === item.to ? 'bg-accent-soft text-primary border-r-2 border-accent' : 'text-gray-600 hover:bg-gray-100'
+        );
+        if (isExternal) {
+          return (
+            <a key={item.to} href={item.to} onClick={onClose} className={linkClass}>
+              {item.label}
+            </a>
+          );
+        }
+        return (
+          <Link key={item.to} to={item.to} onClick={onClose} className={linkClass}>
+            {item.label}
+          </Link>
+        );
+      })}  
     </div>  
   );  
   

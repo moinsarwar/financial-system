@@ -123,3 +123,22 @@ def resolve_claim_service(db: Session, claim_id: str, resolution: ClaimResolutio
     db.flush()  
     db.refresh(claim)  
     return claim
+
+def add_claim_message(db: Session, claim_id: str, message: str, current_user: User):
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
+    if not claim:
+        raise ValueError("Claim not found")
+    if current_user.role == UserRole.CLIENT and claim.client_id != current_user.client_id:
+        raise PermissionError("Cannot access this claim")
+    
+    new_event = {
+        "time": datetime.now(timezone.utc).isoformat(),
+        "event": f"Message: {message}",
+        "user": current_user.full_name or current_user.id
+    }
+    claim.timeline = (claim.timeline or []) + [new_event]
+    claim.updated_at = datetime.now(timezone.utc)
+    db.flush()
+    db.refresh(claim)
+    return claim
+
