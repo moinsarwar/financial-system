@@ -1563,8 +1563,8 @@
         const originalFetch = window.fetch;
         window.fetch = async function(url, options = {}) {
             let finalUrl = url;
-            if (url && url.startsWith('/api')) {
-                finalUrl = 'http://localhost:8000' + url;
+            if (url && url.startsWith('/api') && !url.endsWith('/') && !url.includes('?') && !url.includes('.')) {
+                finalUrl = url + '/';
             }
             const token = localStorage.getItem('access_token');
             if (token) {
