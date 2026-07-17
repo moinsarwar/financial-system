@@ -32,35 +32,36 @@ FinVault is the application-origination counterpart to ClaimVault. This reposito
 - Seed users and sample applications
 - Backend API tests
 
+## Integration with finOS
+
+FinVault is designed to connect directly with the **finOS** database, acting as the frontend channel and workflow management layer on top of the core banking/insurance data. It reads from and writes to the `applications` table in the finOS schema, seamlessly translating status updates into finOS's expected formats.
+
 ## Start with Docker
 
 ```bash
-cp .env.example .env
-docker compose up --build
+docker compose up -d --build
 ```
 
 Open:
 
-- Frontend: http://localhost:8080
-- API documentation: http://localhost:8000/docs
-- Health endpoint: http://localhost:8000/health
+- Frontend: http://localhost:8003
+- API documentation: http://localhost:8002/docs
+- Health endpoint: http://localhost:8002/health
 
 ## Seed credentials
 
 | Role | Username | Password |
 |---|---|---|
-| Administrator | `admin` | `Admin123!` |
-| Applicant | `ahmed` | `User123!` |
-| Applicant | `sana` | `User123!` |
+| Administrator | `admin` | `a` |
+| Applicant | Any `finOS` Client ID (e.g. `c1`) | `User123!` (Mocked) |
 
 ## Local backend verification
 
 ```bash
 cd backend
 python -m venv .venv
-. .venv/bin/activate
+source .venv/bin/activate
 pip install -r requirements.txt
-pytest
 ```
 
 ## Local frontend verification
