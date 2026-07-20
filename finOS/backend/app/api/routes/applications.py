@@ -19,10 +19,41 @@ from app.models.application import Application
 from app.models.document import Document
 from app.services.audit_service import log_audit
 import uuid
+import httpx
+import threading
 from datetime import datetime, timezone
 from pydantic import BaseModel
 from app.services.product_service import create_product_from_application
 from app.services.workflow_service import get_workflow
+
+def _send_to_finvault_async(payload: dict):
+    try:
+        with httpx.Client() as client:
+            client.post("http://finvault-backend-1:8000/api/integrations/applications", json=payload, timeout=5.0)
+    except Exception as e:
+        print(f"FinVault webhook failed: {e}")
+
+def notify_finvault(app: Application, client: Client):
+    try:
+        cnic_val = None
+        if app.unified_data:
+            cnic_val = app.unified_data.get("nationalId")
+
+        payload = {
+            "source_system": "finos",
+            "source_application_id": app.id,
+            "applicant": {
+                "external_user_id": client.id,
+                "name": client.name,
+                "cnic": cnic_val
+            },
+            "product_type": app.product_type,
+            "amount": float(app.amount) if app.amount else None,
+            "details": f"Unified Application for {app.product_label}"
+        }
+        threading.Thread(target=_send_to_finvault_async, args=(payload,)).start()
+    except Exception as e:
+        print(f"Error preparing finvault webhook: {e}")
 
 from app.schemas.unified import (
     UnifiedApplicationRequest,
@@ -322,6 +353,8 @@ def create_unified_application(
 
         db.commit()
         db.refresh(application)
+        
+        notify_finvault(application, client)
     except Exception:
         db.rollback()
         raise
@@ -382,6 +415,11 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
     db.add(app)
     db.commit()
     db.refresh(app)
+    
+    client_obj = db.query(Client).filter(Client.id == demo_user.client_id).first()
+    if client_obj:
+        notify_finvault(app, client_obj)
+
     return {"application_id": app.id}
 
 @router.post("/public/{app_id}/simulate-issue-policy")
@@ -419,3 +457,38 @@ def public_simulate_issue_policy(app_id: str, db: Session = Depends(get_db)):
         }
     
     return {"status": "approved"}
+
+class FinVaultWebhookPayload(BaseModel):
+    source_application_id: str
+    status: str
+    reason: str | None = None
+
+@router.post("/public/webhook/finvault/status")
+def finvault_status_webhook(
+    payload: FinVaultWebhookPayload,
+    db: Session = Depends(get_db),
+):
+    app = db.query(Application).filter(Application.id == payload.source_application_id).first()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    terminal_success_statuses = ["disbursed", "policy-issued", "card-issued", "account-created", "activated", "completed", "approved", "accepted"]
+    
+    if payload.status in terminal_success_statuses:
+        app.status = "completed"
+        app.current_step = "Completed"
+        create_product_from_application(db, app)
+    elif payload.status == "rejected":
+        app.status = "rejected"
+    else:
+        app.status = payload.status
+
+    app.updated_at = datetime.now(timezone.utc)
+    if payload.reason:
+        app.timeline.append({
+            "action": f"Status updated to {payload.status} via FinVault",
+            "date": datetime.now(timezone.utc).isoformat(),
+            "notes": payload.reason
+        })
+    db.commit()
+    return {"status": "ok"}

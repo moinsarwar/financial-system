@@ -15,7 +15,11 @@ def get_app(db,num,user):
  a=db.scalar(query_for(user).where(M.Application.application_number==num))
  if not a: raise HTTPException(404,'Application not found')
  return a
-def summary(a): return S.ApplicationSummary(application_number=a.application_number,applicant_name=a.applicant.name,applicant_public_id=a.applicant.public_id,product_type=a.product_type,status=a.status,amount=a.amount,version=a.version,created_at=a.created_at,document_count=len(a.documents),uploaded_count=sum(d.status in {M.DocumentStatus.UPLOADED,M.DocumentStatus.VERIFIED} for d in a.documents))
+def summary(a):
+ label = a.product_type.value.replace('-', ' ').title()
+ if getattr(a, 'source_system', None) == 'finos' and a.details and a.details.startswith('Unified Application for '):
+  label = a.details.replace('Unified Application for ', '')
+ return S.ApplicationSummary(application_number=a.application_number,applicant_name=a.applicant.name,applicant_public_id=a.applicant.public_id,product_type=a.product_type,product_label=label,status=a.status,amount=a.amount,version=a.version,created_at=a.created_at,document_count=len(a.documents),uploaded_count=sum(d.status in {M.DocumentStatus.UPLOADED,M.DocumentStatus.VERIFIED} for d in a.documents))
 def detail(a): return S.ApplicationDetail(**summary(a).model_dump(),details=a.details,account_data=a.account_data,status_changed_at=a.status_changed_at,status_events=a.status_events,documents=a.documents,info_requests=a.info_requests)
 def system_user(db): return db.scalar(select(M.User).where(M.User.role==M.UserRole.SYSTEM))
 def add_message(db,a,sender,text):
@@ -44,7 +48,15 @@ def transition(db,a,target,actor,reason=None,expected=None):
   if terminal(old,a.product_type): raise HTTPException(400,'Application is terminal')
   a.rejected_from_status=a.exception_return_status if old==M.ApplicationStatus.ADDITIONAL_INFO else old
  elif target!=next_status(old,a.product_type): raise HTTPException(400,f'Invalid transition from {old.value} to {target.value}')
- a.status=target; a.status_changed_at=datetime.now(timezone.utc); db.add(M.StatusEvent(application_id=a.id,from_status=old,to_status=target,changed_by_id=actor.id,reason=reason)); audit(db,actor,'status_changed',{'from':old.value,'to':target.value,'reason':reason},a); add_message(db,a,actor,f'Application moved to {target.value}.'); db.commit(); return get_app(db,a.application_number,actor)
+ a.status=target; a.status_changed_at=datetime.now(timezone.utc); db.add(M.StatusEvent(application_id=a.id,from_status=old,to_status=target,changed_by_id=actor.id,reason=reason)); audit(db,actor,'status_changed',{'from':old.value,'to':target.value,'reason':reason},a); add_message(db,a,actor,f'Application moved to {target.value}.'); db.commit()
+ if a.source_system == 'finos' and a.source_application_id:
+  import threading, httpx
+  def _send():
+   try:
+    with httpx.Client() as c: c.post('http://finos-backend-1:8000/api/applications/public/webhook/finvault/status', json={'source_application_id': a.source_application_id, 'status': target.value, 'reason': reason}, timeout=5.0)
+   except: pass
+  threading.Thread(target=_send).start()
+ return get_app(db,a.application_number,actor)
 def request_info(db,a,data,actor):
  if actor.role!=M.UserRole.ADMIN or terminal(a.status,a.product_type) or a.status==M.ApplicationStatus.ADDITIONAL_INFO: raise HTTPException(400,'Cannot request information now')
  a.exception_return_status=a.status; old=a.status; a.status=M.ApplicationStatus.ADDITIONAL_INFO; a.status_changed_at=datetime.now(timezone.utc)

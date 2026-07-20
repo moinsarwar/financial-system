@@ -1,11 +1,15 @@
+import os
 from sqlalchemy import select
 from .database import SessionLocal,Base,engine
 from .models import *
 from .security import hash_password
 from .schemas import ApplicationCreate,AccountData
 from .services import create_application,transition
-Base.metadata.create_all(engine)
+
 def run():
+ if os.getenv("SEED_DUMMY_DATA", "false").lower() != "true":
+  print("Seeding skipped (SEED_DUMMY_DATA!=true)")
+  return
  db=SessionLocal()
  try:
   if db.scalar(select(User.id).limit(1)): return

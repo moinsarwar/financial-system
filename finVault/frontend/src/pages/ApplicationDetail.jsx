@@ -22,7 +22,7 @@ export default function ApplicationDetail(){
   async function send(){await act(()=>api.post(`/applications/${number}/messages`,{message:msg}));setMsg('');}
   async function downloadDoc(d){try{const r=await api.get(`/applications/${number}/documents/${d.requirement_code}/download`,{responseType:'blob'});const url=URL.createObjectURL(r.data);const link=document.createElement('a');link.href=url;link.download=d.original_name||d.display_name;link.click();URL.revokeObjectURL(url)}catch(e){setError(e.response?.data?.detail||'Download failed.')}}
   return <>
-    <div className="detailhead"><div><h2>{a.application_number}</h2><p>{a.product_type} · {a.applicant_name}</p></div><span className="badge big">{labels[a.status]||a.status}</span></div>
+    <div className="detailhead"><div><h2>{a.application_number}</h2><p>{a.product_label} · {a.applicant_name}</p></div><span className="badge big">{labels[a.status]||a.status}</span></div>
     {error&&<p className="error">{String(error)}</p>}
     <div className="progressline">{flow.map((s,i)=><div key={s} className={(i<idx?'done ':i===idx?'active ':'')+'progressstep'}><span>{i+1}</span><small>{labels[s]}</small></div>)}</div>
     {user.role==='admin'&&<div className="actions">

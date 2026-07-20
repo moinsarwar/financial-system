@@ -113,6 +113,7 @@ class ApplicationSummary(BaseModel):
     applicant_name: str
     applicant_public_id: str
     product_type: ProductType
+    product_label: str
     status: ApplicationStatus
     amount: Decimal | None
     version: int
