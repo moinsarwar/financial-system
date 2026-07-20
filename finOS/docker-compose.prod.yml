@@ -37,6 +37,9 @@ services:
     depends_on:  
       db:  
         condition: service_healthy  
+    networks:
+      - default
+      - finvault_net
   
   frontend:  
     build:  
@@ -52,3 +55,9 @@ services:
 volumes:  
   postgres_data:
   document_uploads:
+
+networks:
+  default:
+  finvault_net:
+    external: true
+    name: finvault_default
