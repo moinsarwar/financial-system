@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';  
 import { getApplications, advanceApplication, Application, createApplication } from '../api/applications';  
 import { getClients } from '../api/clients';  
+import { getFrontProducts } from '../api/products';
 import { useAuth } from '../contexts/AuthContext';  
 import { useSearchParams, useNavigate } from 'react-router-dom';  
 import { Table } from '../components/common/Table';  
@@ -21,14 +22,23 @@ export const Applications: React.FC = () => {
   const department = searchParams.get('department') || 'all';  
   const status = searchParams.get('status') || 'all';  
   const [isModalOpen, setIsModalOpen] = useState(false);  
-  const [newApp, setNewApp] = useState({ client_id: '', product_type: 'loan', amount: 10000 });  
-  
+  const [newApp, setNewApp] = useState<{
+    client_id: string;
+    product_type: string;
+    product_id: string;
+    amount: number;
+  }>({ client_id: '', product_type: 'personal_loan', product_id: '', amount: 10000 });  
   // Fetch clients for dropdown  
   const { data: clientData = [] } = useQuery({  
     queryKey: ['clients-list'],  
     queryFn: () => getClients({}),  
   });  
   const clients = clientData.map((c: any) => ({ id: c.id, name: c.name }));  
+
+  const { data: frontProductsData = [] } = useQuery({
+    queryKey: ['front-products'],
+    queryFn: () => getFrontProducts(),
+  });
   
   const { data, isLoading } = useQuery({  
     queryKey: ['applications', { search, step, department, status }],  
@@ -57,7 +67,7 @@ export const Applications: React.FC = () => {
       toast.success('Application created');  
       queryClient.invalidateQueries({ queryKey: ['applications'] });  
       setIsModalOpen(false);  
-      setNewApp({ client_id: '', product_type: 'loan', amount: 10000 });  
+      setNewApp({ client_id: '', product_type: 'personal_loan', product_id: '', amount: 10000 });  
     },  
     onError: (err: any) => {  
       toast.error(err.response?.data?.detail || 'Failed to create application');  
@@ -161,11 +171,18 @@ export const Applications: React.FC = () => {
         title="Create New Application"  
         onSave={() => {  
           const effectiveClientId = user?.role === 'client' ? user.client_id ?? '' : newApp.client_id;
-          if (!effectiveClientId || !newApp.product_type) {  
-            toast.error('Please select client and product');  
+          if (!effectiveClientId || !newApp.product_type || !newApp.product_id) {  
+            toast.error('Please fill in all required fields');  
             return;  
           }  
-          createAppMut.mutate({ ...newApp, client_id: effectiveClientId });  
+          const selectedProduct = frontProductsData.find(p => p.product_id === newApp.product_id);
+          createAppMut.mutate({
+            client_id: effectiveClientId,
+            product_type: newApp.product_type,
+            product_label: selectedProduct?.features?.[0]?.name || newApp.product_type,
+            department: selectedProduct?.provider_id || '',
+            amount: newApp.amount
+          });  
         }}  
         loading={createAppMut.isPending}  
       >  
@@ -186,22 +203,35 @@ export const Applications: React.FC = () => {
             </div>  
           )}
           <div className="form-group">  
-            <label className="form-label">Product *</label>  
+            <label className="form-label">Category *</label>  
             <select  
               className="form-input"  
               value={newApp.product_type}  
-              onChange={(e) => setNewApp({ ...newApp, product_type: e.target.value })}  
+              onChange={(e) => setNewApp({ ...newApp, product_type: e.target.value, product_id: '' })}  
             >  
-              <option value="loan">Loan</option>  
-              <option value="motor">Motor Insurance</option>  
-              <option value="health">Health Insurance</option>  
-              <option value="life">Life Assurance</option>  
+              <option value="personal_loan">Personal Loan</option>  
+              <option value="motor_insurance">Motor Insurance</option>  
+              <option value="health_insurance">Health Insurance</option>  
+              <option value="life_insurance">Life Insurance</option>  
               <option value="savings">Savings</option>  
-              <option value="credit">Credit Card</option>  
-              <option value="business">Business Insurance</option>  
-              <option value="travel">Travel Insurance</option>  
+              <option value="credit_card">Credit Card</option>  
             </select>  
           </div>  
+          <div className="form-group">  
+            <label className="form-label">Provider Product *</label>  
+            <select  
+              className="form-input"  
+              value={newApp.product_id}  
+              onChange={(e) => setNewApp({ ...newApp, product_id: e.target.value })}  
+            >  
+              <option value="">Select a product</option>  
+              {frontProductsData.filter(p => p.product_type === newApp.product_type).map((p) => (  
+                <option key={p.product_id} value={p.product_id}>
+                  {p.features?.[0]?.name || p.product_id} - {p.provider_id}
+                </option>  
+              ))}  
+            </select>  
+          </div>
           <div className="form-group">  
             <label className="form-label">Amount (PKR) *</label>  
             <input  

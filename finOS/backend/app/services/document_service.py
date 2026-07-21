@@ -7,7 +7,7 @@ from app.models.user import User, UserRole
 from app.services.audit_service import log_audit  
 from app.core.config import settings  
   
-def get_documents(db: Session, current_user: User, search: str = None, doc_type: str = None, department: str = None):  
+def get_documents(db: Session, current_user: User, search: str = None, doc_type: str = None, department: str = None, ref_id: str = None):  
     query = db.query(Document, Client.name).join(Client, Client.id == Document.client_id)  
     if current_user.role == UserRole.CLIENT:  
         query = query.filter(Document.client_id == current_user.client_id)  
@@ -17,6 +17,8 @@ def get_documents(db: Session, current_user: User, search: str = None, doc_type:
         query = query.filter(Document.type == doc_type)  
     if department:  
         query = query.filter(Client.assigned_department == department)  
+    if ref_id:
+        query = query.filter(Document.ref_id == ref_id)
     
     results = query.order_by(Document.uploaded_at.desc()).all()
     for doc, client_name in results:

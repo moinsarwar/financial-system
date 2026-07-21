@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';  
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';  
 import { advanceApplication, decideApplication, getApplication } from '../api/applications';
+import { getDocuments } from '../api/documents';
+import { Link } from 'react-router-dom';
 import { can } from '../utils/permissions';  
 import { Badge } from '../components/common/Badge';  
 import { DetailPanel } from '../components/common/DetailPanel';  
@@ -20,6 +22,11 @@ export const ApplicationDetail: React.FC = () => {
     enabled: Boolean(id),  
   });  
   
+  const { data: documentsData } = useQuery({
+    queryKey: ['documents', { ref_id: id }],
+    queryFn: () => getDocuments({ ref_id: id }),
+    enabled: Boolean(id),
+  });
   const advance = useMutation({  
     mutationFn: advanceApplication,  
     onSuccess: () => {  
@@ -109,6 +116,10 @@ export const ApplicationDetail: React.FC = () => {
                 >
                   Decline
                 </button>
+              </>
+            )}
+          {(can(user?.role, 'application.decide') || user?.role === 'client') &&
+            data.status === 'in-progress' && (
                 <button
                   className="btn-sm outline"
                   disabled={decision.isPending}
@@ -122,7 +133,6 @@ export const ApplicationDetail: React.FC = () => {
                 >
                   Withdraw
                 </button>
-              </>
             )}
           <button className="btn-sm outline" onClick={() => navigate('/dashboard/applications')}>Close</button>  
         </>  
@@ -156,13 +166,28 @@ export const ApplicationDetail: React.FC = () => {
             <div className="space-y-2">  
               {data.timeline.map((item, index) => (  
                 <div key={`${item.time}-${index}`} className="border-b border-gray-100 pb-2 text-sm">  
-                  <div>{item.event}</div>  
+                  <div>{item.event}</div>
                   <div className="text-xs text-gray-400">{new Date(item.time).toLocaleString()} · {item.user}</div>  
                 </div>  
               ))}  
             </div>  
           </div>  
         )}  
+        
+        {documentsData && documentsData.length > 0 && (
+          <div>
+            <h3 className="font-semibold mb-2">Documents</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {documentsData.map(doc => (
+                <div key={doc.id} className="rounded-md border border-gray-200 p-3 bg-white">
+                  <div className="font-semibold text-sm">{doc.name}</div>
+                  <div className="text-xs text-gray-500 mb-2">{doc.type} · {new Date(doc.uploaded_at).toLocaleDateString()}</div>
+                  <Link to={`/dashboard/documents/${doc.id}`} className="text-sm text-blue-600 hover:underline">View Document</Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>  
     </DetailPanel>  
   );  

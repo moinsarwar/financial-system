@@ -45,8 +45,8 @@ def create_application(db: Session, data: ApplicationCreate, current_user: User,
         id=f"APP-{uuid.uuid4().hex[:8].upper()}",  
         client_id=data.client_id,  
         product_type=data.product_type,  
-        product_label=data.product_type.replace("_", " ").title(),  
-        department=client.assigned_department,  
+        product_label=data.product_label or data.product_type.replace("_", " ").title(),  
+        department=data.department or client.assigned_department,  
         steps=steps,  
         step_index=0,  
         current_step=steps[0],  
@@ -114,7 +114,10 @@ def decide_application(
         UserRole.ADMINISTRATOR,
     }
 
-    if current_user.role not in allowed_roles:
+    if current_user.role == UserRole.CLIENT:
+        if decision.outcome != "withdrawn":
+            raise PermissionError("Clients may only withdraw applications")
+    elif current_user.role not in allowed_roles:
         raise PermissionError(
             "Only authorized users may decide applications",
         )

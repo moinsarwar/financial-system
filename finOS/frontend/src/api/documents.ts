@@ -31,6 +31,7 @@ export async function getDocuments(params?: {
   search?: string;  
   doc_type?: string;  
   department?: string;  
+  ref_id?: string;
 }): Promise<Document[]> {  
   const { data } = await api.get<Document[]>('/documents', { params });  
   return data;  

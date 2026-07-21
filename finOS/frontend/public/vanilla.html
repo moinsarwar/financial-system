@@ -561,6 +561,7 @@
             width: 400px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
+
         .modal-content-large {
             width: 800px;
             max-height: 90vh;
@@ -911,7 +912,6 @@
 </head>
 
 <body>
-
     <div class="app mode-marketplace" id="app">
 
         <!-- ===== BANNER ===== -->
@@ -920,6 +920,7 @@
             <span>As of Jul 2026 · Sources: SBP, SECP, provider websites</span>
             <span class="source">KIBOR 6M: <span id="kiborDisplay">19.8</span>%</span>
             <span class="source" id="totalProductsCount">· v7.1 · Board‑Ready · ... Products</span>
+            <div> <a href="/login" class="btn btn-danger">Login</a> </div>
         </div>
 
         <!-- ===== HEADER ===== -->
@@ -1220,7 +1221,8 @@
                     <button class="active" data-subtab="tenant" onclick="switchAdminSubtab('tenant')">Tenant</button>
                     <button data-subtab="users" onclick="switchAdminSubtab('users')">Users & RBAC</button>
                     <button data-subtab="providers" onclick="switchAdminSubtab('providers')">Provider Config</button>
-                    <button data-subtab="product_management" onclick="switchAdminSubtab('product_management')">Product Management</button>
+                    <button data-subtab="product_management" onclick="switchAdminSubtab('product_management')">Product
+                        Management</button>
                     <button data-subtab="decision_engine" onclick="switchAdminSubtab('decision_engine')">Decision
                         Engine</button>
                     <button data-subtab="workflow" onclick="switchAdminSubtab('workflow')">Workflow Designer</button>
@@ -1276,52 +1278,78 @@
         <!-- ============================================================ -->
         <!-- SCREEN 5: APPLICATION -->
         <!-- ============================================================ -->
-<div class="screen" id="screen-application">
-  <div class="hero"><h2>Application & KYC</h2><p>Upload your documents and track institution decisions.</p></div>
-  <div style="max-width:720px;">
+        <div class="screen" id="screen-application">
+            <div class="hero">
+                <h2>Application & KYC</h2>
+                <p>Upload your documents and track institution decisions.</p>
+            </div>
+            <div style="max-width:720px;">
 
-    <!-- KYC Uploads -->
-    <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);margin-bottom:16px;">
-      <h4>📎 Upload Documents</h4>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="form-group"><label>CNIC Front</label><input type="file" accept="image/*,application/pdf" id="cnicFront" onchange="uploadKYC('cnicFront', this)"></div>
-        <div class="form-group"><label>CNIC Back</label><input type="file" accept="image/*,application/pdf" id="cnicBack" onchange="uploadKYC('cnicBack', this)"></div>
-        <div class="form-group"><label>Driving Licence (optional)</label><input type="file" accept="image/*,application/pdf" id="drivingLicence" onchange="uploadKYC('drivingLicence', this)"></div>
-        <div class="form-group"><label>Utility Bill (address proof)</label><input type="file" accept="image/*,application/pdf" id="utilityBill" onchange="uploadKYC('utilityBill', this)"></div>
-      </div>
-      <div id="kycStatus" style="margin-top:8px;font-size:13px;color:var(--gray-600);"></div>
-    </div>
+                <!-- KYC Uploads -->
+                <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);margin-bottom:16px;">
+                    <h4>📎 Upload Documents</h4>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                        <div class="form-group"><label>CNIC Front</label><input type="file"
+                                accept="image/*,application/pdf" id="cnicFront" onchange="uploadKYC('cnicFront', this)">
+                        </div>
+                        <div class="form-group"><label>CNIC Back</label><input type="file"
+                                accept="image/*,application/pdf" id="cnicBack" onchange="uploadKYC('cnicBack', this)">
+                        </div>
+                        <div class="form-group"><label>Driving Licence (optional)</label><input type="file"
+                                accept="image/*,application/pdf" id="drivingLicence"
+                                onchange="uploadKYC('drivingLicence', this)"></div>
+                        <div class="form-group"><label>Utility Bill (address proof)</label><input type="file"
+                                accept="image/*,application/pdf" id="utilityBill"
+                                onchange="uploadKYC('utilityBill', this)"></div>
+                    </div>
+                    <div id="kycStatus" style="margin-top:8px;font-size:13px;color:var(--gray-600);"></div>
+                </div>
 
-    <!-- Institution Action Panel -->
-    <div style="background:white;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
-      <h4>🏛️ Institution Actions (simulated)</h4>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
-        <div><span class="badge" id="fraudBadge" style="background:var(--gray-200);">Fraud: Pending</span></div>
-        <div><button class="btn btn-secondary" onclick="updateFraudStatus('cleared')" style="padding:2px 10px;font-size:11px;">✅ Clear Fraud</button>
-            <button class="btn btn-secondary" onclick="updateFraudStatus('flagged')" style="padding:2px 10px;font-size:11px;">🚩 Flag</button></div>
-        <div><span class="badge" id="riskBadge" style="background:var(--gray-200);">Risk: Pending</span></div>
-        <div><button class="btn btn-secondary" onclick="updateRiskAssessment('approved')" style="padding:2px 10px;font-size:11px;">✅ Approve Risk</button>
-            <button class="btn btn-secondary" onclick="updateRiskAssessment('rejected')" style="padding:2px 10px;font-size:11px;">❌ Reject</button></div>
-        <div><span class="badge" id="policyBadge" style="background:var(--gray-200);">Policy: Not issued</span></div>
-        <div><button class="btn btn-primary" onclick="issuePolicy()" style="padding:2px 10px;font-size:11px;">📄 Issue Policy</button></div>
-      </div>
-      <div id="policyDetailsSection" style="display:none;margin-top:12px;background:var(--gray-50);padding:12px;border-radius:var(--radius-sm);">
-        <h5>Policy Details</h5>
-        <div id="policyDetailsContent"></div>
-        <button class="btn btn-success" onclick="acceptPolicy()" style="margin-top:8px;">✅ Accept Policy</button>
-      </div>
-    </div>
+                <!-- Institution Action Panel -->
+                <div
+                    style="background:white;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+                    <h4>🏛️ Institution Actions (simulated)</h4>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
+                        <div><span class="badge" id="fraudBadge" style="background:var(--gray-200);">Fraud:
+                                Pending</span></div>
+                        <div><button class="btn btn-secondary" onclick="updateFraudStatus('cleared')"
+                                style="padding:2px 10px;font-size:11px;">✅ Clear Fraud</button>
+                            <button class="btn btn-secondary" onclick="updateFraudStatus('flagged')"
+                                style="padding:2px 10px;font-size:11px;">🚩 Flag</button>
+                        </div>
+                        <div><span class="badge" id="riskBadge" style="background:var(--gray-200);">Risk: Pending</span>
+                        </div>
+                        <div><button class="btn btn-secondary" onclick="updateRiskAssessment('approved')"
+                                style="padding:2px 10px;font-size:11px;">✅ Approve Risk</button>
+                            <button class="btn btn-secondary" onclick="updateRiskAssessment('rejected')"
+                                style="padding:2px 10px;font-size:11px;">❌ Reject</button>
+                        </div>
+                        <div><span class="badge" id="policyBadge" style="background:var(--gray-200);">Policy: Not
+                                issued</span></div>
+                        <div><button class="btn btn-primary" onclick="issuePolicy()"
+                                style="padding:2px 10px;font-size:11px;">📄 Issue Policy</button></div>
+                    </div>
+                    <div id="policyDetailsSection"
+                        style="display:none;margin-top:12px;background:var(--gray-50);padding:12px;border-radius:var(--radius-sm);">
+                        <h5>Policy Details</h5>
+                        <div id="policyDetailsContent"></div>
+                        <button class="btn btn-success" onclick="acceptPolicy()" style="margin-top:8px;">✅ Accept
+                            Policy</button>
+                    </div>
+                </div>
 
-    <!-- Original Application fields -->
-    <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);">
-      <div class="form-group"><label>CNIC / National ID</label><input type="text" id="nationalId" placeholder="e.g. 12345-6789012-3"></div>
-      <div class="form-group"><label>IBAN</label><input type="text" id="ibanInput" placeholder="e.g. PK36HBL..."></div>
-      <button class="btn btn-success" onclick="submitApplication()">📨 Submit Application</button>
-      <div id="executionResult" style="margin-top:12px;"></div>
-    </div>
-    <button class="btn btn-secondary" style="margin-top:8px;" onclick="goToConsent()">← Back</button>
-  </div>
-</div>
+                <!-- Original Application fields -->
+                <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);">
+                    <div class="form-group"><label>CNIC / National ID</label><input type="text" id="nationalId"
+                            placeholder="e.g. 12345-6789012-3"></div>
+                    <div class="form-group"><label>IBAN</label><input type="text" id="ibanInput"
+                            placeholder="e.g. PK36HBL..."></div>
+                    <button class="btn btn-success" onclick="submitApplication()">📨 Submit Application</button>
+                    <div id="executionResult" style="margin-top:12px;"></div>
+                </div>
+                <button class="btn btn-secondary" style="margin-top:8px;" onclick="goToConsent()">← Back</button>
+            </div>
+        </div>
 
         <!-- ============================================================ -->
         <!-- SCREEN 6: TRACKING -->
@@ -1853,12 +1881,12 @@
                 const passIncome = INCOME_RANK[state.incomeBand] >= INCOME_RANK[p.eligibility.minIncome];
                 const passJurisdiction = p.jurisdiction.includes(state.jurisdiction);
                 const passSharia = state.shariaPref === 'any' || (state.shariaPref === 'sharia' && p.compliance.sharia) || (state.shariaPref === 'conventional' && !p.compliance.sharia);
-                
+
                 const matchCount = (passAge ? 1 : 0) + (passIncome ? 1 : 0) + (passJurisdiction ? 1 : 0) + (passSharia ? 1 : 0);
                 const displayCompleteness = matchCount * 25;
                 const starsCount = Math.round((displayCompleteness / 100) * 5);
                 const ratingStars = '★'.repeat(starsCount) + '☆'.repeat(5 - starsCount);
-                
+
                 let costDisplayStr = '';
                 if (p.pricing && typeof p.pricing === 'object') {
                     for (const [key, value] of Object.entries(p.pricing)) {
@@ -1867,7 +1895,7 @@
                     }
                 }
                 if (!costDisplayStr) costDisplayStr = 'N/A';
-                
+
                 let costDisplay = `<div style="line-height:1.4;">${costDisplayStr}</div>`;
                 html += `<tr class="main-row" onclick="toggleProductDetail('${p.id}')">
                 <td><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong>${p.provider}</strong><span class="trust-badge ${isEligible ? 'verified' : ''}">${isEligible ? '✅ Verified' : '⏳ Pending'}</span>${p.trustBadges.slice(0, 1).map(b => `<span class="trust-badge">${b}</span>`).join('')}</div></td>
@@ -2325,9 +2353,9 @@
                                 { data: 'provider' },
                                 { data: 'type' },
                                 { data: 'status' },
-                                { 
+                                {
                                     data: null,
-                                    render: function(data, type, row) {
+                                    render: function (data, type, row) {
                                         return '<button class="btn btn-primary" style="padding: 2px 8px; font-size: 11px;" onclick="openProductModal(\'' + row.id + '\')">Edit</button>';
                                     }
                                 }
@@ -2542,93 +2570,93 @@
             transitionTo('application');
         }
 
-// ----- KYC Upload -----
-function uploadKYC(field, input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    state.kyc[field] = e.target.result; // store base64
-    updateKYCStatus();
-    logAudit(`KYC ${field} uploaded`);
-    showToast(`${field} uploaded successfully`, 'success');
-  };
-  reader.readAsDataURL(file);
-}
+        // ----- KYC Upload -----
+        function uploadKYC(field, input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                state.kyc[field] = e.target.result; // store base64
+                updateKYCStatus();
+                logAudit(`KYC ${field} uploaded`);
+                showToast(`${field} uploaded successfully`, 'success');
+            };
+            reader.readAsDataURL(file);
+        }
 
-function updateKYCStatus() {
-  const uploaded = Object.values(state.kyc).filter(v => v !== null).length;
-  const total = 4;
-  document.getElementById('kycStatus').innerHTML = `📄 ${uploaded}/${total} documents uploaded.`;
-}
+        function updateKYCStatus() {
+            const uploaded = Object.values(state.kyc).filter(v => v !== null).length;
+            const total = 4;
+            document.getElementById('kycStatus').innerHTML = `📄 ${uploaded}/${total} documents uploaded.`;
+        }
 
-// ----- Fraud & Risk (institution simulated) -----
-function updateFraudStatus(status) {
-  state.fraudStatus = status;
-  const badge = document.getElementById('fraudBadge');
-  badge.textContent = `Fraud: ${status.charAt(0).toUpperCase()+status.slice(1)}`;
-  badge.style.background = status === 'cleared' ? 'var(--green)' : (status === 'flagged' ? 'var(--red)' : 'var(--gray-200)');
-  badge.style.color = status === 'cleared' ? 'white' : (status === 'flagged' ? 'white' : '');
-  logAudit(`Fraud status updated to ${status} by institution`);
-  showToast(`Fraud ${status}`, status === 'cleared' ? 'success' : 'error');
-}
+        // ----- Fraud & Risk (institution simulated) -----
+        function updateFraudStatus(status) {
+            state.fraudStatus = status;
+            const badge = document.getElementById('fraudBadge');
+            badge.textContent = `Fraud: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+            badge.style.background = status === 'cleared' ? 'var(--green)' : (status === 'flagged' ? 'var(--red)' : 'var(--gray-200)');
+            badge.style.color = status === 'cleared' ? 'white' : (status === 'flagged' ? 'white' : '');
+            logAudit(`Fraud status updated to ${status} by institution`);
+            showToast(`Fraud ${status}`, status === 'cleared' ? 'success' : 'error');
+        }
 
-function updateRiskAssessment(status) {
-  state.riskAssessment = status;
-  const badge = document.getElementById('riskBadge');
-  badge.textContent = `Risk: ${status.charAt(0).toUpperCase()+status.slice(1)}`;
-  badge.style.background = status === 'approved' ? 'var(--green)' : (status === 'rejected' ? 'var(--red)' : 'var(--gray-200)');
-  badge.style.color = status === 'approved' ? 'white' : (status === 'rejected' ? 'white' : '');
-  logAudit(`Risk assessment ${status} by institution`);
-  showToast(`Risk ${status}`, status === 'approved' ? 'success' : 'error');
-}
+        function updateRiskAssessment(status) {
+            state.riskAssessment = status;
+            const badge = document.getElementById('riskBadge');
+            badge.textContent = `Risk: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+            badge.style.background = status === 'approved' ? 'var(--green)' : (status === 'rejected' ? 'var(--red)' : 'var(--gray-200)');
+            badge.style.color = status === 'approved' ? 'white' : (status === 'rejected' ? 'white' : '');
+            logAudit(`Risk assessment ${status} by institution`);
+            showToast(`Risk ${status}`, status === 'approved' ? 'success' : 'error');
+        }
 
-// ----- Policy Issuance (institution) -----
-async function issuePolicy() {
-  if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
-    showToast('Cannot issue policy: fraud or risk not cleared.', 'error');
-    return;
-  }
-  
-  // Simulate API call to backend
-  if (state.applicationId) {
-    try {
-      const response = await fetch(`/api/applications/public/${state.applicationId}/simulate-issue-policy`, { method: 'POST' });
-      const data = await response.json();
-      state.policyDetails = {
-        policyNumber: data.policyNumber || 'POL-' + Date.now().toString().slice(-8),
-        coverage: data.coverage || 'PKR 1,000,000',
-        premium: data.premium || 'PKR 25,000/year',
-        effectiveDate: data.effectiveDate ? data.effectiveDate.slice(0,10) : new Date().toISOString().slice(0,10),
-        expiryDate: data.expiryDate ? data.expiryDate.slice(0,10) : new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
-      };
-    } catch (e) {
-      console.error(e);
-      // Fallback dummy
-      state.policyDetails = {
-        policyNumber: 'POL-' + Date.now().toString().slice(-8),
-        coverage: 'PKR 1,000,000',
-        premium: 'PKR 25,000/year',
-        effectiveDate: new Date().toISOString().slice(0,10),
-        expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
-      };
-    }
-  } else {
-      state.policyDetails = {
-        policyNumber: 'POL-' + Date.now().toString().slice(-8),
-        coverage: 'PKR 1,000,000',
-        premium: 'PKR 25,000/year',
-        effectiveDate: new Date().toISOString().slice(0,10),
-        expiryDate: new Date(Date.now() + 365*24*60*60*1000).toISOString().slice(0,10)
-      };
-  }
-  
-  state.policyIssued = true;
-  document.getElementById('policyBadge').textContent = 'Policy: Issued';
-  document.getElementById('policyBadge').style.background = 'var(--green)';
-  document.getElementById('policyBadge').style.color = 'white';
-  document.getElementById('policyDetailsSection').style.display = 'block';
-  document.getElementById('policyDetailsContent').innerHTML = `
+        // ----- Policy Issuance (institution) -----
+        async function issuePolicy() {
+            if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
+                showToast('Cannot issue policy: fraud or risk not cleared.', 'error');
+                return;
+            }
+
+            // Simulate API call to backend
+            if (state.applicationId) {
+                try {
+                    const response = await fetch(`/api/applications/public/${state.applicationId}/simulate-issue-policy`, { method: 'POST' });
+                    const data = await response.json();
+                    state.policyDetails = {
+                        policyNumber: data.policyNumber || 'POL-' + Date.now().toString().slice(-8),
+                        coverage: data.coverage || 'PKR 1,000,000',
+                        premium: data.premium || 'PKR 25,000/year',
+                        effectiveDate: data.effectiveDate ? data.effectiveDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
+                        expiryDate: data.expiryDate ? data.expiryDate.slice(0, 10) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                    };
+                } catch (e) {
+                    console.error(e);
+                    // Fallback dummy
+                    state.policyDetails = {
+                        policyNumber: 'POL-' + Date.now().toString().slice(-8),
+                        coverage: 'PKR 1,000,000',
+                        premium: 'PKR 25,000/year',
+                        effectiveDate: new Date().toISOString().slice(0, 10),
+                        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                    };
+                }
+            } else {
+                state.policyDetails = {
+                    policyNumber: 'POL-' + Date.now().toString().slice(-8),
+                    coverage: 'PKR 1,000,000',
+                    premium: 'PKR 25,000/year',
+                    effectiveDate: new Date().toISOString().slice(0, 10),
+                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+                };
+            }
+
+            state.policyIssued = true;
+            document.getElementById('policyBadge').textContent = 'Policy: Issued';
+            document.getElementById('policyBadge').style.background = 'var(--green)';
+            document.getElementById('policyBadge').style.color = 'white';
+            document.getElementById('policyDetailsSection').style.display = 'block';
+            document.getElementById('policyDetailsContent').innerHTML = `
     <div style="font-size:13px;line-height:1.6;">
       <div><strong>Policy #:</strong> ${state.policyDetails.policyNumber}</div>
       <div><strong>Coverage:</strong> ${state.policyDetails.coverage}</div>
@@ -2637,100 +2665,101 @@ async function issuePolicy() {
       <div><strong>Expiry:</strong> ${state.policyDetails.expiryDate}</div>
     </div>
   `;
-  logAudit(`Policy issued: ${policyNumber}`);
-  showToast('Policy issued!', 'success');
-}
+            logAudit(`Policy issued: ${policyNumber}`);
+            showToast('Policy issued!', 'success');
+        }
 
-function acceptPolicy() {
-  if (!state.policyIssued) {
-    showToast('No policy to accept.', 'error');
-    return;
-  }
-  state.policyAccepted = true;
-  document.getElementById('policyDetailsSection').innerHTML += `<div style="margin-top:8px;font-weight:700;color:var(--green);">✅ Policy accepted by client on ${new Date().toLocaleString()}</div>`;
-  logAudit('Policy accepted by client');
-  showToast('Policy accepted!', 'success');
-}
+        function acceptPolicy() {
+            if (!state.policyIssued) {
+                showToast('No policy to accept.', 'error');
+                return;
+            }
+            state.policyAccepted = true;
+            document.getElementById('policyDetailsSection').innerHTML += `<div style="margin-top:8px;font-weight:700;color:var(--green);">✅ Policy accepted by client on ${new Date().toLocaleString()}</div>`;
+            logAudit('Policy accepted by client');
+            showToast('Policy accepted!', 'success');
+        }
 
-async function submitApplication() {
-  const id = document.getElementById('nationalId').value.trim();
-  const iban = document.getElementById('ibanInput').value.trim();
-  if (!id || !iban) return showToast('Please fill in all fields.', 'error');
-  // Check KYC uploads
-  const uploaded = Object.values(state.kyc).filter(v => v !== null).length;
-  if (uploaded < 4) {
-    showToast('Please upload all 4 KYC documents before submitting.', 'error');
-    return;
-  }
-  // If fraud or risk not cleared, warn
-  if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
-    if (!confirm('Fraud or risk not fully cleared. Submit anyway?')) return;
-  }
-  
-  try {
-    const productsPayload = state.selectedForApply.map(id => {
-      const p = PRODUCTS.find(prod => prod.id === id);
-      return {
-        id: p.id,
-        name: p.name,
-        type: p.type,
-        provider: p.provider
-      };
-    });
-    
-    const res = await fetch('/api/applications/public/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nationalId: id,
-        iban: iban,
-        products: productsPayload
-      })
-    });
-    const data = await res.json();
-    if (data.application_id) {
-        state.applicationId = data.application_id;
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  
-  logAudit('Application submitted with KYC docs');
-  document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution. KYC complete. Fraud: ${state.fraudStatus}, Risk: ${state.riskAssessment}</div>`;
-  showToast('Application submitted!', 'success');
-  // Redirect to tracking after delay
-  setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1500);
-}
+        async function submitApplication() {
+            const id = document.getElementById('nationalId').value.trim();
+            const iban = document.getElementById('ibanInput').value.trim();
+            if (!id || !iban) return showToast('Please fill in all fields.', 'error');
+            // Check KYC uploads
+            const uploaded = Object.values(state.kyc).filter(v => v !== null).length;
+            if (uploaded < 4) {
+                showToast('Please upload all 4 KYC documents before submitting.', 'error');
+                return;
+            }
+            // If fraud or risk not cleared, warn
+            if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
+                if (!confirm('Fraud or risk not fully cleared. Submit anyway?')) return;
+            }
+
+            try {
+                const productsPayload = state.selectedForApply.map(id => {
+                    const p = PRODUCTS.find(prod => prod.id === id);
+                    return {
+                        id: p.id,
+                        name: p.name,
+                        type: p.type,
+                        provider: p.provider
+                    };
+                });
+
+                const res = await fetch('/api/applications/public/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nationalId: id,
+                        iban: iban,
+                        products: productsPayload,
+                        kyc_documents: state.kyc
+                    })
+                });
+                const data = await res.json();
+                if (data.application_id) {
+                    state.applicationId = data.application_id;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            logAudit('Application submitted with KYC docs');
+            document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution. KYC complete. Fraud: ${state.fraudStatus}, Risk: ${state.riskAssessment}</div>`;
+            showToast('Application submitted!', 'success');
+            // Redirect to tracking after delay
+            setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1500);
+        }
 
         function renderTracking() {
-  const container = document.getElementById('trackingProgress');
-  const steps = [
-    { label: 'Application Received', done: true },
-    { label: 'KYC Documents Uploaded', done: Object.values(state.kyc).every(v => v !== null) },
-    { label: 'Fraud Screening', done: state.fraudStatus === 'cleared' },
-    { label: 'Risk Assessment', done: state.riskAssessment === 'approved' },
-    { label: 'Policy Issued', done: state.policyIssued },
-    { label: 'Policy Accepted', done: state.policyAccepted },
-    { label: 'Policy Active', done: state.policyAccepted }
-  ];
-  const now = new Date().toLocaleTimeString('en-GB', { hour12: false });
-  container.innerHTML = steps.map((s, i) => `
+            const container = document.getElementById('trackingProgress');
+            const steps = [
+                { label: 'Application Received', done: true },
+                { label: 'KYC Documents Uploaded', done: Object.values(state.kyc).every(v => v !== null) },
+                { label: 'Fraud Screening', done: state.fraudStatus === 'cleared' },
+                { label: 'Risk Assessment', done: state.riskAssessment === 'approved' },
+                { label: 'Policy Issued', done: state.policyIssued },
+                { label: 'Policy Accepted', done: state.policyAccepted },
+                { label: 'Policy Active', done: state.policyAccepted }
+            ];
+            const now = new Date().toLocaleTimeString('en-GB', { hour12: false });
+            container.innerHTML = steps.map((s, i) => `
     <div class="tracking-step ${s.done ? 'done' : 'pending'}">
       <span style="font-size:18px;width:28px;text-align:center;">${s.done ? '✅' : '⏳'}</span>
       <span style="font-weight:600;flex:1;">${s.label}</span>
       <span style="font-size:12px;color:var(--gray-400);font-family:var(--font-mono);">${s.done ? now : 'Pending'}</span>
     </div>
   `).join('');
-  // Show policy details if issued
-  if (state.policyIssued && state.policyDetails) {
-    container.innerHTML += `
+            // Show policy details if issued
+            if (state.policyIssued && state.policyDetails) {
+                container.innerHTML += `
       <div style="margin-top:16px;background:var(--gray-50);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--gray-200);">
         <h4>📄 Policy Details</h4>
         <div style="font-size:13px;">Policy #: ${state.policyDetails.policyNumber}<br>Coverage: ${state.policyDetails.coverage}<br>Premium: ${state.policyDetails.premium}</div>
       </div>
     `;
-  }
-}
+            }
+        }
 
         // ============================================================
         // 18. RESET
@@ -2803,7 +2832,7 @@ async function submitApplication() {
                             PRODUCTS = prodData.products.map(p => {
                                 const pr = p.pricing || {};
                                 const el = p.eligibility_rules || {};
-                                
+
                                 let uiType = 'unknown';
                                 let pt = (p.product_type || '').toLowerCase();
                                 if (pt.includes('saving')) uiType = 'savings';
@@ -2822,10 +2851,10 @@ async function submitApplication() {
                                     pricing: pr,
                                     features: p.features ? p.features.map(f => f.name || JSON.stringify(f)) : [],
                                     compliance: { sharia: p.compliance ? (p.compliance.sharia === true || p.compliance.sharia_certified === true) : false },
-                                    eligibility: { 
-                                        minAge: p.eligibility_rules ? (p.eligibility_rules.min_age || p.eligibility_rules.minAge || 18) : 18, 
-                                        maxAge: p.eligibility_rules ? (p.eligibility_rules.max_age || p.eligibility_rules.maxAge || 65) : 65, 
-                                        minIncome: p.eligibility_rules ? (p.eligibility_rules.min_income || p.eligibility_rules.minIncome || '<50k') : '<50k' 
+                                    eligibility: {
+                                        minAge: p.eligibility_rules ? (p.eligibility_rules.min_age || p.eligibility_rules.minAge || 18) : 18,
+                                        maxAge: p.eligibility_rules ? (p.eligibility_rules.max_age || p.eligibility_rules.maxAge || 65) : 65,
+                                        minIncome: p.eligibility_rules ? (p.eligibility_rules.min_income || p.eligibility_rules.minIncome || '<50k') : '<50k'
                                     },
                                     monthlyCost: pr.max_amount ? Math.round(pr.max_amount / 100) : 0,
                                     annualCost: pr.max_amount ? Math.round(pr.max_amount / 10) : 0,
@@ -2856,7 +2885,7 @@ async function submitApplication() {
                 console.error("API Fetch Error:", e);
                 alert("API Fetch Error: " + e.message);
             }
-            
+
             logAudit('System initialised (Pakistan Enterprise)');
             transitionTo('requirements');
             console.log('🚀 FinOS v7.1 – Board-Ready Decision OS (API integrated)');
@@ -2865,10 +2894,10 @@ async function submitApplication() {
             console.log(`   KIBOR: ${CONFIG.KIBOR_6M}%`);
             console.log(`   Products in catalogue: ${PRODUCTS.length}`);
         }
-        
+
         initApp();
     </script>
-    
+
     <!-- Product Management Modal -->
     <div class="modal-overlay" id="productModal">
         <div class="modal-content modal-content-large">
@@ -2901,7 +2930,7 @@ async function submitApplication() {
                     <label>Version</label>
                     <input type="text" id="pm_version" class="form-control" value="1">
                 </div>
-                
+
                 <!-- Eligibility -->
                 <div style="grid-column: 1 / -1; margin-top: 10px;">
                     <h4>Eligibility Rules</h4>
@@ -2918,7 +2947,7 @@ async function submitApplication() {
                     <label>Min Income</label>
                     <input type="number" id="pm_minIncome" class="form-control">
                 </div>
-                
+
                 <!-- Compliance & Pricing -->
                 <div style="grid-column: 1 / -1; margin-top: 10px;">
                     <h4>Compliance & Pricing</h4>
@@ -2934,7 +2963,7 @@ async function submitApplication() {
                     <label>Pricing (JSON format)</label>
                     <textarea id="pm_pricing" class="form-control" rows="2">{}</textarea>
                 </div>
-                
+
                 <!-- Governance -->
                 <div style="grid-column: 1 / -1; margin-top: 10px;">
                     <h4>Governance</h4>
@@ -2952,9 +2981,10 @@ async function submitApplication() {
                     <input type="text" id="pm_published_by" class="form-control" value="System Admin">
                 </div>
             </div>
-            
+
             <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn btn-secondary" onclick="document.getElementById('productModal').style.display='none'">Cancel</button>
+                <button class="btn btn-secondary"
+                    onclick="document.getElementById('productModal').style.display='none'">Cancel</button>
                 <button class="btn btn-primary" onclick="saveProduct()">Save Product</button>
             </div>
         </div>
@@ -2974,17 +3004,17 @@ async function submitApplication() {
                     document.getElementById('pm_jurisdiction').value = (p.jurisdiction || []).join(',');
                     document.getElementById('pm_status').value = p.status || 'active';
                     document.getElementById('pm_version').value = p.version || '1';
-                    
+
                     document.getElementById('pm_minAge').value = p.eligibility_rules?.minAge || '';
                     document.getElementById('pm_maxAge').value = p.eligibility_rules?.maxAge || '';
                     document.getElementById('pm_minIncome').value = p.eligibility_rules?.minIncome || '';
-                    
+
                     let isSharia = p.compliance?.sharia_certified;
-                    if(isSharia === undefined) isSharia = false;
+                    if (isSharia === undefined) isSharia = false;
                     document.getElementById('pm_sharia_certified').value = isSharia ? 'true' : 'false';
-                    
+
                     document.getElementById('pm_pricing').value = JSON.stringify(p.pricing || {});
-                    
+
                     document.getElementById('pm_schema_hash').value = p.schema_hash || '';
                     document.getElementById('pm_effective_date').value = p.effective_date ? p.effective_date.substring(0, 10) : '';
                     document.getElementById('pm_published_by').value = p.published_by || '';
@@ -2998,13 +3028,13 @@ async function submitApplication() {
                 document.getElementById('pm_jurisdiction').value = 'PK';
                 document.getElementById('pm_status').value = 'active';
                 document.getElementById('pm_version').value = '1';
-                
+
                 document.getElementById('pm_minAge').value = '';
                 document.getElementById('pm_maxAge').value = '';
                 document.getElementById('pm_minIncome').value = '';
                 document.getElementById('pm_sharia_certified').value = 'false';
                 document.getElementById('pm_pricing').value = '{}';
-                
+
                 document.getElementById('pm_schema_hash').value = '';
                 document.getElementById('pm_effective_date').value = '';
                 document.getElementById('pm_published_by').value = 'System Admin';
@@ -3016,11 +3046,11 @@ async function submitApplication() {
                 let pricingParsed = {};
                 try {
                     pricingParsed = JSON.parse(document.getElementById('pm_pricing').value);
-                } catch(e) {
+                } catch (e) {
                     alert("Invalid JSON in Pricing");
                     return;
                 }
-                
+
                 const payload = {
                     provider_id: document.getElementById('pm_provider_id').value,
                     schema_hash: document.getElementById('pm_schema_hash').value,
@@ -3028,7 +3058,7 @@ async function submitApplication() {
                         {
                             product_id: document.getElementById('pm_product_id').value || undefined,
                             product_type: document.getElementById('pm_product_type').value,
-                            jurisdiction: document.getElementById('pm_jurisdiction').value.split(',').map(s=>s.trim()),
+                            jurisdiction: document.getElementById('pm_jurisdiction').value.split(',').map(s => s.trim()),
                             status: document.getElementById('pm_status').value,
                             version: document.getElementById('pm_version').value,
                             pricing: pricingParsed,
@@ -3057,7 +3087,7 @@ async function submitApplication() {
                     document.getElementById('productModal').style.display = 'none';
                     // Re-fetch products and re-render DataTable
                     await initApp();
-                    if($.fn.DataTable.isDataTable('#productDataTable')) {
+                    if ($.fn.DataTable.isDataTable('#productDataTable')) {
                         $('#productDataTable').DataTable().clear().rows.add(PRODUCTS).draw();
                     }
                 } else {
@@ -3071,4 +3101,5 @@ async function submitApplication() {
         }
     </script>
 </body>
+
 </html>

@@ -31,3 +31,15 @@ export async function getProduct(id: string): Promise<Product> {
   const { data } = await api.get<Product>(`/products/${id}`);  
   return data;  
 }
+
+export interface FrontProduct {
+  product_id: string;
+  provider_id: string;
+  product_type: string;
+  features: { name: string }[];
+}
+
+export async function getFrontProducts(): Promise<FrontProduct[]> {
+  const { data } = await api.get<{products: FrontProduct[]}>('/front_products?limit=100');
+  return data.products;
+}

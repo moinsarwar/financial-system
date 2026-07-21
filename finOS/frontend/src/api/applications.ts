@@ -29,6 +29,8 @@ export interface Application {
 export interface ApplicationCreate {
   client_id: string;
   product_type: string;
+  product_label?: string;
+  department?: string;
   amount: number;
 }
 

@@ -214,10 +214,15 @@ def decide_application_route(
     decision: ApplicationDecisionRequest,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_permission("application.decide"),
-    ),
+    current_user: User = Depends(get_current_user),
 ):
+    from app.api.dependencies import PERMISSION_ROLES
+    if current_user.role == UserRole.CLIENT:
+        if decision.outcome != "withdrawn":
+            raise HTTPException(403, "Clients can only withdraw applications")
+    else:
+        if current_user.role not in PERMISSION_ROLES.get("application.decide", set()):
+            raise HTTPException(403, "Not authorized")
     try:
         return decide_application(
             db=db,
@@ -376,6 +381,7 @@ class PublicSubmissionRequest(BaseModel):
     nationalId: str
     iban: str
     products: list[PublicProduct]
+    kyc_documents: dict[str, str | None] = None
 
 @router.post("/public/submit")
 def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db)):
@@ -415,6 +421,51 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
     db.add(app)
     db.commit()
     db.refresh(app)
+    
+    if request.kyc_documents:
+        import base64
+        import os
+        from app.core.config import settings
+        
+        os.makedirs(settings.UPLOAD_ROOT, exist_ok=True)
+        for doc_key, b64_data in request.kyc_documents.items():
+            if not b64_data:
+                continue
+                
+            try:
+                header, encoded = b64_data.split(",", 1)
+                mime_type = header.split(";")[0].split(":")[1]
+                ext = mime_type.split("/")[1]
+            except Exception:
+                encoded = b64_data
+                mime_type = "application/octet-stream"
+                ext = "bin"
+
+            file_data = base64.b64decode(encoded)
+            file_name = f"{doc_key}_{uuid.uuid4().hex[:8]}.{ext}"
+            file_path = os.path.join(settings.UPLOAD_ROOT, file_name)
+            
+            with open(file_path, "wb") as f:
+                f.write(file_data)
+                
+            doc_id = f"DOC-{uuid.uuid4().hex[:8].upper()}"
+            doc = Document(
+                id=doc_id,
+                client_id=demo_user.client_id,
+                type=doc_key,
+                name=f"KYC - {doc_key}",
+                original_filename=file_name,
+                storage_key=file_name,
+                ref_id=app.id,
+                ref_type="application",
+                file_url=f"/uploads/{file_name}",
+                mime_type=mime_type,
+                size_bytes=len(file_data),
+                status="uploaded"
+            )
+            db.add(doc)
+            
+        db.commit()
     
     client_obj = db.query(Client).filter(Client.id == demo_user.client_id).first()
     if client_obj:

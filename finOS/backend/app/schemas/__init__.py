@@ -40,7 +40,9 @@ class ApplicationBase(BaseModel):
     product_type: str  
     amount: Decimal = Field(gt=Decimal("0"))  
   
-class ApplicationCreate(ApplicationBase): pass  
+class ApplicationCreate(ApplicationBase):
+    product_label: Optional[str] = None
+    department: Optional[str] = None
   
 class ApplicationResponse(ApplicationBase):  
     id: str  

@@ -20,8 +20,8 @@ ALLOWED_MIME_TYPES = {
   
 @router.get("/", response_model=list[DocumentResponse])  
 def list_documents(db: Session = Depends(get_db), current_user: User = Depends(get_current_user),  
-                   search: str = Query(None), doc_type: str = Query(None), department: str = Query(None)):  
-    docs = get_documents(db, current_user, search, doc_type, department)  
+                   search: str = Query(None), doc_type: str = Query(None), department: str = Query(None), ref_id: str = Query(None)):  
+    docs = get_documents(db, current_user, search, doc_type, department, ref_id)  
     return [map_document_response(db, doc) for doc in docs]  
   
 @router.get("/{document_id}", response_model=DocumentResponse)  
@@ -34,8 +34,9 @@ def get_document_detail(document_id: str, db: Session = Depends(get_db), current
 def download_document(document_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):  
     doc = get_document(db, document_id, current_user)  
     if not doc: raise HTTPException(404, "Document not found")  
-    if not doc.storage_key: raise HTTPException(404, "File not stored")  
-    file_path = os.path.join(settings.UPLOAD_ROOT, doc.storage_key)  
+    storage_key = doc.storage_key or doc.original_filename
+    if not storage_key: raise HTTPException(404, "File not stored")  
+    file_path = os.path.join(settings.UPLOAD_ROOT, storage_key)  
     if not os.path.exists(file_path): raise HTTPException(404, "File not found")  
     return FileResponse(file_path, filename=doc.original_filename or doc.name)  
   
