@@ -17,39 +17,46 @@ const permissionMap: Record<
     'operations_agent',
     'operations_manager',
     'administrator',
+    'super_admin',
   ],
   'application.create': [
     'client',
     'operations_agent',
     'operations_manager',
     'administrator',
+    'super_admin',
   ],
   'application.advance': [
     'operations_agent',
     'operations_manager',
     'administrator',
+    'super_admin',
   ],
   'application.decide': [
     'operations_agent',
     'operations_manager',
     'underwriter',
     'administrator',
+    'super_admin',
   ],
   'claim.create': [
     'client',
     'claims_agent',
     'operations_manager',
     'administrator',
+    'super_admin',
   ],
   'claim.advance': [
     'claims_agent',
     'operations_manager',
     'administrator',
+    'super_admin',
   ],
   'claim.resolve': [
     'claims_agent',
     'operations_manager',
     'administrator',
+    'super_admin',
   ],
   'document.upload': [
     'client',
@@ -59,11 +66,13 @@ const permissionMap: Record<
     'underwriter',
     'compliance',
     'administrator',
+    'super_admin',
   ],
   'activity.read_all': [
     'operations_manager',
     'compliance',
     'administrator',
+    'super_admin',
   ],
 };
 

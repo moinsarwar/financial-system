@@ -9,6 +9,9 @@ const api = axios.create({
 api.interceptors.request.use((config) => {  
   const token = localStorage.getItem('access_token');  
   if (token) config.headers.Authorization = `Bearer ${token}`;  
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;  
 });  
   
@@ -21,7 +24,12 @@ api.interceptors.response.use(
       window.location.href = '/login';  
     }  
     if (error.response?.data?.detail) {  
-      toast.error(error.response.data.detail);  
+      const detail = error.response.data.detail;
+      if (Array.isArray(detail)) {
+        toast.error(detail.map(d => d.msg || d.type).join(', '));
+      } else {
+        toast.error(String(detail));
+      }
     } else if (error.message) {  
       toast.error(error.message);  
     }  

@@ -26,3 +26,7 @@ class Application(Base):
     decided_by_user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     unified_data = Column(JSONB, nullable=True)
     unified_schema_version = Column(String(20), nullable=True)
+
+    from sqlalchemy.orm import relationship
+    messages = relationship("Communication", backref="application", cascade="all, delete-orphan", order_by="Communication.created_at")
+    info_requests = relationship("InformationRequest", backref="application", cascade="all, delete-orphan")

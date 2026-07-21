@@ -50,4 +50,25 @@
   .form-group {  
     @apply mb-4;  
   }  
+
+  /* Ported from finVault */
+  .progressline { display: flex; margin: 1.5rem 0; overflow: hidden; width: 100%; }
+  .progressstep { flex: 1; text-align: center; color: #64748b; position: relative; }
+  .progressstep:before { content: ''; position: absolute; height: 3px; background: #cbd5e1; left: 50%; right: -50%; top: 14px; z-index: 0; }
+  .progressstep:last-child:before { display: none; }
+  .progressstep span { position: relative; z-index: 1; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #f8fafc; border: 2px solid #cbd5e1; font-weight: 600; font-size: 0.875rem; color: #64748b; }
+  .progressstep small { display: block; margin-top: 8px; font-size: 0.75rem; font-weight: 500; }
+  .progressstep.done span { background: #10b981; border-color: #10b981; color: #fff; }
+  .progressstep.done:before { background: #10b981; }
+  .progressstep.active span { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+  .progressstep.active small { color: #0f172a; font-weight: 700; }
+  .thread{max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+  .bubble{max-width:75%;padding:10px 12px;border-radius:12px;background:#f1f4f8}
+  .bubble.outgoing{align-self:flex-end;background:#e7efff}
+  .bubble.incoming{align-self:flex-start}
+  .bubble p{margin:5px 0}
+  .bubble small{color:#76849a}
+  .textbutton{background:transparent;color:#356fd6;padding:2px 0;font-size:12px;display:block}
+  .event,.doc,.request,.message{padding:12px 0;border-bottom:1px solid #edf0f5;display:flex;justify-content:space-between;gap:12px}
+  .upload{background:#eff4ff;color:#356fd6;padding:7px 10px;border-radius:8px;cursor:pointer}
 }

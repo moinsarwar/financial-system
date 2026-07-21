@@ -10,6 +10,7 @@ class UserRole(str, enum.Enum):
     UNDERWRITER = "underwriter"  
     COMPLIANCE = "compliance"  
     ADMINISTRATOR = "administrator"  
+    SUPER_ADMIN = "super_admin"
   
 class User(Base):  
     __tablename__ = "users"  

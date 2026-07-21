@@ -63,6 +63,7 @@ from app.schemas import (
     ApplicationCreate,
     ApplicationDecisionRequest,
     ApplicationResponse,
+    ApplicationWithDetailsResponse,
 )
 from app.services.application_service import (
     advance_application_service,
@@ -103,7 +104,7 @@ def list_applications(
 
 @router.get(
     "/{app_id}",
-    response_model=ApplicationResponse,
+    response_model=ApplicationWithDetailsResponse,
 )
 def application_detail(
     app_id: str,
@@ -543,3 +544,115 @@ def finvault_status_webhook(
         })
     db.commit()
     return {"status": "ok"}
+
+from app.models.communication import Communication, MessageReceipt
+from app.models.information_request import InformationRequest
+from app.schemas import MessageCreate, MessageResponse, InfoRequestCreate, InfoRequestResponse, DocumentResponse
+
+@router.get('/{app_id}/messages', response_model=list[MessageResponse])
+def get_messages(app_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    app = get_application(db, app_id, current_user)
+    if not app: raise HTTPException(404, 'Application not found')
+    return db.query(Communication).filter(Communication.application_id == app.id).order_by(Communication.created_at).all()
+
+@router.post('/{app_id}/messages', response_model=MessageResponse)
+def post_message(app_id: str, data: MessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    app = get_application(db, app_id, current_user)
+    if not app: raise HTTPException(404, 'Application not found')
+    msg = Communication(application_id=app.id, sender_id=current_user.id, sender_role=current_user.role, sender_name=current_user.full_name, message=data.message)
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg
+
+@router.post('/{app_id}/messages/read')
+def read_messages(app_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # simple mock for read receipts
+    return {'status': 'ok'}
+
+@router.post('/{app_id}/information-requests', response_model=list[InfoRequestResponse])
+def create_info_requests(app_id: str, data: InfoRequestCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    app = get_application(db, app_id, current_user)
+    if not app: raise HTTPException(404, 'Application not found')
+    created = []
+    for item in data.items:
+        req = InformationRequest(application_id=app.id, kind=item.kind, label=item.label, document_requirement_code=item.document_requirement_code, requested_by_id=current_user.id)
+        db.add(req)
+        created.append(req)
+    # also advance status to additional-info if needed
+    if app.status != 'additional-info':
+        app.status = 'additional-info'
+    db.commit()
+    for req in created: db.refresh(req)
+    return created
+
+@router.post('/{app_id}/information-requests/submit')
+def submit_info_requests(app_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    app = get_application(db, app_id, current_user)
+    if not app: raise HTTPException(404, 'Application not found')
+    # find open requests and mark them submitted
+    reqs = db.query(InformationRequest).filter(InformationRequest.application_id == app.id, InformationRequest.status == 'open').all()
+    for r in reqs:
+        r.status = 'submitted'
+        r.submitted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {'status': 'ok'}
+
+@router.post('/{app_id}/information-requests/resolve')
+def resolve_info_requests(app_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    app = get_application(db, app_id, current_user)
+    if not app: raise HTTPException(404, 'Application not found')
+    reqs = db.query(InformationRequest).filter(InformationRequest.application_id == app.id, InformationRequest.status.in_(['open', 'submitted'])).all()
+    for r in reqs:
+        r.status = 'resolved'
+        r.resolved_at = datetime.now(timezone.utc)
+        r.resolved_by_id = current_user.id
+    if app.status == 'additional-info':
+        # revert status or move to review
+        app.status = 'in-progress'
+    db.commit()
+    return {'status': 'ok'}
+
+@router.post('/{app_id}/information-requests/{public_id}/response')
+def respond_to_info_request(app_id: str, public_id: str, data: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    app = get_application(db, app_id, current_user)
+    if not app: raise HTTPException(404, 'Application not found')
+    req = db.query(InformationRequest).filter(InformationRequest.public_id == public_id, InformationRequest.application_id == app.id).first()
+    if not req: raise HTTPException(404, 'Request not found')
+    req.response_text = data.get('response_text', '')
+    req.status = 'submitted'
+    req.submitted_at = datetime.now(timezone.utc)
+    db.commit()
+    return {'status': 'ok'}
+
+from fastapi import UploadFile, File
+import os
+from app.core.config import settings
+from app.services.document_service import create_document
+from app.services.mapper_service import map_document_response
+
+@router.post('/{app_id}/documents/{code}', response_model=DocumentResponse)
+async def upload_app_document(app_id: str, code: str, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user), req: Request = None):
+    app = get_application(db, app_id, current_user)
+    if not app: raise HTTPException(404, 'Application not found')
+    
+    # Check if a document with this code (type) already exists for this app
+    existing = db.query(Document).filter(Document.ref_id == app.id, Document.type == code).first()
+    if existing:
+        # Delete old file
+        if existing.storage_key:
+            old_path = os.path.join(settings.UPLOAD_ROOT, existing.storage_key)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        db.delete(existing)
+        db.commit()
+
+    content = await file.read()
+    # Create new document
+    doc = create_document(
+        db, app.client_id, code.replace('_', ' ').title(), file.filename, code, content, file.content_type,
+        app.id, 'application', current_user,
+        req.client.host if req else None,
+        req.headers.get('X-Request-ID') if req else None
+    )
+    return map_document_response(db, doc)

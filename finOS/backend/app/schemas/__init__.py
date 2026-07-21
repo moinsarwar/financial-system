@@ -60,7 +60,51 @@ class ApplicationResponse(ApplicationBase):
     decision_notes: Optional[str] = None  
     decided_at: Optional[datetime] = None  
     decided_by_user_id: Optional[str] = None  
+    unified_data: Optional[Dict[str, Any]] = None
+    unified_schema_version: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)  
+
+class MessageBase(BaseModel):
+    message: str
+
+class MessageCreate(MessageBase): pass
+
+class MessageResponse(MessageBase):
+    id: str
+    application_id: str
+    sender_id: str
+    sender_role: str
+    sender_name: str
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class InfoRequestBase(BaseModel):
+    kind: str
+    label: str
+    document_requirement_code: Optional[str] = None
+
+class InfoRequestCreateItem(InfoRequestBase): pass
+
+class InfoRequestCreate(BaseModel):
+    items: List[InfoRequestCreateItem]
+
+class InfoRequestResponse(InfoRequestBase):
+    id: str
+    public_id: str
+    application_id: str
+    response_text: Optional[str] = None
+    status: str
+    requested_by_id: str
+    resolved_by_id: Optional[str] = None
+    created_at: datetime
+    submitted_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
+
+class ApplicationWithDetailsResponse(ApplicationResponse):
+    messages: List[MessageResponse] = []
+    info_requests: List[InfoRequestResponse] = []
+
   
 class ApplicationDecisionRequest(BaseModel):  
     outcome: Literal["approved", "declined", "withdrawn"]  

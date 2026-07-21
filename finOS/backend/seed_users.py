@@ -54,8 +54,21 @@ def seed():
             )
             db.add(ops_user)
 
+        admin_user = db.query(User).filter(User.email=="admin@finos.com").first()
+        if not admin_user:
+            admin_user = User(
+                id=f"user-{uuid.uuid4().hex[:8]}",
+                email="admin@finos.com",
+                hashed_password=get_password_hash("password123"),
+                full_name="Company Admin",
+                role=UserRole.SUPER_ADMIN,
+                client_id=None,
+                is_active=True
+            )
+            db.add(admin_user)
+
         db.commit()
-        print("Successfully seeded client@finos.com and ops@finos.com with password 'password123'")
+        print("Successfully seeded client@finos.com, ops@finos.com, and admin@finos.com with password 'password123'")
     except Exception as e:
         print(f"Failed to seed users: {e}")
         db.rollback()

@@ -16,7 +16,7 @@ export const Header: React.FC<Props> = ({ user, onMenuToggle }) => {
         <button onClick={onMenuToggle} className="sm:hidden text-2xl text-gray-600">☰</button>  
         <span className="text-xl font-extrabold text-primary">FinOS <span className="text-gray-400 font-normal">v9.0</span></span>  
         <span className="bg-accent-soft text-accent px-3 py-0.5 rounded-full text-xs font-semibold hidden sm:inline">  
-          {user.role === 'client' ? 'Client Portal' : 'Operations Portal'}  
+          {user.role === 'client' ? 'Client Portal' : user.role === 'super_admin' ? 'Company Admin Portal' : 'Operations Portal'}  
         </span>  
       </div>  
       <div className="flex items-center gap-4 text-sm">  

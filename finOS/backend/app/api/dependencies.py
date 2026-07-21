@@ -21,39 +21,46 @@ PERMISSION_ROLES: dict[str, Set[UserRole]] = {
         UserRole.OPERATIONS_AGENT,
         UserRole.OPERATIONS_MANAGER,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "application.create": {
         UserRole.CLIENT,
         UserRole.OPERATIONS_AGENT,
         UserRole.OPERATIONS_MANAGER,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "application.advance": {
         UserRole.OPERATIONS_AGENT,
         UserRole.OPERATIONS_MANAGER,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "application.decide": {
         UserRole.OPERATIONS_AGENT,
         UserRole.OPERATIONS_MANAGER,
         UserRole.UNDERWRITER,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "claim.create": {
         UserRole.CLIENT,
         UserRole.CLAIMS_AGENT,
         UserRole.OPERATIONS_MANAGER,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "claim.advance": {
         UserRole.CLAIMS_AGENT,
         UserRole.OPERATIONS_MANAGER,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "claim.resolve": {
         UserRole.CLAIMS_AGENT,
         UserRole.OPERATIONS_MANAGER,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "document.upload": {
         UserRole.CLIENT,
@@ -63,11 +70,13 @@ PERMISSION_ROLES: dict[str, Set[UserRole]] = {
         UserRole.UNDERWRITER,
         UserRole.COMPLIANCE,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
     "activity.read_all": {
         UserRole.OPERATIONS_MANAGER,
         UserRole.COMPLIANCE,
         UserRole.ADMINISTRATOR,
+        UserRole.SUPER_ADMIN,
     },
 }
 

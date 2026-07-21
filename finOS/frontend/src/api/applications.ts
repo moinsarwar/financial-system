@@ -235,3 +235,62 @@ export async function createUnifiedApplication(payload: UnifiedApplicationReques
   const { data } = await api.post('/applications/unified', payload);
   return data;
 }
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  sender_role: string;
+  sender_name: string;
+  message: string;
+  created_at: string;
+}
+
+export interface InformationRequest {
+  id: string;
+  public_id: string;
+  kind: string;
+  label: string;
+  document_requirement_code?: string;
+  status: string;
+  response_text?: string;
+  created_at: string;
+}
+
+export async function getApplicationMessages(id: string): Promise<Message[]> {
+  const { data } = await api.get<Message[]>(`/applications/${id}/messages`);
+  return data;
+}
+
+export async function sendMessage(id: string, message: string): Promise<Message> {
+  const { data } = await api.post<Message>(`/applications/${id}/messages`, { message });
+  return data;
+}
+
+export async function markMessagesRead(id: string): Promise<void> {
+  await api.post(`/applications/${id}/messages/read`);
+}
+
+export async function requestInformation(id: string, items: {kind: string, label: string, document_requirement_code?: string}[]): Promise<InformationRequest[]> {
+  const { data } = await api.post<InformationRequest[]>(`/applications/${id}/information-requests`, { items });
+  return data;
+}
+
+export async function submitInformationRequests(id: string): Promise<void> {
+  await api.post(`/applications/${id}/information-requests/submit`);
+}
+
+export async function resolveInformationRequests(id: string): Promise<void> {
+  await api.post(`/applications/${id}/information-requests/resolve`);
+}
+
+export async function respondToInformationRequest(appId: string, publicId: string, response_text: string): Promise<void> {
+  await api.post(`/applications/${appId}/information-requests/${publicId}/response`, { response_text });
+}
+
+export async function uploadAppDocument(appId: string, code: string, file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post(`/applications/${appId}/documents/${code}`, formData);
+  return data;
+}
+

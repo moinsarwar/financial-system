@@ -27,6 +27,7 @@ def seed_demo_data(db: Session, commit: bool = False):
         return  
   
     roles = [  
+        ("admin1", "admin@finos.com", "Company Admin", UserRole.SUPER_ADMIN),
         ("ops1", "ops@finos.com", "Operations Director", UserRole.ADMINISTRATOR),  
         ("ops-agent-1", "ops_agent@finos.com", "Operations Agent", UserRole.OPERATIONS_AGENT),  
         ("ops-manager-1", "ops_manager@finos.com", "Operations Manager", UserRole.OPERATIONS_MANAGER),  
