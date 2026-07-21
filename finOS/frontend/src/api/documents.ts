@@ -15,7 +15,9 @@ export interface Document {
   size_bytes: number | null;  
   checksum?: string;  
   storage_key?: string;  
-  uploaded_by_user?: string;  
+  uploaded_by_user?: string;
+  original_filename?: string;
+  is_missing?: boolean;
 }  
   
 export interface DocumentUpload {  

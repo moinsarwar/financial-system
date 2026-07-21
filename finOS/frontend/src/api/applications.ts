@@ -12,7 +12,7 @@ export interface Application {
   current_step: string;
   amount: number | string;
   currency: string;
-  status: 'in-progress' | 'approved' | 'completed' | 'declined' | 'withdrawn';
+  status: 'in-progress' | 'approved' | 'completed' | 'declined' | 'withdrawn' | 'additional-info';
   created_at: string;
   updated_at: string;
   timeline: Array<{
