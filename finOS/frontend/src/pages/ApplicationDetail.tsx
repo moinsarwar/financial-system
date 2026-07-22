@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';  
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';  
 import { advanceApplication, decideApplication, getApplication, getApplicationMessages, sendMessage, requestInformation, submitInformationRequests, resolveInformationRequests, respondToInformationRequest, uploadAppDocument } from '../api/applications';
-import { getDocuments } from '../api/documents';
+import { getDocuments, downloadDocument } from '../api/documents';
 import { can } from '../utils/permissions';  
 import { Badge } from '../components/common/Badge';  
 import { DetailPanel } from '../components/common/DetailPanel';  
@@ -218,7 +218,7 @@ export const ApplicationDetail: React.FC = () => {
                       {doc.type} {!doc.is_missing ? `· ${new Date(doc.uploaded_at).toLocaleDateString()}` : '· Required'}
                     </div>
                     {!doc.is_missing && (
-                      <a href={`/api/documents/${doc.id}/download`} className="text-sm text-blue-600 hover:underline">Download</a>
+                      <button onClick={() => downloadDocument(doc.id, doc.original_filename || doc.name || 'document.pdf')} className="text-sm text-blue-600 hover:underline">Download</button>
                     )}
                   </div>
                   <label className="upload text-sm text-blue-600 cursor-pointer">

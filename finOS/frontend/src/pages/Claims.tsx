@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';  
 import { Table } from '../components/common/Table';  
 import { Badge } from '../components/common/Badge';  
-import { SearchFilterBar } from '../components/common/SearchFilterBar';  
 import { Modal } from '../components/common/Modal';  
 import { can } from '../utils/permissions';  
 import toast from 'react-hot-toast';  
@@ -57,7 +56,8 @@ export const Claims: React.FC = () => {
   const [searchParams] = useSearchParams();  
   const navigate = useNavigate();  
   const [search, setSearch] = useState('');  
-  const [step, setStep] = useState(searchParams.get('step') || 'all');  
+  const [step, setStep] = useState('all');  
+  const [activeTab, setActiveTab] = useState('All Departments');
   const department = searchParams.get('department') || 'all';  
   const openOnly = searchParams.get('open_only') === 'true';  
   const [isModalOpen, setIsModalOpen] = useState(false);  
@@ -69,7 +69,6 @@ export const Claims: React.FC = () => {
     description: '',  
   });  
   
-  // Fetch clients  
   const { data: clientData = [] } = useQuery({  
     queryKey: ['clients-list'],  
     queryFn: () => getClients({}),  
@@ -78,7 +77,6 @@ export const Claims: React.FC = () => {
   
   const effectiveClientId = user?.role === 'client' ? user.client_id || '' : newClaim.client_id;
 
-  // Fetch products for policy selector (only when modal is open)  
   const { data: productData = [] } = useQuery({  
     queryKey: ['active-products-for-claim', effectiveClientId],  
     queryFn: () => getProducts({ status: 'active' }),  
@@ -176,7 +174,36 @@ export const Claims: React.FC = () => {
     {  
       key: 'current_step',  
       header: 'Step',  
-      render: (v: string) => <Badge type={v === 'Decision Advised' ? 'gold' : 'in-progress'}>{v}</Badge>,  
+      render: (v: string) => {
+        const progressMap: Record<string, number> = {
+          'Event Reported': 5,
+          'Evidence Collated': 20,
+          'Submitted to Insurer': 45,
+          'Under Review': 65,
+          'Decision Advised': 80,
+          'Payment Confirmed': 100,
+          'Authorization Denied': 92,
+          'Partially Approved': 92,
+          'Fraud Review': 92,
+        };
+        const progress = progressMap[v] || 0;
+        return (
+          <div>
+            <div className="mb-1">
+              <Badge type={v === 'Decision Advised' ? 'gold' : 'in-progress'}>{v}</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <span className="text-[10px] text-gray-400 font-medium">{progress}%</span>
+            </div>
+          </div>
+        );
+      },  
     },  
     {  
       key: 'status',  
@@ -192,7 +219,7 @@ export const Claims: React.FC = () => {
       header: 'Flag',
       render: (_: any, row: Claim) => {
         const flag = getFlag(row);
-        const typeMap: Record<string, string> = { ontrack: 'approved', delayed: 'gold', overdue: 'rejected' };
+        const typeMap: Record<string, string> = { ontrack: 'success', delayed: 'gold', overdue: 'danger' };
         const labelMap: Record<string, string> = { ontrack: 'On Track', delayed: 'Delayed', overdue: 'Overdue' };
         return <Badge type={typeMap[flag]}>{labelMap[flag]}</Badge>;
       }
@@ -203,9 +230,9 @@ export const Claims: React.FC = () => {
       render: (_: any, row: Claim) => {  
         const open = isClaimOpen(row);  
         return (  
-          <div className="flex gap-2 flex-wrap">  
+          <div className="flex gap-2 flex-wrap items-center">  
             <button  
-              className="btn-sm primary"  
+              className="px-4 py-1 bg-[#4f8cff] text-white rounded-lg text-xs font-semibold hover:bg-blue-600 transition"  
               onClick={() => navigate(`/dashboard/claims/${row.id}`)}  
             >  
               View  
@@ -213,32 +240,16 @@ export const Claims: React.FC = () => {
             {can(user?.role, 'claim.advance') && open && (  
               <>  
                 {row.current_step === 'Decision Advised' ? (  
-                  <>  
-                    <button  
-                      className="btn-sm success"  
-                      onClick={() => resolve.mutate({ id: row.id, resolution: { outcome: 'Payment Confirmed', reason_code: 'claim_validated', notes: 'Claim verified and approved for payment.' } })}  
-                      disabled={resolve.isPending && resolve.variables?.id === row.id}  
-                    >  
-                      Approve  
-                    </button>  
-                    <button  
-                      className="btn-sm danger"  
-                      onClick={() => resolve.mutate({ id: row.id, resolution: { outcome: 'Authorization Denied', reason_code: 'coverage_not_met', notes: 'The reported event is outside the policy coverage.' } })}  
-                      disabled={resolve.isPending && resolve.variables?.id === row.id}  
-                    >  
-                      Deny  
-                    </button>  
-                    <button  
-                      className="btn-sm gold"  
-                      onClick={() => resolve.mutate({ id: row.id, resolution: { outcome: 'Partially Approved', reason_code: 'partial_coverage', notes: 'Claim is partially approved.' } })}  
-                      disabled={resolve.isPending && resolve.variables?.id === row.id}  
-                    >  
-                      Partial  
-                    </button>  
-                  </>  
+                  <button  
+                    className="px-4 py-1 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 transition"  
+                    onClick={() => resolve.mutate({ id: row.id, resolution: { outcome: 'Payment Confirmed', reason_code: 'claim_validated', notes: 'Claim verified and approved for payment.' } })}  
+                    disabled={resolve.isPending && resolve.variables?.id === row.id}  
+                  >  
+                    Approve  
+                  </button>  
                 ) : (  
                   <button  
-                    className="btn-sm gold"  
+                    className="px-4 py-1 bg-yellow-500 text-white rounded-lg text-xs font-semibold hover:bg-yellow-600 transition"  
                     onClick={() => advance.mutate(row.id)}  
                     disabled={advance.isPending && advance.variables === row.id}  
                   >  
@@ -256,73 +267,129 @@ export const Claims: React.FC = () => {
   const stepOptions = ['all', 'Event Reported', 'Evidence Collated', 'Submitted to Insurer', 'Under Review', 'Decision Advised'];  
   
   const claimsList = data || [];
-  const totalClaims = claimsList.length;
-  const pendingValidation = claimsList.filter((c: any) => c.current_step === 'Evidence Collated').length;
-  const underReview = claimsList.filter((c: any) => c.current_step === 'Under Review' || c.current_step === 'Submitted to Insurer').length;
-  const settled = claimsList.filter((c: any) => c.current_step === 'Payment Confirmed').length;
+
+  let displayedClaims = claimsList;
+  if (activeTab !== 'All Departments') {
+    displayedClaims = claimsList.filter((c: any) => {
+      const typeLower = (c.type || '').toLowerCase();
+      if (activeTab === 'Health Insurance' && typeLower.includes('health')) return true;
+      if (activeTab === 'Motor Insurance' && (typeLower.includes('car') || typeLower.includes('motor'))) return true;
+      if (activeTab === 'Home Insurance' && typeLower.includes('home')) return true;
+      if (activeTab === 'Life Assurance' && typeLower.includes('death')) return true;
+      if (activeTab === 'Retail Banking' || activeTab === 'Commercial Insurance' || activeTab === 'Travel Insurance') return false; 
+      return false;
+    });
+  }
+
+  if (search) {
+    displayedClaims = displayedClaims.filter(c => 
+      c.id.toLowerCase().includes(search.toLowerCase()) || 
+      c.client_name?.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+  if (step !== 'all') {
+    displayedClaims = displayedClaims.filter(c => c.current_step === step);
+  }
+
+  const totalClaims = displayedClaims.length;
+  const pendingValidation = displayedClaims.filter((c: any) => c.current_step === 'Evidence Collated').length;
+  const underReview = displayedClaims.filter((c: any) => c.current_step === 'Under Review' || c.current_step === 'Submitted to Insurer').length;
+  const settled = displayedClaims.filter((c: any) => c.current_step === 'Payment Confirmed').length;
+
+  const tabs = [
+    { label: 'All Departments', icon: '' },
+    { label: 'Health Insurance', icon: 'fa-heartbeat', color: 'text-pink-500' },
+    { label: 'Motor Insurance', icon: 'fa-car', color: 'text-red-500' },
+    { label: 'Life Assurance', icon: 'fa-umbrella', color: 'text-blue-400' },
+    { label: 'Home Insurance', icon: 'fa-home', color: 'text-yellow-500' },
+    { label: 'Travel Insurance', icon: 'fa-plane', color: 'text-blue-500' },
+    { label: 'Retail Banking', icon: 'fa-building', color: 'text-gray-500' },
+    { label: 'Commercial Insurance', icon: 'fa-briefcase', color: 'text-gray-600' }
+  ];
 
   return (  
-    <div>  
+    <div className="bg-[#f4f7fc] min-h-screen -m-6 p-6">  
+      {/* Category Tabs */}
+      <div className="flex flex-wrap items-center gap-2 mb-6 border-b border-gray-200 pb-4">
+        <span className="text-gray-500 font-semibold text-sm mr-2 flex items-center">
+          <i className="fas fa-building mr-2"></i> Department:
+        </span>
+        {tabs.map((tab) => (
+          <button
+            key={tab.label}
+            onClick={() => setActiveTab(tab.label)}
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors flex items-center gap-2 border ${
+              activeTab === tab.label
+                ? 'bg-white border-[#4f8cff] text-[#4f8cff] shadow-sm'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            {tab.icon && <i className={`fas ${tab.icon} ${tab.color}`}></i>}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Claims</span>
-            <h3 className="text-2xl font-bold text-gray-800 mt-1">{totalClaims}</h3>
-          </div>
-          <div className="p-3 bg-blue-50 text-blue-500 rounded-lg">
-            <i className="fas fa-file-invoice text-xl"></i>
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 flex items-center">TOTAL CLAIMS</div>
+          <div className="flex justify-between items-end">
+            <h3 className="text-3xl font-bold text-gray-800">{totalClaims}</h3>
+            <div className="w-4 h-4 bg-blue-100 rounded"></div>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pending Validation</span>
-            <h3 className="text-2xl font-bold text-gray-800 mt-1">{pendingValidation}</h3>
-          </div>
-          <div className="p-3 bg-yellow-50 text-yellow-500 rounded-lg">
-            <i className="fas fa-clipboard-check text-xl"></i>
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">PENDING VALIDATION</div>
+          <div className="flex justify-between items-end">
+            <h3 className="text-3xl font-bold text-gray-800">{pendingValidation}</h3>
+            <div className="w-4 h-4 bg-yellow-100 rounded"></div>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Under Review</span>
-            <h3 className="text-2xl font-bold text-gray-800 mt-1">{underReview}</h3>
-          </div>
-          <div className="p-3 bg-purple-50 text-purple-500 rounded-lg">
-            <i className="fas fa-search text-xl"></i>
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">UNDER REVIEW</div>
+          <div className="flex justify-between items-end">
+            <h3 className="text-3xl font-bold text-gray-800">{underReview}</h3>
+            <div className="w-4 h-4 bg-purple-100 rounded"></div>
           </div>
         </div>
-        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Settled</span>
-            <h3 className="text-2xl font-bold text-gray-800 mt-1">{settled}</h3>
-          </div>
-          <div className="p-3 bg-green-50 text-green-500 rounded-lg">
-            <i className="fas fa-check-circle text-xl"></i>
+        <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">SETTLED</div>
+          <div className="flex justify-between items-end">
+            <h3 className="text-3xl font-bold text-gray-800">{settled}</h3>
+            <div className="w-4 h-4 bg-green-100 rounded"></div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-between items-center mb-4">  
-        <SearchFilterBar  
-          search={search}  
-          onSearchChange={setSearch}  
-          filters={[  
-            {  
-              key: 'step',  
-              label: 'Step',  
-              options: stepOptions,  
-              value: step,  
-              onChange: setStep,  
-            },  
-          ]}  
-        />  
-        {can(user?.role, 'claim.create') && (  
-          <button className="btn-sm primary" onClick={() => setIsModalOpen(true)}>  
-            ➕ New Claim  
-          </button>  
-        )}  
-      </div>  
-      <Table columns={columns} data={data || []} loading={isLoading} />  
+      {/* Table Area */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div className="flex justify-between items-center mb-4">  
+          <div className="flex items-center gap-4">
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-48"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <select 
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600"
+              value={step}
+              onChange={(e) => setStep(e.target.value)}
+            >
+              {stepOptions.map(o => <option key={o} value={o}>{o === 'all' ? 'All Steps' : o}</option>)}
+            </select>
+          </div>
+          {can(user?.role, 'claim.create') && (  
+            <button className="px-4 py-2 bg-[#4f8cff] text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition shadow-sm" onClick={() => setIsModalOpen(true)}>  
+              ➕ New Claim  
+            </button>  
+          )}  
+        </div>  
+        
+        <Table columns={columns} data={displayedClaims} loading={isLoading} />  
+      </div>
   
       <Modal  
         isOpen={isModalOpen}  
