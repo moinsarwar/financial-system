@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getClaim, advanceClaim, resolveClaim, addClaimMessage } from '../api/claims';
+import { getClaim, advanceClaim, resolveClaim, addClaimMessage, resetClaim } from '../api/claims';
 import { getDocuments, uploadDocument, downloadDocument } from '../api/documents';
 import { useAuth } from '../contexts/AuthContext';
 import { can } from '../utils/permissions';
@@ -89,6 +89,12 @@ export const ClaimDetail: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['claim', id] });
     },
     onError: (err: any) => toast.error(err.response?.data?.detail || 'Advance failed'),
+  });
+
+  const resetClaimMut = useMutation({
+    mutationFn: () => resetClaim(id!),
+    onSuccess: () => { toast.success('Claim reset to Draft'); queryClient.invalidateQueries({ queryKey: ['claim', id] }); queryClient.invalidateQueries({ queryKey: ['documents', { ref_id: id }] }); },
+    onError: (err: any) => { toast.error(err.response?.data?.detail || 'Failed to reset claim'); }
   });
 
   const resolve = useMutation({
@@ -272,6 +278,15 @@ export const ClaimDetail: React.FC = () => {
                       </button>
                     )}
                   </>
+                )}
+                {can(user?.role, 'claim.advance') && (
+                  <button onClick={() => {
+                    if (window.confirm(`Reset claim ${claim.id} to Draft?`)) {
+                      resetClaimMut.mutate();
+                    }
+                  }} className="px-4 py-2 bg-gray-200 text-gray-700 text-xs font-bold rounded shadow-sm hover:bg-gray-300">
+                    <i className="fas fa-undo"></i> Reset
+                  </button>
                 )}
               </div>
             </div>

@@ -136,21 +136,46 @@ def resolve_claim_service(db: Session, claim_id: str, resolution: ClaimResolutio
     db.refresh(claim)  
     return claim
 
-def add_claim_message(db: Session, claim_id: str, message: str, current_user: User):
-    claim = db.query(Claim).filter(Claim.id == claim_id).first()
-    if not claim:
-        raise ValueError("Claim not found")
-    if current_user.role == UserRole.CLIENT and claim.client_id != current_user.client_id:
-        raise PermissionError("Cannot access this claim")
-    
-    new_event = {
-        "time": datetime.now(timezone.utc).isoformat(),
-        "event": f"Message: {message}",
-        "user": current_user.full_name or current_user.id
-    }
-    claim.timeline = (claim.timeline or []) + [new_event]
-    claim.updated_at = datetime.now(timezone.utc)
-    db.flush()
-    db.refresh(claim)
-    return claim
+def add_claim_message(db: Session, claim_id: str, current_user: User, message: str,  
+                      ip_address: str = None, request_id: str = None):  
+    claim = db.query(Claim).filter(Claim.id == claim_id).with_for_update().first()  
+    if not claim: raise ValueError("Claim not found")  
+    if current_user.role == UserRole.CLIENT and claim.client_id != current_user.client_id:  
+        raise PermissionError("Cannot access this claim")  
+    timeline = list(claim.timeline)  
+    timeline.append({  
+        "time": datetime.now(timezone.utc).isoformat(),  
+        "event": f"Message: {message}",  
+        "user": current_user.full_name or current_user.id  
+    })  
+    claim.timeline = timeline  
+    db.commit()  
+    db.refresh(claim)  
+    return claim  
 
+def reset_claim_service(db: Session, claim_id: str, current_user: User,  
+                        ip_address: str = None, request_id: str = None):  
+    claim = db.query(Claim).filter(Claim.id == claim_id).with_for_update().first()  
+    if not claim: raise ValueError("Claim not found")  
+    allowed_roles = {UserRole.CLAIMS_AGENT, UserRole.OPERATIONS_MANAGER, UserRole.ADMINISTRATOR}  
+    if current_user.role not in allowed_roles:  
+        raise PermissionError("Only claims or operations users may reset claims")  
+    
+    claim.current_step = claim.steps[0]
+    claim.step_index = 0
+    claim.resolution_outcome = None
+    claim.resolution_reason_code = None
+    claim.resolution_notes = None
+
+    timeline = list(claim.timeline)  
+    timeline.append({  
+        "time": datetime.now(timezone.utc).isoformat(),  
+        "event": "Claim reset to first step (Draft/Event Reported)",  
+        "user": current_user.full_name or current_user.id  
+    })  
+    claim.timeline = timeline  
+    db.commit()  
+    log_audit(db, current_user.id, claim.client_id, "claim", claim.id, "claim.reset",  
+              f"Reset claim {claim.id} to step 0", claim.product_type, ip_address, request_id)  
+    db.refresh(claim)  
+    return claim

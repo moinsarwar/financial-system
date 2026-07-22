@@ -98,6 +98,16 @@ export async function advanceClaim(
   return data;
 }
 
+export async function resetClaim(
+  id: string,
+): Promise<Claim> {
+  const { data } = await api.post<Claim>(
+    `/claims/${id}/reset`,
+  );
+
+  return data;
+}
+
 export async function resolveClaim(
   id: string,
   resolution: ClaimResolution,
