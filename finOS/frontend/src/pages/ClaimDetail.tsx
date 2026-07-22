@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getClaim, advanceClaim, resolveClaim, addClaimMessage, Claim } from '../api/claims';
-import { getDocuments, uploadDocument, downloadDocument, Document } from '../api/documents';
+import { getClaim, advanceClaim, resolveClaim, addClaimMessage } from '../api/claims';
+import { getDocuments, uploadDocument, downloadDocument } from '../api/documents';
 import { useAuth } from '../contexts/AuthContext';
 import { can } from '../utils/permissions';
 import toast from 'react-hot-toast';
@@ -71,9 +71,9 @@ export const ClaimDetail: React.FC = () => {
     enabled: !!id,
   });
 
-  const { data: docs = [], isLoading: isDocsLoading } = useQuery({
-    queryKey: ['documents', { ref_id: id, ref_type: 'claim' }],
-    queryFn: () => getDocuments({ ref_id: id, ref_type: 'claim' }),
+  const { data: docs = [] } = useQuery({
+    queryKey: ['documents', { ref_id: id }],
+    queryFn: () => getDocuments({ ref_id: id }),
     enabled: !!id,
   });
 
