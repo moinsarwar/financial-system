@@ -1,30 +1,32 @@
 import React, { useState } from 'react';  
-import { Link, useNavigate, useLocation } from 'react-router-dom';  
+import { useNavigate, useLocation } from 'react-router-dom';  
 import { useAuth } from '../../context/AuthContext';  
   
 const TopBar = () => {  
-  const { role, logout } = useAuth();  
+  const { token, role, currentUser, logout } = useAuth();  
   const navigate = useNavigate();  
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);  
   
-  const handleSwitchView = () => {  
-    if (role === 'public') navigate('/admin');  
-    else if (role === 'admin') navigate('/owner/1'); // default to Ahmed  
-    else if (role === 'owner') navigate('/');  
-  };  
-  
-  const getRoleLabel = () => {  
-    if (role === 'public') return '🌐 Public';  
-    if (role === 'admin') return '🛡️ Admin';  
-    if (role === 'owner') return '👤 Reseller Owner';  
-    return '🌐 Public';  
-  };  
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getDashboardPath = () => {
+    if (role === 'admin') return '/admin';
+    if (role === 'reseller' || role === 'owner') return `/owner/${currentUser?.reseller_id || 1}`;
+    return '/';
+  };
+
+  const isDashboardActive = () => {
+    return location.pathname.startsWith('/admin') || location.pathname.startsWith('/owner');
+  };
   
   return (  
     <header className="topbar">  
       <div className="container">  
-        <div className="logo">  
+        <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>  
           The Comparison <span>Engine</span>  
           <span className="badge-pk">PK</span>  
         </div>  
@@ -37,14 +39,26 @@ const TopBar = () => {
         </button>  
         <ul className={`nav-links ${isMenuOpen ? 'open' : ''}`}>  
           <li className={location.pathname === '/' ? 'active' : ''} onClick={() => navigate('/')}>Home</li>  
-          <li className={location.pathname.startsWith('/admin') ? 'active' : ''} onClick={() => navigate('/admin')}>Admin</li>  
-          <li className={location.pathname.startsWith('/owner') ? 'active' : ''} onClick={() => navigate('/owner/1')}>My Dashboard</li>  
+          
+          {!token && (
+            <li className={location.pathname === '/login' ? 'active' : ''} onClick={() => navigate('/login')}>Login</li>  
+          )}
+
+          {token && (
+            <li className={isDashboardActive() ? 'active' : ''} onClick={() => navigate(getDashboardPath())}>My Dashboard</li>  
+          )}
         </ul>  
         <div className="nav-actions">  
-          <span className="badge-role">{getRoleLabel()}</span>  
-          <button className="btn btn-secondary btn-sm" onClick={handleSwitchView}>  
-            Switch View  
-          </button>  
+          {token && (
+            <>
+              <span className="badge-role" style={{ marginRight: '15px' }}>
+                {role === 'admin' ? '🛡️ Admin' : '👤 Reseller'}
+              </span>  
+              <button className="btn btn-secondary btn-sm" onClick={handleLogout}>  
+                Logout  
+              </button>  
+            </>
+          )}
         </div>  
       </div>  
     </header>  

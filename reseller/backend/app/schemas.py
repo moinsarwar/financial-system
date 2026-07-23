@@ -93,3 +93,27 @@ class ResellerStats(BaseModel):
     pending_resellers: int  
     total_conversions: int  
     total_commission: float
+
+# ---------- Auth & User ----------
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: dict
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+    role: Optional[str] = None
+
+class UserBase(BaseModel):
+    email: EmailStr
+    role: str = "reseller"
+    reseller_id: Optional[int] = None
+
+class UserCreate(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: int
+
+    class Config:
+        from_attributes = True

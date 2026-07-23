@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  
   
 from .database import engine, Base  
-from .routers import resellers, customers, activities, testimonials, products  
-  
+from .routers import resellers, customers, activities, testimonials, products, auth
+
 # Create tables (in production, use Alembic migrations)  
 Base.metadata.create_all(bind=engine)  
   
@@ -23,6 +23,7 @@ app.add_middleware(
 )  
   
 # Include routers  
+app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(resellers.router, prefix="/api/resellers", tags=["resellers"])  
 app.include_router(customers.router, prefix="/api/customers", tags=["customers"])  
 app.include_router(activities.router, prefix="/api/activities", tags=["activities"])  
