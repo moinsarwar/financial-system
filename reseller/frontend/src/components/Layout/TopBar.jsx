@@ -1,10 +1,11 @@
 import React, { useState } from 'react';  
-import { Link, useNavigate } from 'react-router-dom';  
+import { Link, useNavigate, useLocation } from 'react-router-dom';  
 import { useAuth } from '../../context/AuthContext';  
   
 const TopBar = () => {  
   const { role, logout } = useAuth();  
   const navigate = useNavigate();  
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);  
   
   const handleSwitchView = () => {  
@@ -35,9 +36,9 @@ const TopBar = () => {
           <span></span><span></span><span></span>  
         </button>  
         <ul className={`nav-links ${isMenuOpen ? 'open' : ''}`}>  
-          <li className={role === 'public' ? 'active' : ''} onClick={() => navigate('/')}>Home</li>  
-          <li className={role === 'admin' ? 'active' : ''} onClick={() => navigate('/admin')}>Admin</li>  
-          <li className={role === 'owner' ? 'active' : ''} onClick={() => navigate('/owner/1')}>My Dashboard</li>  
+          <li className={location.pathname === '/' ? 'active' : ''} onClick={() => navigate('/')}>Home</li>  
+          <li className={location.pathname.startsWith('/admin') ? 'active' : ''} onClick={() => navigate('/admin')}>Admin</li>  
+          <li className={location.pathname.startsWith('/owner') ? 'active' : ''} onClick={() => navigate('/owner/1')}>My Dashboard</li>  
         </ul>  
         <div className="nav-actions">  
           <span className="badge-role">{getRoleLabel()}</span>  

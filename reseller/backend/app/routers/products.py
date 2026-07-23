@@ -59,6 +59,17 @@ async def fetch_finos_products():
         print(f"Failed to fetch finOS products: {e}")
         return {}
 
+@router.get("/stats")
+async def get_stats():
+    products = await fetch_finos_products()
+    total_products = 0
+    banks = set()
+    for cat, items in products.items():
+        total_products += len(items)
+        for item in items:
+            banks.add(item.get("bank"))
+    return {"total_banks": len(banks), "total_products": total_products}
+
 @router.get("/categories")  
 async def get_categories():
     products = await fetch_finos_products()

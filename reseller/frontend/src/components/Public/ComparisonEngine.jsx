@@ -5,6 +5,7 @@ const ComparisonEngine = () => {
   const [category, setCategory] = useState('personal');  
   const [amount, setAmount] = useState(500000);  
   const [products, setProducts] = useState([]);  
+  const [stats, setStats] = useState({ total_banks: 0, total_products: 0 });
   
   useEffect(() => {  
     const fetchProducts = async () => {  
@@ -18,6 +19,18 @@ const ComparisonEngine = () => {
     fetchProducts();  
   }, [category]);  
   
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await apiClient.get('/products/stats');
+        setStats(response.data);
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const handleCompare = () => {  
     // re-fetch or just rely on useEffect  
   };  
@@ -70,8 +83,8 @@ const ComparisonEngine = () => {
         </table>  
       </div>  
       <div className="demo-stats">  
-        <span><strong>12</strong> banks live</span>  
-        <span><strong>47</strong> products compared</span>  
+        <span><strong>{stats.total_banks}</strong> banks live</span>  
+        <span><strong>{stats.total_products}</strong> products compared</span>  
         <span><strong>Updated:</strong> just now</span>  
         <span><i className="fas fa-shield-alt" style={{color:'var(--secondary)'}}></i> Secure</span>  
       </div>  
