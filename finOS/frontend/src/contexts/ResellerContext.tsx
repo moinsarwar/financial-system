@@ -19,13 +19,21 @@ export const ResellerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     const checkDomain = async () => {
-      // In local dev, window.location.hostname might be ahmed.fincompare.pk
-      const hostname = window.location.hostname;
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref');
       
-      // We can also extract the first part of the hostname or just send the full hostname
-      // For now we'll just send the full hostname to the reseller backend verify endpoint
+      let domainToVerify = window.location.hostname;
+      if (ref) {
+        domainToVerify = ref;
+      }
+
+      // Use correct API host depending on where we are running
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // If not localhost, point to the live server's reseller backend IP
+      const apiHost = isLocalhost ? 'http://localhost:9005' : 'http://163.245.222.160:9005';
+
       try {
-        const response = await fetch(`http://localhost:9005/api/resellers/verify?domain=${hostname}`);
+        const response = await fetch(`${apiHost}/api/resellers/verify?domain=${domainToVerify}`);
         if (response.ok) {
           const data = await response.json();
           setResellerId(data.id);
