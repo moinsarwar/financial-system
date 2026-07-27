@@ -1415,7 +1415,8 @@
             SESSION_ID: sessionStorage.getItem('finos_session') || 'sess_' + Math.random().toString(36).substring(2, 10),
             CORRELATION_ID: 'corr_' + Math.random().toString(36).substring(2, 10),
             OPERATOR: 'admin@finos',
-            KIBOR_6M: 19.8
+            KIBOR_6M: 19.8,
+            RESELLER_SUBDOMAIN: window.location.hostname.includes('.compareengine.pk') ? window.location.hostname.split('.')[0] : null
         };
         document.getElementById('kiborDisplay').textContent = CONFIG.KIBOR_6M;
 
@@ -2713,7 +2714,8 @@
                         nationalId: id,
                         iban: iban,
                         products: productsPayload,
-                        kyc_documents: state.kyc
+                        kyc_documents: state.kyc,
+                        reseller_subdomain: CONFIG.RESELLER_SUBDOMAIN
                     })
                 });
                 const data = await res.json();
@@ -2818,7 +2820,7 @@
                     CONFIG.SESSION_ID = sessionStorage.getItem('finos_session');
                 }
 
-                const prodRes = await fetch('/api/front_products?limit=100');
+                const prodRes = await fetch('/api/front_products?limit=100', { cache: 'no-store' });
                 if (prodRes.ok) {
                     const rawText = await prodRes.text();
                     try {

@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import { useReseller } from '../contexts/ResellerContext';
 import { createUnifiedApplication, UnifiedApplicationRequest } from '../api/applications';
 import { getClients } from '../api/clients';
 import { useQuery } from '@tanstack/react-query';
 
 export const UnifiedApplication: React.FC = () => {
   const { user } = useAuth();
+  const { resellerId } = useReseller();
   const navigate = useNavigate();
 
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -135,6 +137,10 @@ export const UnifiedApplication: React.FC = () => {
       calculated_indicators: {},
       simulation_metadata: { created_at: new Date().toISOString() },
     };
+
+    if (resellerId) {
+      payload.reseller_id = resellerId;
+    }
 
     try {
       const result = await createUnifiedApplication(payload);

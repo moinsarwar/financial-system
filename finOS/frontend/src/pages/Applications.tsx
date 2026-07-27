@@ -4,6 +4,7 @@ import { getApplications, advanceApplication, Application, createApplication } f
 import { getClients } from '../api/clients';  
 import { getFrontProducts } from '../api/products';
 import { useAuth } from '../contexts/AuthContext';  
+import { useReseller } from '../contexts/ResellerContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';  
 import { Table } from '../components/common/Table';  
 import { Badge } from '../components/common/Badge';  
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast';
   
 export const Applications: React.FC = () => {  
   const { user } = useAuth();  
+  const { resellerId } = useReseller();
   const queryClient = useQueryClient();  
   const [searchParams, setSearchParams] = useSearchParams();  
   const navigate = useNavigate();  
@@ -176,13 +178,17 @@ export const Applications: React.FC = () => {
             return;  
           }  
           const selectedProduct = frontProductsData.find(p => p.product_id === newApp.product_id);
-          createAppMut.mutate({
+          const payload: any = {
             client_id: effectiveClientId,
             product_type: newApp.product_type,
             product_label: selectedProduct?.features?.[0]?.name || newApp.product_type,
             department: selectedProduct?.provider_id || '',
             amount: newApp.amount
-          });  
+          };
+          if (resellerId) {
+            payload.reseller_id = resellerId;
+          }
+          createAppMut.mutate(payload);  
         }}  
         loading={createAppMut.isPending}  
       >  

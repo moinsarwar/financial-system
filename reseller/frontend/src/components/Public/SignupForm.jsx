@@ -91,7 +91,7 @@ const SignupForm = () => {
         <div className="form-group">
           <label htmlFor="subdomain">Your Subdomain *</label>
           <input type="text" id="subdomain" placeholder="yourbrand" required value={formData.subdomain} onChange={handleChange} />
-          <div className="hint">🔗 Your site will be available at <strong>{(formData.subdomain || 'yourbrand').toLowerCase().replace(/[^a-z0-9-]/g, '')}.compareengine.pk</strong></div>
+          <div className="hint">🔗 Your site will be available at <strong>{(formData.subdomain || 'yourbrand').toLowerCase().replace(/[^a-z0-9-]/g, '')}.compareengine.pk:5173</strong></div>
         </div>
         <div className="form-group">
           <label htmlFor="marketFocus">Primary Product Focus</label>

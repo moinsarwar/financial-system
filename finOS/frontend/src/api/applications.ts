@@ -32,6 +32,7 @@ export interface ApplicationCreate {
   product_label?: string;
   department?: string;
   amount: number;
+  reseller_id?: number;
 }
 
 export interface ApplicationDecision {
@@ -224,6 +225,7 @@ export interface UnifiedApplicationRequest {
   document_ids: string[];
   calculated_indicators: Record<string, any>;
   simulation_metadata?: Record<string, any>;
+  reseller_id?: number;
 }
 
 export async function createUnifiedApplication(payload: UnifiedApplicationRequest): Promise<{

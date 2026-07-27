@@ -19,8 +19,9 @@ export default defineConfig({
     }
   ],  
   server: {  
+    allowedHosts: true,
     proxy: {  
-      '/api': 'http://backend:8000',  
+      '/api': 'http://finos-backend-1:8000',  
     },  
   },  
 });

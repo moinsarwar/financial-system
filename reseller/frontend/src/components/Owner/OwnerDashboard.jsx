@@ -79,9 +79,9 @@ const OwnerDashboard = () => {
         </div>  
         <div className="subdomain-box">  
           <i className="fas fa-globe"></i>  
-          <span>{reseller.subdomain}.compareengine.pk</span>  
+          <span>{reseller.subdomain}.compareengine.pk:5173</span>  
           <button className="btn btn-sm btn-secondary" style={{ padding: '2px 10px', fontSize: '0.7rem' }} onClick={() => {  
-            navigator.clipboard.writeText(`${reseller.subdomain}.compareengine.pk`);  
+            navigator.clipboard.writeText(`${reseller.subdomain}.compareengine.pk:5173`);  
             showToast('Subdomain copied!', 'success');  
           }}><i className="fas fa-copy"></i></button>  
         </div>  
@@ -98,7 +98,7 @@ const OwnerDashboard = () => {
           testimonials={testimonials}  
           onAddTestimonial={fetchData}  
           onCopyLink={() => {  
-            navigator.clipboard.writeText(`https://${reseller.subdomain}.compareengine.pk?ref=owner`);  
+            navigator.clipboard.writeText(`http://${reseller.subdomain}.compareengine.pk:5173?ref=owner`);  
             showToast('Referral link copied!', 'success');  
           }}  
           onShowModal={showModal}  

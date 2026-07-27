@@ -55,6 +55,28 @@ def notify_finvault(app: Application, client: Client):
     except Exception as e:
         print(f"Error preparing finvault webhook: {e}")
 
+def _send_to_reseller_async(payload: dict):
+    try:
+        with httpx.Client() as client:
+            client.post("http://comparison_backend:8000/api/webhooks/commission", json=payload, timeout=5.0)
+    except Exception as e:
+        print(f"Reseller webhook failed: {e}")
+
+def notify_reseller_status(app: Application, client: Client, subdomain: str, status: str):
+    try:
+        payload = {
+            "subdomain": subdomain,
+            "application_id": app.id,
+            "product_name": app.product_label,
+            "amount": float(app.amount) if app.amount else 0.0,
+            "customer_name": client.name,
+            "customer_email": client.email if hasattr(client, 'email') and client.email else "no-email@example.com",
+            "status": status
+        }
+        threading.Thread(target=_send_to_reseller_async, args=(payload,)).start()
+    except Exception as e:
+        print(f"Error preparing reseller webhook: {e}")
+
 from app.schemas.unified import (
     UnifiedApplicationRequest,
     UnifiedApplicationResponse,
@@ -139,7 +161,7 @@ def create_new_application(
     ),
 ):
     try:
-        return create_application(
+        app_res = create_application(
             db=db,
             data=data,
             current_user=current_user,
@@ -152,6 +174,13 @@ def create_new_application(
                 "X-Request-ID",
             ),
         )
+
+        if data.reseller_id:
+            client = db.query(Client).filter(Client.id == data.client_id).first()
+            if client:
+                notify_reseller(app_res, client, data.reseller_id)
+
+        return app_res
 
     except PermissionError as exc:
         raise HTTPException(
@@ -179,7 +208,7 @@ def advance_application_route(
     ),
 ):
     try:
-        return advance_application_service(
+        updated_app = advance_application_service(
             db=db,
             app_id=app_id,
             current_user=current_user,
@@ -192,6 +221,15 @@ def advance_application_route(
                 "X-Request-ID",
             ),
         )
+
+        if updated_app.status == "completed":
+            reseller_subdomain = updated_app.unified_data.get("reseller_subdomain") if updated_app.unified_data else None
+            if reseller_subdomain:
+                client_obj = db.query(Client).filter(Client.id == updated_app.client_id).first()
+                if client_obj:
+                    notify_reseller_status(updated_app, client_obj, reseller_subdomain, status="completed")
+
+        return updated_app
 
     except PermissionError as exc:
         raise HTTPException(
@@ -225,7 +263,7 @@ def decide_application_route(
         if current_user.role not in PERMISSION_ROLES.get("application.decide", set()):
             raise HTTPException(403, "Not authorized")
     try:
-        return decide_application(
+        updated_app = decide_application(
             db=db,
             app_id=app_id,
             decision=decision,
@@ -239,6 +277,17 @@ def decide_application_route(
                 "X-Request-ID",
             ),
         )
+        
+        # Check if this was a terminal decision
+        if decision.outcome in ["approved", "rejected", "withdrawn"]:
+            reseller_subdomain = updated_app.unified_data.get("reseller_subdomain") if updated_app.unified_data else None
+            if reseller_subdomain:
+                client_obj = db.query(Client).filter(Client.id == updated_app.client_id).first()
+                if client_obj:
+                    # Maps to reseller status logic
+                    notify_reseller_status(updated_app, client_obj, reseller_subdomain, status="completed" if decision.outcome == "approved" else decision.outcome)
+
+        return updated_app
 
     except PermissionError as exc:
         raise HTTPException(
@@ -361,6 +410,8 @@ def create_unified_application(
         db.refresh(application)
         
         notify_finvault(application, client)
+        if data.reseller_id:
+            notify_reseller(application, client, data.reseller_id)
     except Exception:
         db.rollback()
         raise
@@ -383,6 +434,7 @@ class PublicSubmissionRequest(BaseModel):
     iban: str
     products: list[PublicProduct]
     kyc_documents: dict[str, str | None] = None
+    reseller_subdomain: str | None = None
 
 @router.post("/public/submit")
 def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db)):
@@ -417,7 +469,7 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         amount=500000.0, # dummy amount
         currency="PKR",
         status="in-progress",
-        unified_data={"nationalId": request.nationalId, "iban": request.iban}
+        unified_data={"nationalId": request.nationalId, "iban": request.iban, "reseller_subdomain": request.reseller_subdomain}
     )
     db.add(app)
     db.commit()
@@ -471,6 +523,8 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
     client_obj = db.query(Client).filter(Client.id == demo_user.client_id).first()
     if client_obj:
         notify_finvault(app, client_obj)
+        if request.reseller_subdomain:
+            notify_reseller_status(app, client_obj, request.reseller_subdomain, status="pending")
 
     return {"application_id": app.id}
 
@@ -543,6 +597,14 @@ def finvault_status_webhook(
             "notes": payload.reason
         })
     db.commit()
+
+    if payload.status in terminal_success_statuses or payload.status == "rejected":
+        reseller_subdomain = app.unified_data.get("reseller_subdomain") if app.unified_data else None
+        if reseller_subdomain:
+            client_obj = db.query(Client).filter(Client.id == app.client_id).first()
+            if client_obj:
+                notify_reseller_status(app, client_obj, reseller_subdomain, status=app.status)
+
     return {"status": "ok"}
 
 from app.models.communication import Communication, MessageReceipt

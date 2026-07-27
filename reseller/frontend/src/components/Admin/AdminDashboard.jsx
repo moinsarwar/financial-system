@@ -55,7 +55,7 @@ const AdminDashboard = () => {
       <div>  
         <div className="detail-row"><span className="label">Name</span><span>{reseller.name}</span></div>  
         <div className="detail-row"><span className="label">Business</span><span>{reseller.business_name || 'N/A'}</span></div>  
-        <div className="detail-row"><span className="label">Subdomain</span><span>{reseller.subdomain}.compareengine.pk</span></div>  
+        <div className="detail-row"><span className="label">Subdomain</span><span>{reseller.subdomain}.compareengine.pk:5173</span></div>  
         <div className="detail-row"><span className="label">Email</span><span>{reseller.email}</span></div>  
         <div className="detail-row"><span className="label">Status</span><span className={`status-badge ${reseller.status}`}>{reseller.status}</span></div>  
         <div className="detail-row"><span className="label">Conversions</span><span>{reseller.conversions}</span></div>  
@@ -139,7 +139,7 @@ const AdminDashboard = () => {
             {resellers.map(r => (  
               <tr key={r.id}>  
                 <td><strong>{r.name}</strong><br /><span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.business_name || 'Independent'}</span></td>  
-                <td><code style={{ background: 'var(--bg)', padding: '1px 8px', borderRadius: '4px' }}>{r.subdomain}.compareengine.pk</code></td>  
+                <td><code style={{ background: 'var(--bg)', padding: '1px 8px', borderRadius: '4px' }}>{r.subdomain}.compareengine.pk:5173</code></td>  
                 <td><span className={`status-badge ${r.status}`}>{r.status}</span></td>  
                 <td>{r.conversions}</td>  
                 <td>₨ {r.commission.toLocaleString()}</td>  

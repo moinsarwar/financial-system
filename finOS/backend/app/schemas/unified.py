@@ -296,6 +296,7 @@ class UnifiedApplicationRequest(BaseModel):
     document_ids: List[str] = Field(default_factory=list)
     calculated_indicators: Dict[str, Any]
     simulation_metadata: Optional[Dict[str, Any]] = None
+    reseller_id: Optional[int] = None
 
     @model_validator(mode="after")
     def validate_product_consistency(self):

@@ -39,6 +39,7 @@ class Customer(Base):
     email = Column(String, nullable=False)  
     product = Column(String, nullable=False)  
     status = Column(String, nullable=False)  # Approved, Pending, In Progress, etc.  
+    application_id = Column(String, unique=True, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)  
   
     reseller = relationship("Reseller", back_populates="customers")  
@@ -52,6 +53,7 @@ class Activity(Base):
     product = Column(String, nullable=False)  
     conversion_status = Column(String, nullable=False)  # Approved, Pending, Declined  
     commission = Column(Float, default=0.0)  
+    application_id = Column(String, unique=True, nullable=True)
   
     reseller = relationship("Reseller", back_populates="activities")  
   

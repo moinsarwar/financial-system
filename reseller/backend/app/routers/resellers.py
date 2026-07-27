@@ -25,6 +25,15 @@ def create_reseller(reseller: schemas.ResellerCreate, db: Session = Depends(get_
 def get_stats(db: Session = Depends(get_db)):  
     return crud.get_reseller_stats(db)
 
+@router.get("/verify")
+def verify_reseller_domain(domain: str, db: Session = Depends(get_db)):
+    # Extract the first part of the domain as the subdomain prefix
+    subdomain_prefix = domain.split('.')[0] if '.' in domain else domain
+    db_reseller = crud.get_reseller_by_subdomain(db, subdomain_prefix)
+    if not db_reseller:
+        raise HTTPException(status_code=404, detail="Reseller not found for this domain")
+    return {"id": db_reseller.id, "subdomain": db_reseller.subdomain, "name": db_reseller.name}
+
 @router.get("/{reseller_id}", response_model=schemas.Reseller)  
 def read_reseller(reseller_id: int, db: Session = Depends(get_db)):  
     db_reseller = crud.get_reseller(db, reseller_id)  

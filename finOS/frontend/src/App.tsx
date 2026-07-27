@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';  
 import { Toaster } from 'react-hot-toast';  
 import { AuthProvider, useAuth } from './contexts/AuthContext';  
+import { ResellerProvider } from './contexts/ResellerContext';
 import { Layout } from './components/layout/Layout';  
 import { Login } from './pages/Login';  
 import { Dashboard } from './pages/Dashboard';  
@@ -39,36 +40,38 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 export const App: React.FC = () => (  
   <QueryClientProvider client={queryClient}>  
     <AuthProvider>  
-      <Toaster position="top-right" toastOptions={{ duration: 4000 }} />  
-      <BrowserRouter>  
-        <Routes>  
-          <Route path="/login" element={<Login />} />  
-          <Route  
-            path="/dashboard"  
-            element={  
-              <ProtectedRoute>  
-                <Layout />  
-              </ProtectedRoute>  
-            }  
-          >  
-            <Route index element={<Dashboard />} />  
-            <Route path="clients" element={<Clients />} />  
-            <Route path="clients/:id" element={<ClientDetail />} />  
-            <Route path="applications" element={<Applications />} />  
-            <Route path="applications/:id" element={<ApplicationDetail />} />  
-            <Route path="claims" element={<Claims />} />  
-            <Route path="claims/:id" element={<ClaimDetail />} />  
-            <Route path="products" element={<Products />} />  
-            <Route path="products/:id" element={<ProductDetail />} />  
-            <Route path="documents" element={<Documents />} />  
-            <Route path="documents/:id" element={<DocumentDetail />} />  
-            <Route path="activity" element={<Activity />} />  
-            <Route path="unified-application" element={<UnifiedApplication />} />
-          </Route>  
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />  
-        </Routes>  
-      </BrowserRouter>  
+      <ResellerProvider>
+        <Toaster position="top-right" toastOptions={{ duration: 4000 }} />  
+        <BrowserRouter>  
+          <Routes>  
+            <Route path="/login" element={<Login />} />  
+            <Route  
+              path="/dashboard"  
+              element={  
+                <ProtectedRoute>  
+                  <Layout />  
+                </ProtectedRoute>  
+              }  
+            >  
+              <Route index element={<Dashboard />} />  
+              <Route path="clients" element={<Clients />} />  
+              <Route path="clients/:id" element={<ClientDetail />} />  
+              <Route path="applications" element={<Applications />} />  
+              <Route path="applications/:id" element={<ApplicationDetail />} />  
+              <Route path="claims" element={<Claims />} />  
+              <Route path="claims/:id" element={<ClaimDetail />} />  
+              <Route path="products" element={<Products />} />  
+              <Route path="products/:id" element={<ProductDetail />} />  
+              <Route path="documents" element={<Documents />} />  
+              <Route path="documents/:id" element={<DocumentDetail />} />  
+              <Route path="activity" element={<Activity />} />  
+              <Route path="unified-application" element={<UnifiedApplication />} />
+            </Route>  
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />  
+          </Routes>  
+        </BrowserRouter>  
+      </ResellerProvider>
     </AuthProvider>  
   </QueryClientProvider>  
 );
