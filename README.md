@@ -25,7 +25,13 @@ This repository is structured into distinct projects, each serving a specific ro
 - **Tech Stack**: FastAPI, Node.js/React, PostgreSQL, Redis, Kubernetes (K3s), Docker.
 - **Role**: Core comparison engine, policy ingestion, audit logging, and external product aggregation.
 
-### 5. [tezQarza-Gateway](./tezQarza-Gateway/)
+### 5. [reseller](./reseller/)
+**Reseller (The Comparison Engine)** is a white-labeled dashboard for external agents to view products, submit applications, and track commissions.
+- **Tech Stack**: React, FastAPI, PostgreSQL, Docker Compose.
+- **Role**: Partner portal for originating applications into finOS.
+
+
+### 6. [tezQarza-Gateway](./tezQarza-Gateway/)
 **TezQarza-Gateway** is a channel gateway connecting frontend applications with backend financial systems for loan originations and product listing.
 - **Tech Stack**: FastAPI, React, PostgreSQL, Docker Compose, Nginx.
 - **Role**: API gateway for external agents and dashboard analytics.

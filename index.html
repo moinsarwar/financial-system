@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>GreenDrive Pakistan — Energy Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+    body { background:#f4f7fb; color:#1e293b; line-height:1.5; }
+    :root {
+      --primary:#0a7e3e; --primary-light:#d1fae5; --primary-dark:#065f2e;
+      --secondary:#1e3a8a; --accent:#f59e0b; --gray:#64748b;
+      --light-bg:#f8fafc; --shadow:0 4px 16px rgba(0,0,0,0.06); --radius:14px;
+    }
+    a { text-decoration:none; color:inherit; }
+    button { cursor:pointer; border:none; outline:none; font-weight:600; font-size:0.95rem; }
+    .container { max-width:1280px; margin:0 auto; padding:0 16px; }
+
+    /* ===== NAVBAR ===== */
+    .navbar {
+      background:#fff; padding:12px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.04);
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      position:sticky; top:0; z-index:100;
+    }
+    .logo { font-size:22px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:6px; }
+    .logo i { color:var(--accent); }
+    .hamburger { font-size:26px; background:none; padding:4px 8px; color:var(--gray); display:block; cursor:pointer; }
+    .hamburger:hover { color:var(--primary); }
+    .nav-links {
+      display:none; flex-direction:column; width:100%; gap:4px; padding-top:12px;
+      border-top:1px solid #eef2f6; margin-top:10px;
+    }
+    .nav-links.open { display:flex; }
+    .nav-links .nav-btn {
+      padding:10px 14px; border-radius:40px; font-size:15px; background:transparent;
+      color:var(--gray); text-align:left; transition:0.2s; border:1px solid transparent;
+    }
+    .nav-links .nav-btn i { width:24px; }
+    .nav-links .nav-btn.active { background:var(--primary); color:#fff; box-shadow:0 4px 10px rgba(10,126,62,0.2); }
+    .nav-links .nav-btn:hover:not(.active) { background:var(--primary-light); }
+    .nav-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .user-badge { background:#eef2ff; border-radius:40px; padding:4px 12px 4px 8px; display:flex; align-items:center; gap:6px; font-size:13px; font-weight:500; color:var(--secondary); }
+    .user-badge i { font-size:16px; }
+    .menu-label { display:none; font-size:12px; color:var(--gray); margin-left:4px; }
+
+    @media (min-width:768px) {
+      .hamburger { display:none; }
+      .nav-links { display:flex !important; flex-direction:row; width:auto; border:none; margin:0; padding:0; gap:4px; flex-wrap:wrap; }
+      .navbar { flex-wrap:nowrap; }
+      .nav-links .nav-btn { padding:8px 18px; font-size:14px; }
+      .menu-label { display:none !important; }
+    }
+
+    /* ===== SECTIONS ===== */
+    .page-section { display:none; padding:24px 0 40px; animation:fadeUp 0.25s ease; }
+    .page-section.active { display:block; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ===== CARDS & GRID ===== */
+    .grid-2 { display:grid; grid-template-columns:1fr; gap:20px; }
+    .grid-3 { display:grid; grid-template-columns:1fr; gap:20px; }
+    .grid-4 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (min-width:600px) { .grid-2 { grid-template-columns:1fr 1fr; } .grid-3 { grid-template-columns:1fr 1fr; } .grid-4 { grid-template-columns:1fr 1fr; } }
+    @media (min-width:900px) { .grid-3 { grid-template-columns:1fr 1fr 1fr; } .grid-4 { grid-template-columns:1fr 1fr 1fr 1fr; } }
+
+    .card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border:1px solid #f0f2f5; transition:0.15s; }
+    .card:hover { transform:translateY(-2px); box-shadow:0 12px 24px rgba(0,0,0,0.06); }
+    .badge { display:inline-block; background:var(--primary-light); color:var(--primary-dark); font-size:12px; font-weight:600; padding:4px 12px; border-radius:40px; }
+    .sharia-badge { background:#fef9c3; color:#854d0e; padding:4px 14px; border-radius:40px; font-size:12px; font-weight:600; }
+    .price { font-size:22px; font-weight:700; color:var(--secondary); }
+    .price small { font-size:14px; font-weight:400; color:var(--gray); }
+    .btn-primary { background:var(--primary); color:#fff; padding:10px 22px; border-radius:40px; font-weight:600; transition:0.2s; display:inline-flex; align-items:center; gap:8px; justify-content:center; }
+    .btn-primary:hover { background:var(--primary-dark); transform:scale(1.02); }
+    .btn-secondary { background:#eef2ff; color:var(--secondary); padding:8px 18px; border-radius:40px; }
+    .btn-secondary:hover { background:#dbe3fe; }
+    .btn-outline { background:transparent; border:1.5px solid var(--primary); color:var(--primary); padding:8px 18px; border-radius:40px; }
+    .btn-outline:hover { background:var(--primary); color:#fff; }
+    .btn-danger { background:#fee2e2; color:#b91c1c; padding:6px 16px; border-radius:40px; }
+    .btn-danger:hover { background:#fecaca; }
+    .btn-sm { padding:6px 16px; font-size:13px; }
+    .flex-between { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    .mt-12 { margin-top:12px; } .mt-16 { margin-top:16px; } .mt-24 { margin-top:24px; }
+    .mb-12 { margin-bottom:12px; } .text-muted { color:var(--gray); } .text-center { text-align:center; }
+
+    /* ===== TABLES ===== */
+    .table-wrap { overflow-x:auto; margin:12px 0; border-radius:var(--radius); border:1px solid #eef2f6; background:#fff; }
+    table { width:100%; border-collapse:collapse; font-size:14px; min-width:480px; }
+    th { background:#f1f5f9; text-align:left; padding:12px 14px; font-weight:600; }
+    td { padding:10px 14px; border-bottom:1px solid #eef2f6; }
+    tr:last-child td { border-bottom:none; }
+
+    /* ===== STEPPER ===== */
+    .stepper { display:flex; flex-wrap:wrap; gap:4px 0; justify-content:space-between; margin:16px 0; position:relative; }
+    .stepper::before { content:''; position:absolute; top:20px; left:20px; right:20px; height:3px; background:#e2e8f0; z-index:0; }
+    .step-item { display:flex; flex-direction:column; align-items:center; flex:1; min-width:60px; position:relative; z-index:1; }
+    .step-circle { width:40px; height:40px; border-radius:50%; background:#e2e8f0; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:14px; transition:0.2s; border:3px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+    .step-circle.active { background:var(--primary); }
+    .step-circle.completed { background:var(--accent); }
+    .step-circle.pending { background:#94a3b8; }
+    .step-label { font-size:11px; font-weight:600; margin-top:6px; text-align:center; color:var(--gray); max-width:70px; }
+    .step-label.active { color:var(--primary-dark); }
+    .step-label.completed { color:var(--accent); }
+
+    /* ===== MODALS ===== */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:999; padding:16px; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#fff; border-radius:24px; padding:28px 20px; max-width:600px; width:100%; box-shadow:0 40px 80px rgba(0,0,0,0.2); position:relative; max-height:90vh; overflow-y:auto; }
+    .modal-box .close-modal { position:absolute; top:12px; right:16px; font-size:28px; color:var(--gray); background:none; cursor:pointer; }
+    .modal-box input, .modal-box select, .modal-box textarea { width:100%; padding:12px 16px; border:1.5px solid #e2e8f0; border-radius:12px; margin:8px 0; font-size:15px; }
+    .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus { border-color:var(--primary); outline:none; }
+    .modal-box .file-upload { border:2px dashed #d1d5db; padding:16px; border-radius:12px; text-align:center; margin:8px 0; }
+    .modal-box .file-upload input { display:none; }
+    .demo-creds { background:#f1f5f9; padding:12px; border-radius:12px; font-size:13px; margin:12px 0; color:var(--gray); }
+    .demo-creds code { background:#fff; padding:2px 8px; border-radius:6px; font-weight:600; color:var(--secondary); }
+
+    /* ===== LEGAL TABS ===== */
+    .legal-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+    .legal-tabs button { padding:8px 18px; border-radius:40px; background:#f1f5f9; font-weight:500; cursor:pointer; }
+    .legal-tabs button.active { background:var(--primary); color:#fff; }
+    .legal-content { max-height:400px; overflow-y:auto; padding:4px; font-size:14px; }
+    .legal-content h3 { margin-top:12px; color:var(--secondary); }
+
+    /* ===== COMPARE SUMMARY ===== */
+    .compare-summary-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    .compare-summary-grid .stat-item {
+      background:white;
+      padding:12px;
+      border-radius:12px;
+      text-align:center;
+      box-shadow:0 2px 8px rgba(0,0,0,0.04);
+    }
+    .compare-summary-grid .stat-item .label { font-size:13px; color:var(--gray); }
+    .compare-summary-grid .stat-item .value { font-size:20px; font-weight:700; color:var(--primary-dark); }
+    .compare-summary-grid .stat-item.highlight { background:var(--primary-light); border:1px solid var(--primary); }
+    @media (min-width:600px) {
+      .compare-summary-grid { grid-template-columns:repeat(4,1fr); }
+    }
+    @media (min-width:900px) {
+      .compare-summary-grid { grid-template-columns:repeat(5,1fr); }
+    }
+
+    /* ===== ABOUT / HOW IT WORKS ===== */
+    .how-step { display:flex; gap:16px; align-items:flex-start; margin-bottom:20px; }
+    .how-step .step-number { background:var(--primary); color:#fff; width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:18px; flex-shrink:0; }
+    .how-step .step-content { flex:1; }
+    .trust-badge { display:flex; align-items:center; gap:12px; background:#f8fafc; padding:12px 16px; border-radius:12px; }
+    .trust-badge i { font-size:28px; color:var(--primary); }
+
+    /* ===== STATS BANNER ===== */
+    .stats-banner { display:grid; grid-template-columns:1fr 1fr; gap:12px; background:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+    .stats-banner .stat { text-align:center; }
+    .stats-banner .stat .number { font-size:28px; font-weight:700; color:var(--primary-dark); }
+    .stats-banner .stat .label { font-size:14px; color:var(--gray); }
+    @media (min-width:600px) { .stats-banner { grid-template-columns:repeat(4,1fr); } }
+
+    /* ===== PARTNER LOGOS ===== */
+    .partner-strip { display:flex; flex-wrap:wrap; justify-content:center; gap:20px; align-items:center; padding:16px 0; }
+    .partner-strip .logo-placeholder { background:#f1f5f9; border-radius:12px; padding:12px 20px; font-weight:600; color:var(--gray); border:1px solid #e2e8f0; }
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonial-card { background:#fff; border-radius:var(--radius); padding:20px; border:1px solid #eef2f6; box-shadow:var(--shadow); }
+    .testimonial-card .avatar { width:50px; height:50px; border-radius:50%; background:var(--primary-light); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--primary-dark); }
+
+    /* ===== PRODUCT CARDS (enhanced) ===== */
+    .product-card { cursor:pointer; }
+    .product-card .spec { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; border-bottom:1px solid #f1f5f9; }
+    .product-card .spec:last-child { border-bottom:none; }
+    .saving-positive { color:var(--primary); font-weight:600; }
+    .saving-negative { color:#b91c1c; font-weight:600; }
+
+    /* ===== FILTER & SEARCH ===== */
+    .filter-bar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:16px; }
+    .filter-bar .filter-btn { padding:6px 16px; border-radius:40px; background:#f1f5f9; font-weight:500; cursor:pointer; transition:0.2s; }
+    .filter-bar .filter-btn.active { background:var(--primary); color:#fff; }
+    .filter-bar .filter-btn:hover:not(.active) { background:#e2e8f0; }
+    .filter-bar input { padding:10px 16px; border-radius:40px; border:1.5px solid #e2e8f0; flex:1; min-width:180px; font-size:14px; }
+    .filter-bar input:focus { border-color:var(--primary); outline:none; }
+
+    /* ===== FAQ ===== */
+    .faq-item { border-bottom:1px solid #eef2f6; padding:12px 0; }
+    .faq-item:last-child { border-bottom:none; }
+    .faq-item .question { font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:4px 0; }
+    .faq-item .question:hover { color:var(--primary); }
+    .faq-item .answer { display:none; padding-top:8px; color:var(--gray); line-height:1.6; }
+
+    /* ===== STICKY BUTTONS ===== */
+    .sticky-apply { position:fixed; bottom:20px; right:20px; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.2); }
+    .scroll-top { position:fixed; bottom:80px; right:20px; z-index:50; background:#fff; border-radius:50%; width:48px; height:48px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.1); color:var(--primary); cursor:pointer; border:1px solid #e2e8f0; transition:0.2s; }
+    .scroll-top:hover { background:var(--primary-light); transform:scale(1.05); }
+
+    /* ===== FOOTER ===== */
+    footer { background:#fff; border-top:1px solid #e2e8f0; padding:20px 0; margin-top:32px; text-align:center; font-size:13px; color:var(--gray); }
+    footer .legal-links a { margin:0 10px; color:var(--secondary); font-weight:500; cursor:pointer; }
+    footer .legal-links a:hover { color:var(--primary); }
+
+    /* ===== MISC ===== */
+    .hidden { display:none !important; }
+    .w-full { width:100%; }
+    .gap-8 { gap:8px; }
+    .flex-wrap { flex-wrap:wrap; }
+    .cursor-pointer { cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar">
+  <div class="logo"><i class="fas fa-leaf"></i> GreenDrive<span style="color:var(--secondary);">.pk</span></div>
+  <div class="nav-actions">
+    <span id="userNavBadge" style="display:none;" class="user-badge"><i class="fas fa-user-check"></i> <span id="userNameDisplay">User</span></span>
+    <button class="nav-btn" id="loginBtn" style="padding:6px 16px;background:var(--primary);color:#fff;border-radius:40px;font-weight:600;"><i class="fas fa-sign-in-alt"></i> <span class="hide-mobile">Login</span></button>
+    <button class="nav-btn" id="signupBtn" style="padding:6px 16px;background:var(--secondary);color:#fff;border-radius:40px;font-weight:600;"><i class="fas fa-user-plus"></i> <span class="hide-mobile">Sign Up</span></button>
+    <button class="nav-btn" id="logoutBtn" style="display:none;background:#fee2e2;color:#b91c1c;border-radius:40px;padding:6px 14px;"><i class="fas fa-sign-out-alt"></i></button>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><i class="fas fa-bars"></i> <span class="menu-label">Menu</span></button>
+  </div>
+  <div class="nav-links" id="navLinks">
+    <button class="nav-btn active" data-page="public-home"><i class="fas fa-home"></i> Home</button>
+    <button class="nav-btn" data-page="public-about"><i class="fas fa-info-circle"></i> About</button>
+    <button class="nav-btn" data-page="public-products"><i class="fas fa-boxes"></i> Marketplace</button>
+    <button class="nav-btn" data-page="public-compare"><i class="fas fa-chart-line"></i> Compare</button>
+    <button class="nav-btn" data-page="public-faq"><i class="fas fa-question-circle"></i> FAQ</button>
+    <button class="nav-btn" data-page="public-ecosystem"><i class="fas fa-sitemap"></i> Ecosystem</button>
+    <button class="nav-btn" data-page="public-legal"><i class="fas fa-gavel"></i> Legal</button>
+    <hr style="margin:4px 0;border-color:#eef2f6;">
+    <button class="nav-btn" data-page="user-dashboard" id="navUserDash"><i class="fas fa-user-circle"></i> My Journey</button>
+    <button class="nav-btn" data-page="vendor-dashboard" id="navVendorDash"><i class="fas fa-store"></i> Vendor</button>
+    <button class="nav-btn" data-page="admin-dashboard" id="navAdminDash"><i class="fas fa-crown"></i> Super Admin</button>
+  </div>
+</nav>
+
+<!-- ========== MODALS ========== -->
+<!-- Login Modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <button class="close-modal" id="closeLoginModal">&times;</button>
+    <h2><i class="fas fa-lock" style="color:var(--primary);"></i> Access Portal</h2>
+    <p class="text-muted">Simulated login — choose your role</p>
+    <div class="demo-creds">
+      <strong>User:</strong> <code>user@demo.com</code> / <code>user123</code><br>
+      <strong>Vendor:</strong> <code>vendor@demo.com</code> / <code>vendor123</code><br>
+      <strong>Super Admin:</strong> <code>admin@demo.com</code> / <code>admin123</code>
+    </div>
+    <input type="email" id="loginEmail" placeholder="Email" value="user@demo.com">
+    <input type="password" id="loginPassword" placeholder="Password" value="user123">
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px;" id="loginSubmitBtn"><i class="fas fa-arrow-right"></i> Sign In</button>
+    <p id="loginError" style="color:#b91c1c;margin-top:10px;font-size:14px;display:none;">Invalid credentials. Try one of the demo accounts.</p>
+  </div>
+</div>
+
+<!-- Signup Modal -->
+<div class="modal-overlay" id="signupModal">
+  <div class="modal-box">
+    <button class="close-modal" id="closeSignupModal">&times;</button>
+    <h2><i class="fas fa-user-plus" style="color:var(--primary);"></i> Register</h2>
+    <p class="text-muted">Create your account to apply for financing.</p>
+    <input type="text" id="signupName" placeholder="Full Name">
+    <input type="email" id="signupEmail" placeholder="Email Address">
+    <input type="password" id="signupPassword" placeholder="Password">
+    <input type="text" id="signupCnic" placeholder="CNIC (e.g. 42101-1234567-8)">
+    <input type="text" id="signupPhone" placeholder="Phone Number">
+    <input type="text" id="signupAddress" placeholder="Home Address">
+    <input type="number" id="signupSalary" placeholder="Monthly Salary (PKR)">
+    <div style="margin:8px 0;">
+      <label style="font-weight:500;">Upload Documents</label>
+      <div class="file-upload" id="fileUploadArea">
+        <i class="fas fa-cloud-upload-alt" style="font-size:24px;color:var(--gray);"></i>
+        <p>CNIC Copy, Bank Statement, Salary Slip (simulated)</p>
+        <input type="file" id="fileUploadInput" multiple accept=".pdf,.jpg,.png">
+        <button class="btn-secondary btn-sm" onclick="document.getElementById('fileUploadInput').click();">Select Files</button>
+      </div>
+      <div id="fileList" style="font-size:13px;color:var(--gray);"></div>
+    </div>
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px;" id="signupSubmitBtn"><i class="fas fa-user-check"></i> Register</button>
+  </div>
+</div>
+
+<!-- Application Modal -->
+<div class="modal-overlay" id="applicationModal">
+  <div class="modal-box">
+    <button class="close-modal" id="closeAppModal">&times;</button>
+    <h2><i class="fas fa-file-invoice" style="color:var(--primary);"></i> Complete Application</h2>
+    <p class="text-muted">Provide additional details for financing approval.</p>
+    <div id="appProductInfo" style="background:#f1f5f9;padding:12px;border-radius:12px;margin:8px 0;"></div>
+    <input type="number" id="appMonthlyIncome" placeholder="Monthly Income (PKR)">
+    <input type="text" id="appEmployment" placeholder="Employment Status (e.g. Salaried, Business)">
+    <input type="text" id="appExistingBills" placeholder="Existing Monthly Bills (Electricity, Fuel, etc.)">
+    <textarea id="appNotes" placeholder="Additional notes" rows="2"></textarea>
+    <div style="margin:8px 0;">
+      <label style="font-weight:500;">Upload Additional Documents (optional)</label>
+      <div class="file-upload" id="appFileUploadArea">
+        <i class="fas fa-cloud-upload-alt" style="font-size:24px;color:var(--gray);"></i>
+        <p>Any supporting documents</p>
+        <input type="file" id="appFileUploadInput" multiple accept=".pdf,.jpg,.png">
+        <button class="btn-secondary btn-sm" onclick="document.getElementById('appFileUploadInput').click();">Select Files</button>
+      </div>
+    </div>
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px;" id="submitAppBtn"><i class="fas fa-paper-plane"></i> Submit Application</button>
+  </div>
+</div>
+
+<!-- Product Detail Modal -->
+<div class="modal-overlay" id="productDetailModal">
+  <div class="modal-box">
+    <button class="close-modal" id="closeProductModal">&times;</button>
+    <div id="productDetailContent"></div>
+  </div>
+</div>
+
+<!-- ========== MAIN CONTENT ========== -->
+<main>
+
+  <!-- HOME -->
+  <section class="page-section active" id="section-public-home">
+    <div style="background:linear-gradient(135deg,#0a7e3e 0%,#065f2e 100%);color:#fff;padding:40px 0;border-radius:0 0 32px 32px;margin-bottom:16px;">
+      <div class="container">
+        <h1 style="font-size:28px;font-weight:700;">Beat Record <span style="color:#fcd34d;">Fuel &amp; Energy</span> Costs</h1>
+        <p style="font-size:16px;max-width:500px;margin:8px 0 16px;opacity:0.9;">Sharia-compliant financing on solar, EVs, and efficient appliances. Save up to 70% on bills.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn-primary" style="background:#fff;color:var(--primary);" onclick="switchPage('public-products')"><i class="fas fa-shopping-cart"></i> Explore</button>
+          <button class="btn-outline" style="border-color:#fff;color:#fff;" onclick="switchPage('public-compare')"><i class="fas fa-calculator"></i> Compare</button>
+          <button class="btn-outline" style="border-color:#fff;color:#fff;" onclick="switchPage('public-about')"><i class="fas fa-info-circle"></i> Learn More</button>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <!-- Stats Banner -->
+      <div class="stats-banner">
+        <div class="stat"><div class="number">70%</div><div class="label">Electricity Savings</div></div>
+        <div class="stat"><div class="number">90%</div><div class="label">Fuel Savings</div></div>
+        <div class="stat"><div class="number">24</div><div class="label">Month Finance</div></div>
+        <div class="stat"><div class="number">100%</div><div class="label">Sharia Compliant</div></div>
+      </div>
+
+      <!-- Why GreenDrive -->
+      <div class="card mt-16" style="background:var(--primary-light);border:1px solid var(--primary);">
+        <h3 style="display:flex;align-items:center;gap:8px;"><i class="fas fa-leaf" style="color:var(--primary);"></i> Why GreenDrive?</h3>
+        <div class="grid-4 mt-12">
+          <div><i class="fas fa-bolt" style="color:var(--accent);font-size:24px;"></i><p><strong>Rising Electricity</strong><br>Costs up 40% in 2024</p></div>
+          <div><i class="fas fa-gas-pump" style="color:var(--accent);font-size:24px;"></i><p><strong>Fuel Inflation</strong><br>Petrol at record highs</p></div>
+          <div><i class="fas fa-lightbulb" style="color:var(--accent);font-size:24px;"></i><p><strong>Load Shedding</strong><br>Unreliable grid supply</p></div>
+          <div><i class="fas fa-hand-holding-heart" style="color:var(--accent);font-size:24px;"></i><p><strong>Sharia Finance</strong><br>No Riba, ethical saving</p></div>
+        </div>
+        <p class="mt-12">We provide energy independence, lower monthly expenses, and a cleaner planet.</p>
+      </div>
+
+      <!-- Partner Logos -->
+      <div class="partner-strip">
+        <span class="logo-placeholder"><i class="fas fa-solar-panel"></i> SolarTech</span>
+        <span class="logo-placeholder"><i class="fas fa-car"></i> EcoRides</span>
+        <span class="logo-placeholder"><i class="fas fa-university"></i> LFE Islamic</span>
+        <span class="logo-placeholder"><i class="fas fa-tools"></i> InstallPro</span>
+        <span class="logo-placeholder"><i class="fas fa-handshake"></i> Sharia Advisors</span>
+      </div>
+
+      <!-- Testimonials -->
+      <h3 class="mt-16">Customer Testimonials</h3>
+      <div class="grid-3 mt-12">
+        <div class="testimonial-card">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="avatar">AK</div>
+            <div><strong>Ali Khan</strong><br><span class="text-muted">Lahore</span></div>
+          </div>
+          <p class="mt-12">"I installed a 3kW solar kit. My electricity bill dropped from 18,000 to 5,000. Monthly saving of 13,000!"</p>
+          <div class="badge mt-12">Solar Kit</div>
+        </div>
+        <div class="testimonial-card">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="avatar">SA</div>
+            <div><strong>Sara Ahmed</strong><br><span class="text-muted">Karachi</span></div>
+          </div>
+          <p class="mt-12">"Switched to an electric bike. I save 8,000 per month on fuel. Best decision ever."</p>
+          <div class="badge mt-12">E-Bike</div>
+        </div>
+        <div class="testimonial-card">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="avatar">RN</div>
+            <div><strong>Raza Naqvi</strong><br><span class="text-muted">Islamabad</span></div>
+          </div>
+          <p class="mt-12">"Our factory installed solar and batteries. Monthly savings of 200,000. The Murabaha plan made it possible."</p>
+          <div class="badge mt-12">Commercial</div>
+        </div>
+      </div>
+
+      <!-- Compelling reasons -->
+      <div class="grid-2 mt-16">
+        <div class="card" style="border-left:4px solid var(--secondary);">
+          <h4><i class="fas fa-user-plus" style="color:var(--secondary);"></i> Why Register?</h4>
+          <ul style="list-style:none;padding:0;margin-top:8px;">
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Apply for financing in minutes</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Track your application & repayments</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Get personalized savings reports</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Exclusive offers & early access</li>
+          </ul>
+          <button class="btn-primary btn-sm mt-12" onclick="document.getElementById('signupBtn').click();">Sign Up Now</button>
+        </div>
+        <div class="card" style="border-left:4px solid var(--accent);">
+          <h4><i class="fas fa-shopping-bag" style="color:var(--accent);"></i> Why Buy from Us?</h4>
+          <ul style="list-style:none;padding:0;margin-top:8px;">
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Transparent pricing – no hidden fees</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Genuine products with warranty</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> 24/7 customer support</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Save money from day one</li>
+          </ul>
+          <button class="btn-primary btn-sm mt-12" onclick="switchPage('public-products')">Browse Products</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="page-section" id="section-public-about">
+    <div class="container">
+      <h2><i class="fas fa-info-circle" style="color:var(--primary);"></i> About GreenDrive Pakistan</h2>
+      <p class="text-muted">Empowering Pakistan with affordable, clean energy solutions.</p>
+      <div class="card mt-16">
+        <h3>Our Mission</h3>
+        <p>We are on a mission to help Pakistani households and businesses break free from skyrocketing fuel and electricity costs. By providing access to high-quality energy-saving products with Sharia-compliant financing, we make sustainability affordable and accessible for everyone.</p>
+        <p class="mt-12">Our platform connects you with vetted suppliers and offers transparent, interest-free (Murabaha) payment plans, backed by LFE's Sharia supervision.</p>
+      </div>
+      <div class="card mt-16">
+        <h3><i class="fas fa-route" style="color:var(--accent);"></i> How It Works</h3>
+        <div class="how-step"><div class="step-number">1</div><div class="step-content"><strong>Browse &amp; Compare</strong><p class="text-muted">Explore our marketplace of energy-saving products and use our comparison engine to see real savings.</p></div></div>
+        <div class="how-step"><div class="step-number">2</div><div class="step-content"><strong>Register &amp; Apply</strong><p class="text-muted">Create your account, upload required documents, and submit your financing application.</p></div></div>
+        <div class="how-step"><div class="step-number">3</div><div class="step-content"><strong>Approval &amp; Delivery</strong><p class="text-muted">Our team reviews your application, and upon approval, we arrange delivery and installation.</p></div></div>
+        <div class="how-step"><div class="step-number">4</div><div class="step-content"><strong>Save &amp; Track</strong><p class="text-muted">Monitor your savings, make repayments, and track your journey via your dashboard.</p></div></div>
+      </div>
+      <div class="card mt-16">
+        <h3><i class="fas fa-shield-alt" style="color:var(--primary);"></i> Vetted Suppliers &amp; Partners</h3>
+        <p>We only work with trusted manufacturers and vendors who meet our strict quality and sustainability criteria. Our partners are committed to providing durable, high-performance products.</p>
+        <div class="grid-3 mt-12">
+          <div class="card text-center" style="background:#f8fafc;border:1px solid #e2e8f0;"><i class="fas fa-solar-panel" style="font-size:32px;color:var(--accent);"></i><h4>SolarTech</h4><p class="text-muted">Premium solar panels & batteries</p></div>
+          <div class="card text-center" style="background:#f8fafc;border:1px solid #e2e8f0;"><i class="fas fa-motorcycle" style="font-size:32px;color:var(--accent);"></i><h4>EcoRides</h4><p class="text-muted">Electric bikes, rickshaws & cars</p></div>
+          <div class="card text-center" style="background:#f8fafc;border:1px solid #e2e8f0;"><i class="fas fa-fan" style="font-size:32px;color:var(--accent);"></i><h4>CoolAir</h4><p class="text-muted">Energy-efficient fans & ACs</p></div>
+        </div>
+      </div>
+      <div class="grid-2 mt-16">
+        <div class="card" style="border-left:4px solid var(--secondary);">
+          <h4><i class="fas fa-user-plus" style="color:var(--secondary);"></i> Why Register?</h4>
+          <ul style="list-style:none;padding:0;margin-top:8px;">
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Apply for financing in minutes</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Track your application & repayments</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Get personalized savings reports</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Exclusive offers & early access</li>
+          </ul>
+          <button class="btn-primary btn-sm mt-12" onclick="document.getElementById('signupBtn').click();">Sign Up Now</button>
+        </div>
+        <div class="card" style="border-left:4px solid var(--accent);">
+          <h4><i class="fas fa-shopping-bag" style="color:var(--accent);"></i> Why Buy from Us?</h4>
+          <ul style="list-style:none;padding:0;margin-top:8px;">
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Transparent pricing – no hidden fees</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Genuine products with warranty</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> 24/7 customer support</li>
+            <li style="margin:6px 0;"><i class="fas fa-check" style="color:var(--primary);"></i> Save money from day one</li>
+          </ul>
+          <button class="btn-primary btn-sm mt-12" onclick="switchPage('public-products')">Browse Products</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKETPLACE -->
+  <section class="page-section" id="section-public-products">
+    <div class="container">
+      <div class="flex-between"><h2><i class="fas fa-boxes" style="color:var(--primary);"></i> Marketplace</h2><span class="badge">🇵🇰 Pakistan</span></div>
+      <div class="filter-bar">
+        <input type="text" id="productSearch" placeholder="Search products..." oninput="filterProducts()">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="filter-btn active" data-category="all" onclick="filterProducts('all')">All</button>
+          <button class="filter-btn" data-category="Solar" onclick="filterProducts('Solar')">Solar</button>
+          <button class="filter-btn" data-category="EV" onclick="filterProducts('EV')">EV</button>
+          <button class="filter-btn" data-category="Appliances" onclick="filterProducts('Appliances')">Appliances</button>
+          <button class="filter-btn" data-category="Battery" onclick="filterProducts('Battery')">Battery</button>
+          <button class="filter-btn" data-category="Lighting" onclick="filterProducts('Lighting')">Lighting</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="badge" style="background:#fef3c7;color:#92400e;"><i class="fas fa-star"></i> Most Popular</span>
+        <span class="badge" style="background:#dbeafe;color:#1e3a8a;"><i class="fas fa-crown"></i> Best Value</span>
+        <span class="badge" style="background:#fce4ec;color:#b91c1c;"><i class="fas fa-edit"></i> Editor's Choice</span>
+      </div>
+      <div class="grid-3 mt-16" id="productGrid"></div>
+    </div>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="page-section" id="section-public-compare">
+    <div class="container">
+      <h2><i class="fas fa-chart-line" style="color:var(--primary);"></i> Comparison Engine</h2>
+      <p class="text-muted">Enter your monthly bills and see realistic savings after product purchase and financing.</p>
+      <div class="card mt-16">
+        <div class="compare-input-group" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+          <div class="field" style="flex:1;min-width:120px;">
+            <label><i class="fas fa-bolt"></i> Electricity Bill (PKR/mo)</label>
+            <input type="number" id="electricBill" placeholder="e.g. 15000" value="15000" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:15px;">
+          </div>
+          <div class="field" style="flex:1;min-width:120px;">
+            <label><i class="fas fa-gas-pump"></i> Fuel Bill (PKR/mo)</label>
+            <input type="number" id="fuelBill" placeholder="e.g. 10000" value="10000" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:15px;">
+          </div>
+          <div class="field" style="min-width:160px;">
+            <label>Compare against</label>
+            <select id="compareType" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:15px;background:#fff;">
+              <option value="both">Both (Electricity + Fuel)</option>
+              <option value="electricity">Electricity only</option>
+              <option value="fuel">Fuel only</option>
+            </select>
+          </div>
+          <div><button class="btn-primary" id="calcCompareBtn"><i class="fas fa-sync-alt"></i> Calculate Savings</button></div>
+        </div>
+      </div>
+      <div id="compareSummary" class="compare-summary hidden" style="background:var(--primary-light);border:1px solid var(--primary);border-radius:12px;padding:16px;margin-top:12px;">
+        <div class="compare-summary-grid">
+          <div class="stat-item"><div class="label">Current Bill</div><div class="value" id="totalMonthlyCost">PKR 0</div></div>
+          <div class="stat-item"><div class="label">Best Product</div><div class="value" id="bestProductName" style="font-size:16px;">—</div></div>
+          <div class="stat-item"><div class="label">New Bill</div><div class="value" id="bestNewBill">PKR 0</div></div>
+          <div class="stat-item"><div class="label">Monthly Installment</div><div class="value" id="bestInstallment">PKR 0</div></div>
+          <div class="stat-item highlight"><div class="label">Monthly Saving</div><div class="value" id="bestMonthlySaving">PKR 0</div></div>
+          <div class="stat-item highlight"><div class="label">Yearly Saving</div><div class="value" id="bestYearlySaving">PKR 0</div></div>
+          <div class="stat-item"><div class="label">5-Year Net Saving</div><div class="value" id="bestFiveYearSaving">PKR 0</div></div>
+        </div>
+        <div id="bestPickDetail" class="best-pick mt-12" style="background:#fef9c3;border:1px solid #f59e0b;padding:12px;border-radius:10px;"><i class="fas fa-star"></i> <span id="bestPickText">Pick the best product above.</span></div>
+      </div>
+      <div class="table-wrap mt-16"><table><thead><tr><th>Product</th><th>Price</th><th>Monthly (24mo)</th><th>Current Bill</th><th>New Bill</th><th>Monthly Saving</th><th>Yearly Saving</th><th>5-Year Net Saving</th></tr></thead><tbody id="compareTableBody"></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="page-section" id="section-public-faq">
+    <div class="container">
+      <h2><i class="fas fa-question-circle" style="color:var(--accent);"></i> Frequently Asked Questions</h2>
+      <div class="card mt-16">
+        <div class="faq-item"><div class="question" onclick="toggleFaq(this)">How does Murabaha work? <i class="fas fa-chevron-down"></i></div><div class="answer">Murabaha is a cost-plus financing structure. We purchase the product, add a fixed profit margin, and sell it to you on deferred payment. You pay in equal installments with no interest.</div></div>
+        <div class="faq-item"><div class="question" onclick="toggleFaq(this)">Who owns the product during financing? <i class="fas fa-chevron-down"></i></div><div class="answer">Ownership transfers to you immediately upon signing the agreement. We do not retain ownership as security.</div></div>
+        <div class="faq-item"><div class="question" onclick="toggleFaq(this)">What documents are required? <i class="fas fa-chevron-down"></i></div><div class="answer">CNIC copy, recent bank statements, salary slips or business proof, and utility bills for load assessment.</div></div>
+        <div class="faq-item"><div class="question" onclick="toggleFaq(this)">How long does approval take? <i class="fas fa-chevron-down"></i></div><div class="answer">Typically 24–48 hours after all documents are submitted.</div></div>
+        <div class="faq-item"><div class="question" onclick="toggleFaq(this)">Do you install the products? <i class="fas fa-chevron-down"></i></div><div class="answer">Yes, we provide installation services through our certified partners.</div></div>
+        <div class="faq-item"><div class="question" onclick="toggleFaq(this)">Can businesses apply? <i class="fas fa-chevron-down"></i></div><div class="answer">Absolutely. We have commercial solutions for businesses, factories, schools, and more.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ECOSYSTEM -->
+  <section class="page-section" id="section-public-ecosystem">
+    <div class="container">
+      <h2><i class="fas fa-sitemap" style="color:var(--primary);"></i> Our Ecosystem</h2>
+      <p class="text-muted">How the GreenDrive platform works from start to finish.</p>
+      <div class="card mt-16">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;text-align:center;">
+          <div><i class="fas fa-user" style="font-size:32px;color:var(--accent);"></i><br><strong>Customer</strong></div>
+          <div><i class="fas fa-arrow-down" style="font-size:24px;color:var(--gray);"></i></div>
+          <div><i class="fas fa-store" style="font-size:32px;color:var(--accent);"></i><br><strong>Marketplace</strong></div>
+          <div><i class="fas fa-arrow-down" style="font-size:24px;color:var(--gray);"></i></div>
+          <div><i class="fas fa-hand-holding-usd" style="font-size:32px;color:var(--accent);"></i><br><strong>Finance (Murabaha)</strong></div>
+          <div><i class="fas fa-arrow-down" style="font-size:24px;color:var(--gray);"></i></div>
+          <div><i class="fas fa-truck" style="font-size:32px;color:var(--accent);"></i><br><strong>Vendor / Supplier</strong></div>
+          <div><i class="fas fa-arrow-down" style="font-size:24px;color:var(--gray);"></i></div>
+          <div><i class="fas fa-tools" style="font-size:32px;color:var(--accent);"></i><br><strong>Installer</strong></div>
+          <div><i class="fas fa-arrow-down" style="font-size:24px;color:var(--gray);"></i></div>
+          <div><i class="fas fa-shield-alt" style="font-size:32px;color:var(--accent);"></i><br><strong>Warranty &amp; Support</strong></div>
+          <div><i class="fas fa-arrow-down" style="font-size:24px;color:var(--gray);"></i></div>
+          <div><i class="fas fa-chart-line" style="font-size:32px;color:var(--accent);"></i><br><strong>Savings &amp; Referrals</strong></div>
+          <div><i class="fas fa-arrow-down" style="font-size:24px;color:var(--gray);"></i></div>
+          <div><i class="fas fa-redo" style="font-size:32px;color:var(--accent);"></i><br><strong>Repeat Purchase</strong></div>
+        </div>
+        <p class="mt-16 text-center text-muted">This end-to-end journey ensures transparency, trust, and long-term value.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEGAL -->
+  <section class="page-section" id="section-public-legal">
+    <div class="container">
+      <h2><i class="fas fa-gavel" style="color:var(--secondary);"></i> Legal &amp; Trust</h2>
+      <div class="legal-tabs">
+        <button class="active" data-legal-tab="terms">Terms of Service</button>
+        <button data-legal-tab="privacy">Privacy</button>
+        <button data-legal-tab="sale">Terms of Sale</button>
+        <button data-legal-tab="agreement">Murabaha Agreement</button>
+      </div>
+      <div class="card"><div id="legalContent" class="legal-content"></div></div>
+      <div class="card mt-16" style="background:#f0fdf4;border-color:#86efac;">
+        <i class="fas fa-shield-alt" style="color:var(--primary);"></i> <strong>Trusted by LFE</strong> — All financing is Sharia-screened. No hidden fees.
+      </div>
+    </div>
+  </section>
+
+  <!-- USER DASHBOARD -->
+  <section class="page-section" id="section-user-dashboard">
+    <div class="container">
+      <div class="flex-between"><h2><i class="fas fa-user-circle" style="color:var(--secondary);"></i> My Journey</h2><span class="badge" id="userRoleBadge">Customer</span></div>
+      <div id="userJourneyContainer" class="mt-16"></div>
+      <div class="grid-2 mt-16">
+        <div class="card"><i class="fas fa-wallet" style="color:var(--primary);"></i> <strong>Total Savings</strong> <span class="stat-number" id="userTotalSavings">PKR 0</span></div>
+        <div class="card"><i class="fas fa-calendar-check"></i> <strong>Next Payment</strong> <span class="stat-number" id="userNextPayment">PKR 0</span></div>
+      </div>
+      <h3 class="mt-16"><i class="fas fa-list-ul"></i> Application &amp; Repayment Details</h3>
+      <div id="userOrdersContainer"></div>
+      <div class="card mt-16"><h4><i class="fas fa-file-alt"></i> My Reports</h4><div id="userReportsContent"><p class="text-muted">Total financed: <span id="userTotalFinanced">0</span> | Total paid: <span id="userTotalPaid">0</span> | Remaining: <span id="userTotalRemaining">0</span></p></div></div>
+    </div>
+  </section>
+
+  <!-- VENDOR DASHBOARD -->
+  <section class="page-section" id="section-vendor-dashboard">
+    <div class="container">
+      <div class="flex-between"><h2><i class="fas fa-store" style="color:var(--accent);"></i> Vendor Dashboard</h2><span class="badge" id="vendorBadge">Merchant</span></div>
+      <div class="grid-3 mt-16">
+        <div class="card"><i class="fas fa-boxes"></i> <strong>Products</strong> <span class="stat-number" id="vendorProductCount">0</span></div>
+        <div class="card"><i class="fas fa-coins"></i> <strong>Financed Sales</strong> <span class="stat-number" id="vendorFinancedCount">0</span></div>
+        <div class="card"><i class="fas fa-money-bill"></i> <strong>Cash Sales</strong> <span class="stat-number" id="vendorCashCount">0</span></div>
+      </div>
+      <div class="card mt-16"><h4><i class="fas fa-file-invoice"></i> Sales &amp; Orders</h4><div class="table-wrap"><table><thead><tr><th>Product</th><th>Buyer</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead><tbody id="vendorOrdersTable"></tbody></table></div></div>
+      <div class="card mt-16"><h4><i class="fas fa-chart-pie"></i> Vendor Reports</h4><div id="vendorReportsContent"><p>Total revenue: <span id="vendorRevenue">0</span> | Financed: <span id="vendorRevFinanced">0</span> | Cash: <span id="vendorRevCash">0</span></p></div></div>
+    </div>
+  </section>
+
+  <!-- SUPER ADMIN -->
+  <section class="page-section" id="section-admin-dashboard">
+    <div class="container">
+      <div class="flex-between"><h2><i class="fas fa-crown" style="color:var(--accent);"></i> Super Admin</h2><span class="badge" style="background:#fef3c7;color:#92400e;">Platform Oversight</span></div>
+      <div class="grid-3 mt-16">
+        <div class="card"><i class="fas fa-users"></i> <strong>Total Users</strong> <span class="stat-number" id="adminTotalUsers">0</span></div>
+        <div class="card"><i class="fas fa-store-alt"></i> <strong>Vendors</strong> <span class="stat-number" id="adminTotalVendors">0</span></div>
+        <div class="card"><i class="fas fa-clipboard-list"></i> <strong>Applications</strong> <span class="stat-number" id="adminTotalApps">0</span></div>
+        <div class="card"><i class="fas fa-hand-holding-usd"></i> <strong>Financed Volume</strong> <span class="stat-number" id="adminFinancedVol">PKR 0</span></div>
+        <div class="card"><i class="fas fa-money-bill-wave"></i> <strong>Cash Sales</strong> <span class="stat-number" id="adminCashVol">PKR 0</span></div>
+        <div class="card"><i class="fas fa-file-invoice"></i> <strong>Total Revenue</strong> <span class="stat-number" id="adminTotalRev">PKR 0</span></div>
+      </div>
+      <div class="card mt-16">
+        <h4><i class="fas fa-university"></i> Lender Comparison Engine</h4>
+        <p class="text-muted">Manage lenders and their profit rates. The system will use the selected lender for all new financing.</p>
+        <div class="table-wrap"><table><thead><tr><th>Lender Name</th><th>Profit Rate (%)</th><th>Max Tenure (months)</th><th>Action</th></tr></thead><tbody id="adminLendersTable"></tbody></table></div>
+        <div class="mt-12"><button class="btn-secondary btn-sm" id="addLenderBtn"><i class="fas fa-plus"></i> Add Lender</button></div>
+        <div id="addLenderForm" style="display:none;margin-top:12px;background:#f8fafc;padding:16px;border-radius:12px;">
+          <input type="text" id="newLenderName" placeholder="Lender Name" style="padding:10px;border-radius:10px;border:1px solid #d1d5db;width:100%;margin-bottom:8px;">
+          <input type="number" id="newLenderRate" placeholder="Profit Rate %" style="padding:10px;border-radius:10px;border:1px solid #d1d5db;width:100%;margin-bottom:8px;">
+          <input type="number" id="newLenderTenure" placeholder="Max Tenure (months)" style="padding:10px;border-radius:10px;border:1px solid #d1d5db;width:100%;margin-bottom:8px;">
+          <button class="btn-primary btn-sm" id="saveLenderBtn"><i class="fas fa-save"></i> Save</button>
+          <button class="btn-secondary btn-sm" id="cancelLenderBtn">Cancel</button>
+        </div>
+        <div class="mt-12"><strong>Current Active Lender:</strong> <span id="activeLenderDisplay">LFE</span></div>
+        <div><button class="btn-primary btn-sm" onclick="applyLenderToAllProducts()"><i class="fas fa-sync-alt"></i> Apply Active Lender to All Products (recalculate profit)</button></div>
+      </div>
+      <div class="card mt-16"><h4><i class="fas fa-flag"></i> Platform Reports</h4><div id="adminReportsContent"><p>Pending approvals: <span id="adminPendingApps">0</span> | Active loans: <span id="adminActiveLoans">0</span> | Completed: <span id="adminCompleted">0</span></p></div></div>
+      <div class="card mt-16"><h4><i class="fas fa-list"></i> All Applications</h4><div class="table-wrap"><table><thead><tr><th>User</th><th>Vendor</th><th>Product</th><th>Amount</th><th>Status</th></tr></thead><tbody id="adminAllAppsTable"></tbody></table></div></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ========== STICKY BUTTONS ========== -->
+<button class="btn-primary sticky-apply" onclick="switchPage('public-products')"><i class="fas fa-shopping-bag"></i> Apply Now</button>
+<div class="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'});"><i class="fas fa-arrow-up"></i></div>
+
+<footer>
+  <div class="container">
+    <p><i class="fas fa-leaf" style="color:var(--primary);"></i> GreenDrive Pakistan — Energy for Tomorrow.</p>
+    <div class="legal-links">
+      <a onclick="switchPage('public-legal');return false;">Terms</a>
+      <a onclick="switchPage('public-legal');return false;">Privacy</a>
+      <a onclick="switchPage('public-legal');return false;">Sale Agreement</a>
+    </div>
+    <p class="text-muted" style="margin-top:6px;">&copy; 2026 — Simulated Prototype. All data mock.</p>
+  </div>
+</footer>
+
+<script>
+// ======================================================================
+// MOCK DATA
+// ======================================================================
+const vendors = [
+  { id: 1, name: 'SolarTech Solutions', email: 'vendor@demo.com', password: 'vendor123' },
+  { id: 2, name: 'EcoRides Pakistan', email: 'vendor2@demo.com', password: 'vendor123' },
+  { id: 3, name: 'CoolAir Industries', email: 'vendor3@demo.com', password: 'vendor123' }
+];
+
+let lenders = [
+  { id: 1, name: 'LFE', profitRate: 0.13, maxTenure: 24 },
+  { id: 2, name: 'Bank Al-Falah', profitRate: 0.18, maxTenure: 36 },
+  { id: 3, name: 'Meezan Bank', profitRate: 0.15, maxTenure: 24 }
+];
+let activeLenderId = 1;
+
+const productCatalog = [
+  { id: 1, vendorId: 1, name: 'Solar Panel Kit (3kW)', price: 450000, category: 'Solar', type: 'financed', savingFactorElectric: 0.70, savingFactorFuel: 0, description: 'Cuts electricity bill by 70%', warranty: '25 years', installation: 'Included', monthlySaving: 10500, annualSaving: 126000, payback: '4 years', rating: 4.9 },
+  { id: 2, vendorId: 1, name: 'Lithium Battery (200Ah)', price: 280000, category: 'Battery', type: 'both', savingFactorElectric: 0.30, savingFactorFuel: 0, description: 'Shifts peak usage, saves 30%', warranty: '5 years', installation: 'Included', monthlySaving: 4500, annualSaving: 54000, payback: '3 years', rating: 4.7 },
+  { id: 3, vendorId: 2, name: 'Electric Bike (Commuter)', price: 180000, category: 'EV', type: 'both', savingFactorElectric: 0, savingFactorFuel: 0.80, description: 'Replaces fuel bike, saves 80% fuel', warranty: '2 years', installation: 'Free assembly', monthlySaving: 8000, annualSaving: 96000, payback: '2 years', rating: 4.8 },
+  { id: 4, vendorId: 2, name: 'Electric Rickshaw', price: 850000, category: 'EV', type: 'financed', savingFactorElectric: 0, savingFactorFuel: 0.90, description: 'Cuts fuel cost by 90%', warranty: '3 years', installation: 'Included', monthlySaving: 25000, annualSaving: 300000, payback: '3 years', rating: 4.6 },
+  { id: 5, vendorId: 2, name: 'Electric Car (Base)', price: 3200000, category: 'EV', type: 'financed', savingFactorElectric: 0, savingFactorFuel: 0.95, description: 'Almost zero fuel cost', warranty: '8 years battery', installation: 'Included', monthlySaving: 45000, annualSaving: 540000, payback: '5 years', rating: 4.9 },
+  { id: 6, vendorId: 3, name: 'BLDC Energy Fan', price: 15000, category: 'Appliances', type: 'both', savingFactorElectric: 0.35, savingFactorFuel: 0, description: 'Saves 35% on fan electricity', warranty: '2 years', installation: 'Self', monthlySaving: 500, annualSaving: 6000, payback: '1 year', rating: 4.5 },
+  { id: 7, vendorId: 3, name: 'Inverter AC (1.5 Ton)', price: 120000, category: 'Appliances', type: 'both', savingFactorElectric: 0.40, savingFactorFuel: 0, description: 'Saves 40% AC electricity', warranty: '3 years', installation: 'Included', monthlySaving: 6000, annualSaving: 72000, payback: '2 years', rating: 4.7 },
+  { id: 8, vendorId: 3, name: 'LED Bulbs & Smart Appliances Pack', price: 25000, category: 'Lighting', type: 'both', savingFactorElectric: 0.20, savingFactorFuel: 0, description: 'Saves 20% lighting/appliance', warranty: '2 years', installation: 'Self', monthlySaving: 1000, annualSaving: 12000, payback: '1 year', rating: 4.3 }
+];
+
+function computeProfit(price) {
+  const lender = lenders.find(l => l.id === activeLenderId) || lenders[0];
+  return Math.round(price * lender.profitRate);
+}
+function updateProductProfits() { productCatalog.forEach(p => { p.profit = computeProfit(p.price); }); }
+updateProductProfits();
+
+let users = [
+  { id: 1, name: 'Ali Khan', email: 'user@demo.com', password: 'user123', cnic: '42101-1234567-8', phone: '0300-1234567', address: 'Lahore', salary: 80000, documents: [] },
+  { id: 2, name: 'Sara Ahmed', email: 'sara@demo.com', password: 'user123', cnic: '42101-9876543-2', phone: '0300-7654321', address: 'Karachi', salary: 60000, documents: [] }
+];
+
+let applications = [
+  { id: 1, userId: 1, productId: 1, vendorId: 1, status: 'approved',
+    appliedDate: '2026-06-01', reviewedDate: '2026-06-03', approvedDate: '2026-06-05',
+    downPayment: 90000, monthlyInstallment: 15000, tenure: 24, totalDeferred: 510000,
+    paidAmount: 150000, remainingAmount: 360000, nextDueDate: '2026-08-05',
+    repayments: [
+      { dueDate: '2026-07-05', paidDate: '2026-07-04', amount: 15000, status: 'paid' },
+      { dueDate: '2026-08-05', paidDate: null, amount: 15000, status: 'overdue' },
+      { dueDate: '2026-09-05', paidDate: null, amount: 15000, status: 'pending' }
+    ],
+    applicationDetails: { monthlyIncome: 80000, employment: 'Salaried', existingBills: '15000', notes: '' }
+  },
+  { id: 2, userId: 1, productId: 3, vendorId: 2, status: 'pending_review',
+    appliedDate: '2026-07-10', reviewedDate: null, approvedDate: null,
+    downPayment: 36000, monthlyInstallment: 6000, tenure: 24, totalDeferred: 204000,
+    paidAmount: 0, remainingAmount: 204000, nextDueDate: 'N/A',
+    repayments: [],
+    applicationDetails: { monthlyIncome: 80000, employment: 'Salaried', existingBills: '25000', notes: 'Already have solar' }
+  },
+  { id: 3, userId: 2, productId: 7, vendorId: 3, status: 'approved',
+    appliedDate: '2026-06-15', reviewedDate: '2026-06-16', approvedDate: '2026-06-18',
+    downPayment: 24000, monthlyInstallment: 4000, tenure: 24, totalDeferred: 136000,
+    paidAmount: 4000, remainingAmount: 132000, nextDueDate: '2026-08-18',
+    repayments: [
+      { dueDate: '2026-07-18', paidDate: '2026-07-17', amount: 4000, status: 'paid' },
+      { dueDate: '2026-08-18', paidDate: null, amount: 4000, status: 'pending' }
+    ],
+    applicationDetails: { monthlyIncome: 60000, employment: 'Self-employed', existingBills: '12000', notes: '' }
+  }
+];
+
+let cashSales = [
+  { id: 1, vendorId: 1, productId: 2, buyerName: 'Imran Ali', amount: 280000, date: '2026-07-01' },
+  { id: 2, vendorId: 3, productId: 6, buyerName: 'Nadia Khan', amount: 15000, date: '2026-07-12' }
+];
+
+// ======================================================================
+// STATE & DOM REFS
+// ======================================================================
+let currentUser = null;
+let currentPage = 'public-home';
+let pendingProductForApplication = null;
+
+const pageSections = {
+  'public-home': document.getElementById('section-public-home'),
+  'public-about': document.getElementById('section-public-about'),
+  'public-products': document.getElementById('section-public-products'),
+  'public-compare': document.getElementById('section-public-compare'),
+  'public-faq': document.getElementById('section-public-faq'),
+  'public-ecosystem': document.getElementById('section-public-ecosystem'),
+  'public-legal': document.getElementById('section-public-legal'),
+  'user-dashboard': document.getElementById('section-user-dashboard'),
+  'vendor-dashboard': document.getElementById('section-vendor-dashboard'),
+  'admin-dashboard': document.getElementById('section-admin-dashboard')
+};
+const navLinks = document.getElementById('navLinks');
+const hamburger = document.getElementById('hamburgerBtn');
+const loginModal = document.getElementById('loginModal');
+const signupModal = document.getElementById('signupModal');
+const appModal = document.getElementById('applicationModal');
+const productDetailModal = document.getElementById('productDetailModal');
+const userBadge = document.getElementById('userNavBadge');
+const userNameDisplay = document.getElementById('userNameDisplay');
+const logoutBtn = document.getElementById('logoutBtn');
+const loginBtn = document.getElementById('loginBtn');
+const signupBtn = document.getElementById('signupBtn');
+
+// ======================================================================
+// HELPERS
+// ======================================================================
+function getProduct(id) { return productCatalog.find(p => p.id === id); }
+function getVendor(id) { return vendors.find(v => v.id === id); }
+function getUser(id) { return users.find(u => u.id === id); }
+function formatCurrency(amt) { return 'PKR ' + Number(amt).toLocaleString(); }
+function getStatusLabel(status) {
+  const map = { 'pending_review':'Under Review', 'approved':'Approved', 'rejected':'Rejected', 'active':'Active', 'completed':'Completed' };
+  return map[status] || status;
+}
+function getLender(id) { return lenders.find(l => l.id === id); }
+
+// ======================================================================
+// PRODUCT RENDER WITH FILTERS
+// ======================================================================
+let currentCategory = 'all';
+let currentSearch = '';
+
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  let filtered = productCatalog.filter(p => {
+    const matchCategory = currentCategory === 'all' || p.category === currentCategory;
+    const search = currentSearch.toLowerCase();
+    const matchSearch = p.name.toLowerCase().includes(search) || p.category.toLowerCase().includes(search) || (getVendor(p.vendorId)?.name.toLowerCase().includes(search) || false);
+    return matchCategory && matchSearch;
+  });
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="card text-center" style="grid-column:1/-1;padding:40px;"><i class="fas fa-search" style="font-size:32px;color:var(--gray);"></i><p class="text-muted mt-12">No products found. Try adjusting your search.</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(p => {
+    const down = Math.round(p.price * 0.2);
+    const monthly = Math.round((p.price + p.profit) / 24);
+    const vendor = getVendor(p.vendorId);
+    return `
+      <div class="card product-card" onclick="openProductDetail(${p.id})">
+        <div class="flex-between"><span class="badge">${p.category}</span><span style="font-size:12px;color:var(--gray);">${vendor ? vendor.name : ''}</span></div>
+        <h4 style="margin:8px 0;">${p.name}</h4>
+        <div class="price">${formatCurrency(p.price)} <small>MRP</small></div>
+        <div style="margin:6px 0;"><i class="fas fa-calendar-alt"></i> <strong>${formatCurrency(monthly)}</strong> / mo × 24</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+          <span class="badge" style="background:#e0f2fe;">Down: ${formatCurrency(down)}</span>
+          <span class="sharia-badge"><i class="fas fa-handshake"></i> Murabaha</span>
+          ${p.type === 'cash' ? '<span class="badge" style="background:#dbeafe;">Cash</span>' : ''}
+          ${p.type === 'both' ? '<span class="badge" style="background:#fef3c7;">Both</span>' : ''}
+        </div>
+        <div style="margin-top:10px;font-size:13px;">
+          <div class="spec"><span>Warranty</span><span>${p.warranty}</span></div>
+          <div class="spec"><span>Installation</span><span>${p.installation}</span></div>
+          <div class="spec"><span>Monthly Saving</span><span class="saving-positive">${formatCurrency(p.monthlySaving)}</span></div>
+          <div class="spec"><span>Annual Saving</span><span class="saving-positive">${formatCurrency(p.annualSaving)}</span></div>
+          <div class="spec"><span>Payback</span><span>${p.payback}</span></div>
+          <div class="spec"><span>Rating</span><span>${'★'.repeat(Math.floor(p.rating))} ${p.rating}</span></div>
+        </div>
+        <button class="btn-primary btn-sm" style="margin-top:12px;width:100%;justify-content:center;" onclick="event.stopPropagation();initiatePurchase(${p.id})"><i class="fas fa-shopping-bag"></i> Buy Now (BNPL)</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterProducts(category) {
+  if (category) {
+    currentCategory = category;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`.filter-btn[data-category="${category}"]`)?.classList.add('active');
+  }
+  currentSearch = document.getElementById('productSearch').value;
+  renderProducts();
+}
+
+// ======================================================================
+// PRODUCT DETAIL MODAL
+// ======================================================================
+function openProductDetail(productId) {
+  const p = getProduct(productId);
+  if (!p) return;
+  const vendor = getVendor(p.vendorId);
+  const down = Math.round(p.price * 0.2);
+  const monthly = Math.round((p.price + p.profit) / 24);
+  const content = document.getElementById('productDetailContent');
+  content.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <h2>${p.name}</h2>
+      <div><span class="badge">${p.category}</span> <span class="badge" style="background:#e0f2fe;">${vendor ? vendor.name : ''}</span></div>
+      <div><strong>Price:</strong> ${formatCurrency(p.price)} <small>MRP</small></div>
+      <div><strong>Financing:</strong> ${formatCurrency(down)} down + ${formatCurrency(monthly)}/mo for 24 months</div>
+      <div><strong>Description:</strong> ${p.description}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><strong>Warranty:</strong> ${p.warranty}</div>
+        <div><strong>Installation:</strong> ${p.installation}</div>
+        <div><strong>Monthly Saving:</strong> ${formatCurrency(p.monthlySaving)}</div>
+        <div><strong>Annual Saving:</strong> ${formatCurrency(p.annualSaving)}</div>
+        <div><strong>Payback Period:</strong> ${p.payback}</div>
+        <div><strong>Rating:</strong> ${'★'.repeat(Math.floor(p.rating))} ${p.rating}</div>
+      </div>
+      <div style="background:var(--primary-light);padding:12px;border-radius:12px;">
+        <strong>Savings Calculator</strong><br>
+        Current bill (avg): PKR 15,000<br>
+        New bill: PKR ${Math.round(15000 * (1 - p.savingFactorElectric))}<br>
+        Monthly saving: ${formatCurrency(p.monthlySaving)}
+      </div>
+      <button class="btn-primary" onclick="initiatePurchase(${p.id});document.getElementById('closeProductModal').click();"><i class="fas fa-shopping-bag"></i> Buy Now</button>
+    </div>
+  `;
+  productDetailModal.classList.add('open');
+}
+
+document.getElementById('closeProductModal').addEventListener('click', () => productDetailModal.classList.remove('open'));
+productDetailModal.addEventListener('click', (e) => { if (e.target === productDetailModal) productDetailModal.classList.remove('open'); });
+
+// ======================================================================
+// PURCHASE FLOW
+// ======================================================================
+function initiatePurchase(productId) {
+  if (!currentUser || currentUser.role !== 'user') {
+    alert('Please login as a User to purchase.');
+    loginModal.classList.add('open'); return;
+  }
+  const prod = getProduct(productId);
+  if (!prod) return;
+  if (applications.some(a => a.userId === currentUser.id && a.productId === productId)) {
+    alert('You already have an application for this product.');
+    return;
+  }
+  pendingProductForApplication = productId;
+  const down = Math.round(prod.price * 0.2);
+  const monthly = Math.round((prod.price + prod.profit) / 24);
+  document.getElementById('appProductInfo').innerHTML = `
+    <strong>${prod.name}</strong><br>
+    Price: ${formatCurrency(prod.price)} | Down: ${formatCurrency(down)} | Installment: ${formatCurrency(monthly)}/mo<br>
+    <span class="text-muted">${prod.description}</span>
+  `;
+  const user = getUser(currentUser.id);
+  if (user) {
+    document.getElementById('appMonthlyIncome').value = user.salary || '';
+    document.getElementById('appExistingBills').value = '15000';
+  }
+  appModal.classList.add('open');
+}
+
+document.getElementById('submitAppBtn').addEventListener('click', function() {
+  if (!currentUser || !pendingProductForApplication) return;
+  const prod = getProduct(pendingProductForApplication);
+  if (!prod) return;
+  const income = parseFloat(document.getElementById('appMonthlyIncome').value) || 0;
+  const employment = document.getElementById('appEmployment').value.trim() || 'Not specified';
+  const bills = document.getElementById('appExistingBills').value.trim() || 'Not specified';
+  const notes = document.getElementById('appNotes').value.trim() || '';
+  if (income <= 0) { alert('Please enter your monthly income.'); return; }
+  const down = Math.round(prod.price * 0.2);
+  const monthly = Math.round((prod.price + prod.profit) / 24);
+  const total = prod.price + prod.profit;
+  const newApp = {
+    id: applications.length + 1,
+    userId: currentUser.id,
+    productId: prod.id,
+    vendorId: prod.vendorId,
+    status: 'pending_review',
+    appliedDate: new Date().toISOString().slice(0,10),
+    reviewedDate: null,
+    approvedDate: null,
+    downPayment: down,
+    monthlyInstallment: monthly,
+    tenure: 24,
+    totalDeferred: total,
+    paidAmount: 0,
+    remainingAmount: total,
+    nextDueDate: 'N/A',
+    repayments: [],
+    applicationDetails: { monthlyIncome: income, employment, existingBills: bills, notes }
+  };
+  applications.push(newApp);
+  appModal.classList.remove('open');
+  pendingProductForApplication = null;
+  alert(`✅ Application submitted for "${prod.name}". Your journey has started!`);
+  switchPage('user-dashboard');
+});
+
+// ======================================================================
+// COMPARE ENGINE
+// ======================================================================
+function renderCompare() {
+  const electric = parseFloat(document.getElementById('electricBill').value) || 0;
+  const fuel = parseFloat(document.getElementById('fuelBill').value) || 0;
+  const compareType = document.getElementById('compareType').value;
+
+  let totalBill = 0;
+  if (compareType === 'both') totalBill = electric + fuel;
+  else if (compareType === 'electricity') totalBill = electric;
+  else if (compareType === 'fuel') totalBill = fuel;
+
+  const results = productCatalog.map(p => {
+    const monthly = Math.round((p.price + p.profit) / 24);
+    let newElectric = electric;
+    let newFuel = fuel;
+    if (compareType === 'both' || compareType === 'electricity') {
+      newElectric = electric * (1 - p.savingFactorElectric);
+    }
+    if (compareType === 'both' || compareType === 'fuel') {
+      newFuel = fuel * (1 - p.savingFactorFuel);
+    }
+    let newTotal = 0;
+    if (compareType === 'both') newTotal = newElectric + newFuel;
+    else if (compareType === 'electricity') newTotal = newElectric;
+    else if (compareType === 'fuel') newTotal = newFuel;
+    const monthlyCost = newTotal + monthly;
+    const monthlySaving = totalBill - monthlyCost;
+    const downPayment = Math.round(p.price * 0.2);
+    const yearlySaving = monthlySaving * 12;
+    const fiveYearNet = (monthlySaving * 60) - downPayment;
+    return { ...p, monthly, newTotal, monthlySaving, yearlySaving, fiveYearNet, totalBill, downPayment };
+  });
+
+  results.sort((a,b) => b.monthlySaving - a.monthlySaving);
+  const best = results.length > 0 ? results[0] : null;
+
+  const summary = document.getElementById('compareSummary');
+  if (totalBill > 0 && best) {
+    summary.classList.remove('hidden');
+    document.getElementById('totalMonthlyCost').innerHTML = formatCurrency(totalBill);
+    document.getElementById('bestProductName').innerText = best.name;
+    document.getElementById('bestNewBill').innerHTML = formatCurrency(best.newTotal);
+    document.getElementById('bestInstallment').innerHTML = formatCurrency(best.monthly);
+    document.getElementById('bestMonthlySaving').innerHTML = formatCurrency(best.monthlySaving);
+    document.getElementById('bestYearlySaving').innerHTML = formatCurrency(best.yearlySaving);
+    document.getElementById('bestFiveYearSaving').innerHTML = formatCurrency(best.fiveYearNet);
+    document.getElementById('bestPickText').innerHTML = `🏆 <strong>${best.name}</strong> — New bill: ${formatCurrency(best.newTotal)} + installment ${formatCurrency(best.monthly)} = ${formatCurrency(best.newTotal + best.monthly)}. Monthly saving: <strong>${formatCurrency(best.monthlySaving)}</strong> (${formatCurrency(best.yearlySaving)}/year). 5-year net saving: <strong>${formatCurrency(best.fiveYearNet)}</strong>.`;
+  } else {
+    summary.classList.add('hidden');
+  }
+
+  const tbody = document.getElementById('compareTableBody');
+  tbody.innerHTML = results.map(p => {
+    const savingColor = p.monthlySaving > 0 ? 'var(--primary)' : '#b91c1c';
+    return `<tr>
+      <td><strong>${p.name}</strong> <span class="badge" style="background:#e0f2fe;">${p.savingFactorElectric>0?'⚡':''}${p.savingFactorFuel>0?'⛽':''}</span></td>
+      <td>${formatCurrency(p.price)}</td>
+      <td>${formatCurrency(p.monthly)}</td>
+      <td>${formatCurrency(p.totalBill)}</td>
+      <td>${formatCurrency(p.newTotal)}</td>
+      <td style="color:${savingColor};">${formatCurrency(p.monthlySaving)}</td>
+      <td style="color:${savingColor};">${formatCurrency(p.yearlySaving)}</td>
+      <td style="color:${p.fiveYearNet > 0 ? 'var(--primary)' : '#b91c1c'};">${formatCurrency(p.fiveYearNet)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ======================================================================
+// LEGAL
+// ======================================================================
+const legalData = {
+  terms: `<h3>Terms of Service</h3><p><strong>Acceptance:</strong> By using GreenDrive.pk you agree to these terms. <strong>Eligibility:</strong> 18+ Pakistani resident with valid CNIC. <strong>Financing:</strong> Subject to LFE Sharia screening. <strong>Delivery:</strong> Est. timelines; install by certified partners. <strong>Governing Law:</strong> Pakistan.</p><p><strong>Liability:</strong> We are not liable for product defects beyond manufacturer warranty. All financing decisions are at LFE's discretion.</p>`,
+  privacy: `<h3>Privacy Policy</h3><p>We collect: Name, CNIC, phone, address, utility bills, bank details. Used for: order processing, LFE underwriting, support. <strong>No data sold.</strong> SSL encrypted. Request deletion anytime via support@greendrive.pk.</p><p>We share data only with LFE and logistics partners. You may opt out of marketing communications.</p>`,
+  sale: `<h3>Terms of Sale</h3><p><strong>Order Confirmation:</strong> All orders are subject to availability and confirmation of financing. <strong>Pricing:</strong> Prices are fixed at time of order. <strong>Delivery:</strong> Standard delivery within 5-7 working days. <strong>Installation:</strong> Solar and electrical installations must be performed by our certified technicians.</p><p><strong>Cancellation:</strong> Cancellation within 24 hours of order is free of charge. After that, a 10% restocking fee applies.</p>`,
+  agreement: `<h3>Murabaha Financing Agreement</h3><p><strong>Seller:</strong> GreenDrive (Pvt) Ltd. <strong>Buyer:</strong> [Customer]. <strong>Disclosure:</strong> Cost + fixed profit shown separately. <strong>Deferred Price:</strong> Equal installments. <strong>Ownership:</strong> passes immediately. <strong>Default:</strong> No monetary penalty; hardship restructuring available. <strong>Early Payment:</strong> Rebate (<em>Ibra</em>) on remaining profit. This contract is free from Riba and Gharar.</p><p><strong>Sharia Supervisory Board:</strong> LFE certifies compliance.</p>`
+};
+let currentLegalTab = 'terms';
+function renderLegal(tab) {
+  currentLegalTab = tab;
+  document.getElementById('legalContent').innerHTML = legalData[tab] || legalData.terms;
+  document.querySelectorAll('.legal-tabs button').forEach(b => b.classList.toggle('active', b.dataset.legalTab === tab));
+}
+
+// ======================================================================
+// USER DASHBOARD
+// ======================================================================
+function renderUserDashboard() {
+  if (!currentUser || currentUser.role !== 'user') return;
+  const userApps = applications.filter(a => a.userId === currentUser.id);
+  const container = document.getElementById('userJourneyContainer');
+  if (userApps.length === 0) {
+    container.innerHTML = `<div class="card"><p class="text-muted">You have no applications yet. Browse the marketplace to apply.</p></div>`;
+  } else {
+    container.innerHTML = userApps.map(app => {
+      const prod = getProduct(app.productId);
+      const vendor = getVendor(app.vendorId);
+      const status = app.status;
+      const steps = ['pending_review', 'reviewed', 'approved', 'active', 'completed'];
+      const labels = ['Apply', 'Review', 'Approval', 'Active', 'Complete'];
+      const currentIdx = steps.indexOf(status) >= 0 ? steps.indexOf(status) : 0;
+      const stepper = steps.map((s, i) => {
+        let cls = 'pending';
+        if (i < currentIdx) cls = 'completed';
+        else if (i === currentIdx) cls = 'active';
+        return `<div class="step-item"><div class="step-circle ${cls}">${i+1}</div><div class="step-label ${cls}">${labels[i]}</div></div>`;
+      }).join('');
+      return `<div class="card mb-12">
+        <div class="flex-between"><h4>${prod ? prod.name : 'Product'}</h4><span class="badge">${getStatusLabel(status)}</span></div>
+        <p class="text-muted">Vendor: ${vendor ? vendor.name : 'N/A'} | Applied: ${app.appliedDate}</p>
+        <div class="stepper">${stepper}</div>
+        <div style="font-size:14px;background:#f8fafc;padding:10px;border-radius:10px;">
+          <div class="flex-between"><span>Total Deferred</span><strong>${formatCurrency(app.totalDeferred)}</strong></div>
+          <div class="flex-between"><span>Paid</span><strong>${formatCurrency(app.paidAmount)}</strong></div>
+          <div class="flex-between"><span>Remaining</span><strong>${formatCurrency(app.remainingAmount)}</strong></div>
+          <div class="flex-between"><span>Next Due</span><strong>${app.nextDueDate || 'N/A'}</strong></div>
+        </div>
+        <div class="mt-12"><button class="btn-secondary btn-sm" onclick="toggleRepayments(${app.id})"><i class="fas fa-chevron-down"></i> View Repayments</button></div>
+        <div id="repayments-${app.id}" style="display:none;margin-top:8px;">
+          <div class="table-wrap"><table><thead><tr><th>Due Date</th><th>Amount</th><th>Paid Date</th><th>Status</th></tr></thead><tbody>
+          ${app.repayments.map(r => `<tr><td>${r.dueDate}</td><td>${formatCurrency(r.amount)}</td><td>${r.paidDate || '—'}</td><td><span class="badge" style="background:${r.status==='paid'?'#d1fae5':r.status==='overdue'?'#fee2e2':'#fef3c7'};color:${r.status==='paid'?'#065f2e':r.status==='overdue'?'#b91c1c':'#92400e'};">${r.status}</span></td></tr>`).join('')}
+          </tbody></table></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  const totalFinanced = userApps.reduce((s,a) => s + a.totalDeferred, 0);
+  const totalPaid = userApps.reduce((s,a) => s + a.paidAmount, 0);
+  const totalRemaining = userApps.reduce((s,a) => s + a.remainingAmount, 0);
+  let totalMonthlySaving = 0;
+  userApps.forEach(app => {
+    const prod = getProduct(app.productId);
+    if (prod && app.status === 'approved') {
+      const elec = 15000, fuel = 10000;
+      const saving = (elec * prod.savingFactorElectric) + (fuel * prod.savingFactorFuel) - app.monthlyInstallment;
+      if (saving > 0) totalMonthlySaving += saving;
+    }
+  });
+  const totalSavings = totalMonthlySaving * 12;
+  document.getElementById('userTotalSavings').innerHTML = formatCurrency(totalSavings);
+  const nextDue = userApps.length > 0 ? userApps[0].monthlyInstallment : 0;
+  document.getElementById('userNextPayment').innerHTML = formatCurrency(nextDue);
+  document.getElementById('userTotalFinanced').innerText = formatCurrency(totalFinanced);
+  document.getElementById('userTotalPaid').innerText = formatCurrency(totalPaid);
+  document.getElementById('userTotalRemaining').innerText = formatCurrency(totalRemaining);
+}
+
+function toggleRepayments(appId) {
+  const el = document.getElementById('repayments-' + appId);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// ======================================================================
+// VENDOR DASHBOARD
+// ======================================================================
+function renderVendorDashboard() {
+  if (!currentUser || currentUser.role !== 'vendor') return;
+  const vendor = vendors.find(v => v.id === currentUser.id);
+  if (!vendor) return;
+  const myProducts = productCatalog.filter(p => p.vendorId === vendor.id);
+  const myApps = applications.filter(a => a.vendorId === vendor.id);
+  const myCash = cashSales.filter(c => c.vendorId === vendor.id);
+  document.getElementById('vendorProductCount').innerText = myProducts.length;
+  document.getElementById('vendorFinancedCount').innerText = myApps.length;
+  document.getElementById('vendorCashCount').innerText = myCash.length;
+  const tbody = document.getElementById('vendorOrdersTable');
+  const allOrders = [...myApps.map(a => {
+    const prod = getProduct(a.productId);
+    const user = getUser(a.userId);
+    return { product: prod ? prod.name : 'N/A', buyer: user ? user.name : 'N/A', type: 'Financed', amount: a.totalDeferred, status: a.status };
+  }), ...myCash.map(c => {
+    const prod = getProduct(c.productId);
+    return { product: prod ? prod.name : 'N/A', buyer: c.buyerName, type: 'Cash', amount: c.amount, status: 'Completed' };
+  })];
+  tbody.innerHTML = allOrders.length ? allOrders.map(o => `<tr><td>${o.product}</td><td>${o.buyer}</td><td>${o.type}</td><td>${formatCurrency(o.amount)}</td><td><span class="badge">${o.status}</span></td></tr>`).join('') : `<tr><td colspan="5" class="text-muted">No orders yet.</td></tr>`;
+  const revFinanced = myApps.reduce((s,a) => s + a.totalDeferred, 0);
+  const revCash = myCash.reduce((s,c) => s + c.amount, 0);
+  document.getElementById('vendorRevenue').innerHTML = formatCurrency(revFinanced + revCash);
+  document.getElementById('vendorRevFinanced').innerHTML = formatCurrency(revFinanced);
+  document.getElementById('vendorRevCash').innerHTML = formatCurrency(revCash);
+}
+
+// ======================================================================
+// SUPER ADMIN
+// ======================================================================
+function renderAdminDashboard() {
+  if (!currentUser || currentUser.role !== 'admin') return;
+  document.getElementById('adminTotalUsers').innerText = users.length;
+  document.getElementById('adminTotalVendors').innerText = vendors.length;
+  document.getElementById('adminTotalApps').innerText = applications.length;
+  const financedVol = applications.reduce((s,a) => s + a.totalDeferred, 0);
+  const cashVol = cashSales.reduce((s,c) => s + c.amount, 0);
+  document.getElementById('adminFinancedVol').innerHTML = formatCurrency(financedVol);
+  document.getElementById('adminCashVol').innerHTML = formatCurrency(cashVol);
+  document.getElementById('adminTotalRev').innerHTML = formatCurrency(financedVol + cashVol);
+  document.getElementById('adminPendingApps').innerText = applications.filter(a => a.status === 'pending_review').length;
+  document.getElementById('adminActiveLoans').innerText = applications.filter(a => a.status === 'approved' || a.status === 'active').length;
+  document.getElementById('adminCompleted').innerText = applications.filter(a => a.status === 'completed').length;
+  const tbody = document.getElementById('adminAllAppsTable');
+  tbody.innerHTML = applications.map(a => {
+    const user = getUser(a.userId);
+    const vendor = getVendor(a.vendorId);
+    const prod = getProduct(a.productId);
+    return `<tr><td>${user ? user.name : 'N/A'}</td><td>${vendor ? vendor.name : 'N/A'}</td><td>${prod ? prod.name : 'N/A'}</td><td>${formatCurrency(a.totalDeferred)}</td><td><span class="badge">${getStatusLabel(a.status)}</span></td></tr>`;
+  }).join('');
+  renderLendersTable();
+  const active = getLender(activeLenderId);
+  document.getElementById('activeLenderDisplay').innerText = active ? active.name : 'None';
+}
+
+function renderLendersTable() {
+  const tbody = document.getElementById('adminLendersTable');
+  tbody.innerHTML = lenders.map(l => `
+    <tr>
+      <td>${l.name}</td>
+      <td>${(l.profitRate * 100).toFixed(0)}%</td>
+      <td>${l.maxTenure}</td>
+      <td>
+        ${activeLenderId === l.id ? '<span class="badge" style="background:#d1fae5;">Active</span>' : `<button class="btn-primary btn-sm" onclick="setActiveLender(${l.id})">Set Active</button>`}
+        <button class="btn-danger btn-sm" onclick="deleteLender(${l.id})"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function setActiveLender(id) {
+  activeLenderId = id;
+  updateProductProfits();
+  renderAdminDashboard();
+  renderProducts();
+  renderCompare();
+  alert('Active lender updated and product profits recalculated.');
+}
+
+function deleteLender(id) {
+  if (lenders.length <= 1) { alert('Cannot delete the last lender.'); return; }
+  if (confirm('Delete this lender?')) {
+    lenders = lenders.filter(l => l.id !== id);
+    if (activeLenderId === id) activeLenderId = lenders[0].id;
+    updateProductProfits();
+    renderAdminDashboard();
+    renderProducts();
+    renderCompare();
+  }
+}
+
+document.getElementById('addLenderBtn').addEventListener('click', function(){
+  document.getElementById('addLenderForm').style.display = 'block';
+});
+document.getElementById('cancelLenderBtn').addEventListener('click', function(){
+  document.getElementById('addLenderForm').style.display = 'none';
+});
+document.getElementById('saveLenderBtn').addEventListener('click', function(){
+  const name = document.getElementById('newLenderName').value.trim();
+  const rate = parseFloat(document.getElementById('newLenderRate').value);
+  const tenure = parseInt(document.getElementById('newLenderTenure').value);
+  if (!name || isNaN(rate) || isNaN(tenure) || rate <= 0 || tenure <= 0) {
+    alert('Please fill all fields with valid values.');
+    return;
+  }
+  const newId = lenders.length ? Math.max(...lenders.map(l=>l.id)) + 1 : 1;
+  lenders.push({ id: newId, name, profitRate: rate/100, maxTenure: tenure });
+  document.getElementById('newLenderName').value = '';
+  document.getElementById('newLenderRate').value = '';
+  document.getElementById('newLenderTenure').value = '';
+  document.getElementById('addLenderForm').style.display = 'none';
+  updateProductProfits();
+  renderAdminDashboard();
+  renderProducts();
+  renderCompare();
+  alert('Lender added.');
+});
+
+function applyLenderToAllProducts() {
+  updateProductProfits();
+  renderProducts();
+  renderCompare();
+  alert('All product profits updated based on active lender.');
+}
+
+// ======================================================================
+// SIGNUP
+// ======================================================================
+document.getElementById('signupBtn').addEventListener('click', () => signupModal.classList.add('open'));
+document.getElementById('closeSignupModal').addEventListener('click', () => signupModal.classList.remove('open'));
+
+document.getElementById('signupSubmitBtn').addEventListener('click', function() {
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value.trim();
+  const cnic = document.getElementById('signupCnic').value.trim();
+  const phone = document.getElementById('signupPhone').value.trim();
+  const address = document.getElementById('signupAddress').value.trim();
+  const salary = parseFloat(document.getElementById('signupSalary').value) || 0;
+  if (!name || !email || !password || !cnic || !phone || !address || salary <= 0) {
+    alert('Please fill all fields with valid values.');
+    return;
+  }
+  if (users.find(u => u.email === email)) {
+    alert('Email already registered. Please login.');
+    return;
+  }
+  const newUser = {
+    id: users.length + 1,
+    name, email, password, cnic, phone, address, salary,
+    documents: []
+  };
+  users.push(newUser);
+  signupModal.classList.remove('open');
+  alert('Registration successful! Please login.');
+  document.getElementById('signupName').value = '';
+  document.getElementById('signupEmail').value = '';
+  document.getElementById('signupPassword').value = '';
+  document.getElementById('signupCnic').value = '';
+  document.getElementById('signupPhone').value = '';
+  document.getElementById('signupAddress').value = '';
+  document.getElementById('signupSalary').value = '';
+  document.getElementById('fileList').innerHTML = '';
+  loginModal.classList.add('open');
+});
+
+document.getElementById('fileUploadInput').addEventListener('change', function(e) {
+  const files = e.target.files;
+  const list = document.getElementById('fileList');
+  if (files.length) {
+    list.innerHTML = Array.from(files).map(f => `<div><i class="fas fa-file"></i> ${f.name} (${(f.size/1024).toFixed(0)} KB)</div>`).join('');
+  }
+});
+document.getElementById('appFileUploadInput').addEventListener('change', function(e) {
+  const area = document.getElementById('appFileUploadArea');
+  area.innerHTML = `<i class="fas fa-check-circle" style="color:var(--primary);"></i> ${e.target.files.length} file(s) selected.`;
+});
+
+// ======================================================================
+// FAQ TOGGLE
+// ======================================================================
+function toggleFaq(el) {
+  const answer = el.nextElementSibling;
+  const icon = el.querySelector('i');
+  if (answer.style.display === 'block') {
+    answer.style.display = 'none';
+    icon.className = 'fas fa-chevron-down';
+  } else {
+    answer.style.display = 'block';
+    icon.className = 'fas fa-chevron-up';
+  }
+}
+
+// ======================================================================
+// NAVIGATION
+// ======================================================================
+function switchPage(page) {
+  currentPage = page;
+  if ((page === 'user-dashboard' || page === 'vendor-dashboard' || page === 'admin-dashboard') && !currentUser) {
+    loginModal.classList.add('open'); return;
+  }
+  if (page === 'user-dashboard' && currentUser && currentUser.role !== 'user') { alert('Switch to a User account.'); return; }
+  if (page === 'vendor-dashboard' && currentUser && currentUser.role !== 'vendor') { alert('Switch to a Vendor account.'); return; }
+  if (page === 'admin-dashboard' && currentUser && currentUser.role !== 'admin') { alert('Switch to Super Admin.'); return; }
+
+  Object.values(pageSections).forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('section-' + page);
+  if (target) target.classList.add('active');
+
+  document.querySelectorAll('.nav-links .nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-links .nav-btn[data-page]').forEach(b => {
+    if (b.dataset.page === page) b.classList.add('active');
+  });
+  navLinks.classList.remove('open');
+
+  if (page === 'public-products') renderProducts();
+  if (page === 'public-compare') renderCompare();
+  if (page === 'public-legal') renderLegal(currentLegalTab);
+  if (page === 'user-dashboard') renderUserDashboard();
+  if (page === 'vendor-dashboard') renderVendorDashboard();
+  if (page === 'admin-dashboard') renderAdminDashboard();
+}
+
+// ======================================================================
+// LOGIN / LOGOUT
+// ======================================================================
+function performLogin(email, password) {
+  const user = users.find(u => u.email === email && u.password === password);
+  if (user) {
+    currentUser = { role: 'user', id: user.id, name: user.name, email: user.email };
+    updateUIForLogin(); loginModal.classList.remove('open'); switchPage('user-dashboard'); return true;
+  }
+  const vendor = vendors.find(v => v.email === email && v.password === password);
+  if (vendor) {
+    currentUser = { role: 'vendor', id: vendor.id, name: vendor.name, email: vendor.email };
+    updateUIForLogin(); loginModal.classList.remove('open'); switchPage('vendor-dashboard'); return true;
+  }
+  if (email === 'admin@demo.com' && password === 'admin123') {
+    currentUser = { role: 'admin', id: 0, name: 'Super Admin', email: 'admin@demo.com' };
+    updateUIForLogin(); loginModal.classList.remove('open'); switchPage('admin-dashboard'); return true;
+  }
+  document.getElementById('loginError').style.display = 'block';
+  return false;
+}
+
+function updateUIForLogin() {
+  if (!currentUser) {
+    userBadge.style.display = 'none'; logoutBtn.style.display = 'none'; loginBtn.style.display = 'inline-block'; signupBtn.style.display = 'inline-block';
+    document.getElementById('navUserDash').style.display = 'none';
+    document.getElementById('navVendorDash').style.display = 'none';
+    document.getElementById('navAdminDash').style.display = 'none';
+    return;
+  }
+  userBadge.style.display = 'flex';
+  userNameDisplay.innerText = currentUser.name;
+  logoutBtn.style.display = 'inline-block';
+  loginBtn.style.display = 'none';
+  signupBtn.style.display = 'none';
+  document.getElementById('navUserDash').style.display = currentUser.role === 'user' ? 'inline-block' : 'none';
+  document.getElementById('navVendorDash').style.display = currentUser.role === 'vendor' ? 'inline-block' : 'none';
+  document.getElementById('navAdminDash').style.display = currentUser.role === 'admin' ? 'inline-block' : 'none';
+  document.getElementById('userRoleBadge').innerText = currentUser.role === 'admin' ? 'Super Admin' : currentUser.role === 'vendor' ? 'Vendor' : 'Customer';
+}
+
+function logout() {
+  currentUser = null;
+  updateUIForLogin();
+  switchPage('public-home');
+}
+
+// ======================================================================
+// EVENT LISTENERS
+// ======================================================================
+document.querySelectorAll('.nav-links .nav-btn[data-page]').forEach(btn => {
+  btn.addEventListener('click', function() { switchPage(this.dataset.page); });
+});
+hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+loginBtn.addEventListener('click', () => loginModal.classList.add('open'));
+document.getElementById('closeLoginModal').addEventListener('click', () => loginModal.classList.remove('open'));
+loginModal.addEventListener('click', (e) => { if (e.target === loginModal) loginModal.classList.remove('open'); });
+signupModal.addEventListener('click', (e) => { if (e.target === signupModal) signupModal.classList.remove('open'); });
+appModal.addEventListener('click', (e) => { if (e.target === appModal) appModal.classList.remove('open'); });
+document.getElementById('closeAppModal').addEventListener('click', () => appModal.classList.remove('open'));
+
+document.getElementById('loginSubmitBtn').addEventListener('click', function() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value.trim();
+  performLogin(email, pass);
+});
+document.querySelectorAll('#loginEmail, #loginPassword').forEach(f => {
+  f.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('loginSubmitBtn').click(); });
+});
+logoutBtn.addEventListener('click', logout);
+
+document.querySelectorAll('.legal-tabs button').forEach(btn => {
+  btn.addEventListener('click', function() { renderLegal(this.dataset.legalTab); });
+});
+document.getElementById('calcCompareBtn').addEventListener('click', renderCompare);
+['electricBill', 'fuelBill', 'compareType'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', function() {
+    clearTimeout(this._timer);
+    this._timer = setTimeout(renderCompare, 400);
+  });
+  el.addEventListener('change', renderCompare);
+});
+
+// ======================================================================
+// INIT
+// ======================================================================
+function init() {
+  renderProducts();
+  renderCompare();
+  renderLegal('terms');
+  updateUIForLogin();
+  switchPage('public-home');
+}
+init();
+
+// Expose global functions
+window.switchPage = switchPage;
+window.initiatePurchase = initiatePurchase;
+window.toggleRepayments = toggleRepayments;
+window.setActiveLender = setActiveLender;
+window.deleteLender = deleteLender;
+window.applyLenderToAllProducts = applyLenderToAllProducts;
+window.filterProducts = filterProducts;
+window.openProductDetail = openProductDetail;
+window.toggleFaq = toggleFaq;
+</script>
+</body>
+</html>
