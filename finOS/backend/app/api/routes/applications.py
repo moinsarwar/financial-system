@@ -178,7 +178,8 @@ def create_new_application(
         if data.reseller_id:
             client = db.query(Client).filter(Client.id == data.client_id).first()
             if client:
-                notify_reseller(app_res, client, data.reseller_id)
+                reseller_subdomain = data.reseller_id if isinstance(data.reseller_id, str) else str(data.reseller_id) # Ensure it's a string as subdomain
+                notify_reseller_status(app_res, client, reseller_subdomain, "pending")
 
         return app_res
 
@@ -411,7 +412,8 @@ def create_unified_application(
         
         notify_finvault(application, client)
         if data.reseller_id:
-            notify_reseller(application, client, data.reseller_id)
+            reseller_subdomain = data.reseller_id if isinstance(data.reseller_id, str) else str(data.reseller_id)
+            notify_reseller_status(application, client, reseller_subdomain, "pending")
     except Exception:
         db.rollback()
         raise
