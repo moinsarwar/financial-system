@@ -59,7 +59,11 @@ docker compose up --build
 - Backend: http://localhost:9011  
 - Docs: http://localhost:9011/docs  
 
-On Linux, compose uses `host.docker.internal` via `extra_hosts` so the container can reach host Ollama / finOS / reseller.
+On Linux, compose uses `host.docker.internal` via `extra_hosts` so the container can reach host Ollama.
+
+**Server note:** `finos-backend-1` often has **no host port** (`8000/tcp` only). Compose joins `finos_default` and calls:
+- `http://finos-backend-1:8000/api`
+- `http://comparison_backend:8000/api`
 
 ## Read-only guarantee
 

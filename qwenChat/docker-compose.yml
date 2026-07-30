@@ -5,13 +5,19 @@ services:
     ports:
       - "9011:8000"
     environment:
+      # Ollama on the VPS host (not in Docker)
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:0.5b}
-      FINOS_API_URL: ${FINOS_API_URL:-http://host.docker.internal:8000/api}
-      RESELLER_API_URL: ${RESELLER_API_URL:-http://host.docker.internal:9005/api}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:9010,http://127.0.0.1:9010}
+      # finOS is NOT published on host :8000 — reach it on Docker network
+      FINOS_API_URL: ${FINOS_API_URL:-http://finos-backend-1:8000/api}
+      # reseller container listens on 8000 internally (host maps 9005)
+      RESELLER_API_URL: ${RESELLER_API_URL:-http://comparison_backend:8000/api}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:9010,http://127.0.0.1:9010,http://163.245.222.160:9010}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - finos_net
     restart: unless-stopped
 
   frontend:
@@ -21,4 +27,12 @@ services:
       - "9010:80"
     depends_on:
       - backend
+    networks:
+      - default
     restart: unless-stopped
+
+networks:
+  default:
+  finos_net:
+    external: true
+    name: finos_default
