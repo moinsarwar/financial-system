@@ -8,29 +8,27 @@ import httpx
 from app.config import settings
 from app.services.summarize import facts_to_markdown, summarize_action
 
-MAX_CHARS = 200000
+MAX_CHARS = 100000
 
 
-SYSTEM_PROMPT = """You are the Financial System assistant (read-only).
+SYSTEM_PROMPT = """You are the Financial System assistant (read-only), powered by Qwen.
 
-You answer using ONLY the FACTS block when it is provided.
-finOS = core banking/insurance data. Reseller = partner commissions and catalog.
+You receive live database data and must write a clear natural-language SUMMARY for the user.
 
 HARD RULES:
-1) NEVER invent numbers, statuses, products, clients, or commissions.
-2) NEVER recount or re-group data. Copy counts EXACTLY from FACTS.
-3) Each status/category appears ONCE. FACTS are already normalized.
-4) If FACTS is missing or ok=false, say the live API failed and ask the user to retry a quick action.
-5) Do not claim you can create, edit, or delete anything.
-6) When FACTS include a full record list, include ALL records — never say "for example" or show only samples.
-7) Prefer plain language. No duplicate sections.
+1) Summarize in plain professional English (or match the user's language). Do NOT paste raw JSON.
+2) Use AUTHORITATIVE COUNTS exactly when stating totals or breakdowns — never invent or recount.
+3) Each status/category appears once. Do not split the same status into two labels.
+4) If the fetch failed (ok=false), say so briefly and suggest retrying a quick action.
+5) Read-only: you cannot create, edit, or delete data.
+6) Structure: short overview → key totals/breakdown → notable items or groups. No duplicate sections.
+7) Be informative but readable — group marketplace products by type/provider; do not dump every field.
 """
 
 
 USER_PROMPT_WITH_FACTS = (
-    "Using ONLY the FACTS below, answer the user. "
-    "Copy every number exactly. If a full DB list is present, include every record. "
-    "Do not truncate to examples.\n\n"
+    "Summarize the live database data below for the user in clear prose. "
+    "Do not output raw JSON. Use AUTHORITATIVE COUNTS for every number. "
     "User request: {message}"
 )
 
@@ -142,63 +140,63 @@ QUICK_ACTIONS: list[dict[str, Any]] = [
         "label": "Marketplace",
         "group": "finOS",
         "description": "Full marketplace catalog from DB",
-        "prompt": "Show ALL marketplace products from the full DB FACTS list.",
+        "prompt": "Summarize the marketplace products from the live database.",
     },
     {
         "id": "finos_clients",
         "label": "Clients",
         "group": "finOS",
         "description": "Full clients list from DB",
-        "prompt": "Show ALL clients from the full DB FACTS list.",
+        "prompt": "Summarize all clients from the live database.",
     },
     {
         "id": "finos_applications",
         "label": "Applications",
         "group": "finOS",
         "description": "Full applications list from DB",
-        "prompt": "Show ALL applications from the full DB FACTS list.",
+        "prompt": "Summarize all applications from the live database by status.",
     },
     {
         "id": "finos_claims",
         "label": "Claims",
         "group": "finOS",
         "description": "Full claims list from DB",
-        "prompt": "Show ALL claims from the full DB FACTS list.",
+        "prompt": "Summarize all claims from the live database.",
     },
     {
         "id": "finos_policies",
         "label": "Policies",
         "group": "finOS",
         "description": "Full policies and holdings from DB",
-        "prompt": "Show ALL policies and holdings from the full DB FACTS list.",
+        "prompt": "Summarize all policies and holdings from the live database.",
     },
     {
         "id": "reseller_list",
         "label": "Resellers",
         "group": "Reseller",
         "description": "Full resellers list from DB",
-        "prompt": "Show ALL resellers from the full DB FACTS list.",
+        "prompt": "Summarize all resellers from the live database.",
     },
     {
         "id": "reseller_stats",
         "label": "Stats",
         "group": "Reseller",
         "description": "Aggregate reseller stats",
-        "prompt": "Show full reseller stats from FACTS.",
+        "prompt": "Summarize the reseller stats from the live database.",
     },
     {
         "id": "reseller_product_stats",
         "label": "Catalog stats",
         "group": "Reseller",
         "description": "Banks and product counts",
-        "prompt": "Show full catalog stats from FACTS.",
+        "prompt": "Summarize the product catalog stats from the live database.",
     },
     {
         "id": "reseller_categories",
         "label": "Categories",
         "group": "Reseller",
         "description": "All product categories",
-        "prompt": "Show ALL product categories from FACTS.",
+        "prompt": "Summarize the product categories from the live database.",
     },
     {
         "id": "reseller_products",
@@ -206,7 +204,7 @@ QUICK_ACTIONS: list[dict[str, Any]] = [
         "group": "Reseller",
         "description": "Full personal category products",
         "params": {"category": "personal"},
-        "prompt": "Show ALL personal loan products from the full DB FACTS list.",
+        "prompt": "Summarize personal loan products from the live database.",
     },
     {
         "id": "reseller_activities",
@@ -214,7 +212,7 @@ QUICK_ACTIONS: list[dict[str, Any]] = [
         "group": "Reseller",
         "description": "Full activities for reseller 1",
         "params": {"reseller_id": 1},
-        "prompt": "Show ALL commission activities from the full DB FACTS list.",
+        "prompt": "Summarize commission activities from the live database.",
     },
     {
         "id": "reseller_customers",
@@ -222,30 +220,49 @@ QUICK_ACTIONS: list[dict[str, Any]] = [
         "group": "Reseller",
         "description": "Full customers for reseller 1",
         "params": {"reseller_id": 1},
-        "prompt": "Show ALL customers from the full DB FACTS list.",
+        "prompt": "Summarize customers from the live database.",
     },
 ]
+
+
+def _authoritative_counts(facts: dict[str, Any]) -> dict[str, Any]:
+    """Small accurate totals for the model — prevents recounting errors."""
+    out: dict[str, Any] = {"entity": facts.get("entity"), "total": facts.get("total")}
+    for key in (
+        "by_status",
+        "by_lifecycle_stage",
+        "by_product_type",
+        "by_provider",
+        "by_conversion_status",
+        "stats",
+        "categories",
+        "total_commission",
+    ):
+        if key in facts and facts[key] is not None:
+            out[key] = facts[key]
+    return out
 
 
 def format_context_block(action: str, result: dict[str, Any]) -> str:
     if not result.get("ok"):
         return (
-            f"### FACTS\n"
-            f"ok: false\n"
+            "### FETCH FAILED\n"
             f"action: {action}\n"
+            f"ok: false\n"
             f"error: {result.get('error')}\n"
-            f"Tell the user the live data fetch failed.\n"
+            "Tell the user the live data fetch failed.\n"
         )
 
     facts = result.get("facts") or summarize_action(action, result.get("data"))
-    md = result.get("facts_markdown") or facts_to_markdown(facts)
+    counts = _authoritative_counts(facts)
+    raw = result.get("data")
     return (
-        f"### FACTS (authoritative — copy numbers exactly, do not recount)\n"
+        "### AUTHORITATIVE COUNTS (copy these numbers exactly — do not recount)\n"
+        f"```json\n{_serialize(counts)}\n```\n\n"
+        "### RAW DATABASE DATA (write a natural-language summary — do NOT paste this JSON back)\n"
         f"action: {action}\n"
-        f"ok: true\n"
-        f"source: {result.get('source')}\n\n"
-        f"{md}\n\n"
-        f"JSON facts:\n```json\n{_serialize(facts)}\n```\n"
+        f"source: {result.get('source')}\n"
+        f"```json\n{_serialize(raw)}\n```\n"
     )
 
 
@@ -254,6 +271,6 @@ def build_user_message(message: str, has_facts: bool) -> str:
         return USER_PROMPT_WITH_FACTS.format(message=message)
     return (
         f"{message}\n\n"
-        "(No FACTS block was attached. If the question needs live DB numbers, "
+        "(No live database context was attached. If the question needs DB data, "
         "ask the user to press a quick-action button.)"
     )

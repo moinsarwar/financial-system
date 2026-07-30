@@ -21,7 +21,6 @@ router = APIRouter(prefix="/api")
 def _preview_from_result(result: dict[str, Any]) -> Any:
     if not result.get("ok"):
         return {"error": result.get("error")}
-    # Prefer compact facts in the UI panel
     return {
         "facts": result.get("facts"),
         "facts_markdown": result.get("facts_markdown"),
@@ -36,7 +35,7 @@ async def list_actions() -> dict[str, Any]:
 
 @router.post("/data")
 async def fetch_data(body: ActionRequest) -> dict[str, Any]:
-    """Fetch read-only data + deterministic facts (no LLM)."""
+    """Fetch read-only data + facts (no LLM)."""
     result = await data_service.run_action(body.action, body.params)
     return {
         "action": body.action,
@@ -55,23 +54,12 @@ async def chat(body: ChatRequest) -> ChatResponse:
     data_ok = None
     data_preview = None
     action = body.action
-    facts_md = None
 
     if action:
         result = await data_service.run_action(action, body.params)
         data_ok = bool(result.get("ok"))
         data_preview = _preview_from_result(result)
-        facts_md = result.get("facts_markdown")
         context = format_context_block(action, result)
-
-        # Small models invent counts — for quick actions return computed facts directly
-        if data_ok and facts_md:
-            return ChatResponse(
-                reply=facts_md,
-                action=action,
-                data_ok=data_ok,
-                data_preview=data_preview,
-            )
 
     history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
     user_msg = build_user_message(body.message, has_facts=bool(context))
@@ -93,13 +81,11 @@ async def chat(body: ChatRequest) -> ChatResponse:
 async def chat_stream(body: ChatRequest):
     context = None
     meta: dict[str, Any] = {"action": body.action}
-    facts_md = None
 
     if body.action:
         result = await data_service.run_action(body.action, body.params)
         meta["data_ok"] = bool(result.get("ok"))
         meta["data_preview"] = _preview_from_result(result)
-        facts_md = result.get("facts_markdown")
         context = format_context_block(body.action, result)
 
     history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
@@ -108,17 +94,11 @@ async def chat_stream(body: ChatRequest):
     async def event_gen():
         yield {"event": "meta", "data": json.dumps(meta, default=str)}
         try:
-            # Quick-action path: stream deterministic facts (no LLM counting errors)
-            if body.action and meta.get("data_ok") and facts_md:
-                yield {"event": "token", "data": json.dumps({"token": facts_md})}
-                yield {"event": "done", "data": json.dumps({"source": "facts"})}
-                return
-
             async for token in ollama_service.chat_stream(
                 user_msg, history=history, context=context
             ):
                 yield {"event": "token", "data": json.dumps({"token": token})}
-            yield {"event": "done", "data": "{}"}
+            yield {"event": "done", "data": json.dumps({"source": "qwen"})}
         except Exception as exc:  # noqa: BLE001
             yield {"event": "error", "data": json.dumps({"error": str(exc)})}
 

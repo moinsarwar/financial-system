@@ -4,7 +4,7 @@ import { fetchActions, fetchData, fetchHealth, streamChat } from "./api.js";
 const WELCOME = {
   role: "assistant",
   content:
-    "Ask a question or tap a quick action. Replies use full live DB records (read-only) — not samples.",
+    "Ask a question or tap a quick action. Live DB data goes to Qwen, which returns a natural summary (read-only).",
 };
 
 function StatusDot({ ok, label }) {
@@ -297,7 +297,7 @@ export default function App() {
               {busy ? "…" : "Send"}
             </button>
           </form>
-          <p className="footnote">Quick actions return full live DB records (read-only). No samples.</p>
+          <p className="footnote">Quick actions load live DB data into Qwen for a summary. Read-only — no create, edit, or delete.</p>
         </main>
 
         {panelOpen ? (
