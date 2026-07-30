@@ -15,15 +15,18 @@ from app.services.summarize import (
 MAX_CHARS = 60000
 
 
-SYSTEM_PROMPT = """You are the Financial System assistant (read-only), powered by Qwen.
+SYSTEM_PROMPT = """You are the Financial System assistant (read-only).
+
+Scope: ONLY finOS and reseller data — products, clients, applications, claims, policies, commissions, resellers.
 
 HARD RULES:
-1) The FIRST number you must respect is TOTAL in AUTHORITATIVE COUNTS. Never invent a different total.
-2) Copy every count in AUTHORITATIVE COUNTS exactly (by_product_type, by_provider, by_status, etc.).
-3) Do NOT recount rows. If TOTAL says 74, you must say 74 — never 3 or any other guessed number.
-4) Write a clear natural-language SUMMARY. Do NOT paste raw JSON.
-5) Structure: total → breakdowns → brief groups/highlights. No duplicate sections.
-6) Read-only only.
+1) Do NOT answer general knowledge, trivia, geography, animals, politics, or unrelated topics.
+2) If the user asks something outside finOS/reseller, reply briefly:
+   "I only help with Financial System data (finOS / reseller). Use a quick action button, or ask about products, applications, clients, or commissions."
+3) Never invent database numbers. If AUTHORITATIVE COUNTS are present, copy TOTAL and breakdowns exactly.
+4) If you are unsure about financial data and no counts are provided, say you need a quick action button.
+5) Read-only: never claim you can create, edit, or delete records.
+6) Keep answers short and accurate. Do not paste raw JSON.
 """
 
 
@@ -32,6 +35,45 @@ USER_PROMPT_WITH_FACTS = (
     "Your opening sentence MUST include the exact TOTAL. "
     "Do not invent totals. Do not output JSON.\n"
     "User request: {message}"
+)
+
+USER_PROMPT_FREEFORM = (
+    "Answer only if this is about Financial System / finOS / reseller data. "
+    "Otherwise refuse briefly and point the user to quick-action buttons.\n"
+    "User message: {message}"
+)
+
+# Free-form off-topic signals — tiny models hallucinate on these
+_OFFTOPIC_HINTS = (
+    "national bird",
+    "national animal",
+    "national flag",
+    "capital of",
+    "who is the prime",
+    "president of",
+    "markhor",
+    "weather",
+    "joke",
+    "poem",
+    "recipe",
+    "cricket score",
+    "movie",
+    "celebrity",
+)
+
+
+def is_offtopic(message: str) -> bool:
+    text = (message or "").strip().lower()
+    if not text:
+        return False
+    return any(h in text for h in _OFFTOPIC_HINTS)
+
+
+OFFTOPIC_REPLY = (
+    "I only help with **Financial System** data (finOS products, applications, clients, "
+    "claims, policies, and reseller commissions).\n\n"
+    "I can't reliably answer general trivia. Please use a quick-action button "
+    "(Marketplace, Applications, Resellers, …) or ask about those topics."
 )
 
 
@@ -271,8 +313,4 @@ def format_context_block(action: str, result: dict[str, Any]) -> str:
 def build_user_message(message: str, has_facts: bool) -> str:
     if has_facts:
         return USER_PROMPT_WITH_FACTS.format(message=message)
-    return (
-        f"{message}\n\n"
-        "(No live database context was attached. If the question needs DB data, "
-        "ask the user to press a quick-action button.)"
-    )
+    return USER_PROMPT_FREEFORM.format(message=message)

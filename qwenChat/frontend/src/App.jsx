@@ -4,7 +4,7 @@ import { fetchActions, fetchData, fetchHealth, streamChat } from "./api.js";
 const WELCOME = {
   role: "assistant",
   content:
-    "Ask a question or tap a quick action. Quick actions use exact live DB totals (fast). Free-form chat uses Qwen.",
+    "Ask about finOS / reseller data, or tap a quick action for exact tables. General trivia is out of scope.",
 };
 
 function StatusDot({ ok, label }) {
