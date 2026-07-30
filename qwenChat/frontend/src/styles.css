@@ -190,8 +190,12 @@ button.ghost:disabled {
 }
 
 .bubble {
-  max-width: min(680px, 94%);
+  max-width: min(820px, 96%);
   animation: rise 240ms ease-out;
+}
+
+.bubble.assistant .bubble-body {
+  max-height: none;
 }
 
 .bubble.user {

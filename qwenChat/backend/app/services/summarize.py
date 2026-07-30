@@ -87,11 +87,11 @@ def summarize_action(action: str, raw: Any) -> dict[str, Any]:
 
     if action == "finos_applications":
         by_status = _count_by(items, "status")
-        samples = []
-        for a in items[:8]:
+        rows = []
+        for a in items:
             if not isinstance(a, dict):
                 continue
-            samples.append(
+            rows.append(
                 {
                     "id": a.get("id"),
                     "status": _norm_status(a.get("status")),
@@ -102,40 +102,47 @@ def summarize_action(action: str, raw: Any) -> dict[str, Any]:
             )
         return {
             "entity": "applications",
-            "total": len(items),
+            "total": len(rows),
             "by_status": by_status,
-            "note": "Status labels are normalized. Each status appears once. Do not invent extra statuses.",
-            "samples": samples,
+            "list_all": True,
+            "note": "Status labels are normalized. Each status appears once.",
+            "items": rows,
         }
 
     if action == "finos_clients":
         by_stage = _count_by(items, "lifecycle_stage")
+        rows = [
+            {
+                "id": c.get("id"),
+                "name": c.get("name"),
+                "lifecycle_stage": _norm_status(c.get("lifecycle_stage")),
+                "email": c.get("email"),
+                "phone": c.get("phone"),
+            }
+            for c in items
+            if isinstance(c, dict)
+        ]
         return {
             "entity": "clients",
-            "total": len(items),
+            "total": len(rows),
             "by_lifecycle_stage": by_stage,
-            "samples": [
-                {
-                    "id": c.get("id"),
-                    "name": c.get("name"),
-                    "lifecycle_stage": _norm_status(c.get("lifecycle_stage")),
-                }
-                for c in items[:8]
-                if isinstance(c, dict)
-            ],
+            "list_all": True,
+            "items": rows,
         }
 
     if action == "finos_claims":
         by_status = _count_by(items, "status")
+        rows = [
+            {"id": c.get("id"), "status": _norm_status(c.get("status")), "claim_type": c.get("claim_type") or c.get("type")}
+            for c in items
+            if isinstance(c, dict)
+        ]
         return {
             "entity": "claims",
-            "total": len(items),
+            "total": len(rows),
             "by_status": by_status,
-            "samples": [
-                {"id": c.get("id"), "status": _norm_status(c.get("status"))}
-                for c in items[:8]
-                if isinstance(c, dict)
-            ],
+            "list_all": True,
+            "items": rows,
         }
 
     if action in ("finos_products", "finos_marketplace"):
@@ -144,7 +151,7 @@ def summarize_action(action: str, raw: Any) -> dict[str, Any]:
             products = raw["products"]
         by_type: Counter[str] = Counter()
         by_provider: Counter[str] = Counter()
-        samples = []
+        full_list: list[dict[str, Any]] = []
         for p in products:
             if not isinstance(p, dict):
                 continue
@@ -152,25 +159,37 @@ def summarize_action(action: str, raw: Any) -> dict[str, Any]:
             provider = str(p.get("provider_id") or p.get("bank") or "unknown")
             by_type[ptype] += 1
             by_provider[provider] += 1
-            if len(samples) < 10:
-                pricing = p.get("pricing") or {}
-                samples.append(
-                    {
-                        "name": _product_name(p),
-                        "provider": provider,
-                        "type": ptype,
-                        "rate": pricing.get("apr")
-                        or pricing.get("interest_rate")
-                        or pricing.get("profit_rate")
-                        or p.get("rate"),
-                    }
-                )
+            pricing = p.get("pricing") or {}
+            fee = (
+                pricing.get("processing_fee")
+                or pricing.get("annual_fee")
+                or pricing.get("annual_premium")
+                or pricing.get("maintenance_fee")
+                or p.get("fee")
+            )
+            full_list.append(
+                {
+                    "name": _product_name(p),
+                    "provider": provider,
+                    "type": ptype,
+                    "rate": pricing.get("apr")
+                    or pricing.get("interest_rate")
+                    or pricing.get("profit_rate")
+                    or p.get("rate"),
+                    "fee": fee,
+                    "product_id": p.get("product_id"),
+                    "status": p.get("status"),
+                }
+            )
+        # Sort for stable full listing: type then provider then name
+        full_list.sort(key=lambda x: (str(x.get("type")), str(x.get("provider")), str(x.get("name"))))
         return {
             "entity": "marketplace_products",
-            "total": len(products) if products else (raw.get("total") if isinstance(raw, dict) else 0),
+            "total": len(full_list),
             "by_product_type": dict(sorted(by_type.items(), key=lambda x: (-x[1], x[0]))),
-            "by_provider": dict(sorted(by_provider.items(), key=lambda x: (-x[1], x[0]))[:15]),
-            "samples": samples,
+            "by_provider": dict(sorted(by_provider.items(), key=lambda x: (-x[1], x[0]))),
+            "list_all": True,
+            "products": full_list,
         }
 
     if action == "finos_policies":
@@ -210,20 +229,22 @@ def summarize_action(action: str, raw: Any) -> dict[str, Any]:
         return {"entity": "product_categories", "total": len(cats), "categories": cats}
 
     if action == "reseller_products":
+        products = [
+            {
+                "bank": p.get("bank"),
+                "product": p.get("product"),
+                "rate": p.get("rate"),
+                "fee": p.get("fee"),
+                "tenure": p.get("tenure"),
+            }
+            for p in items
+            if isinstance(p, dict)
+        ]
         return {
             "entity": "reseller_products",
-            "total": len(items),
-            "products": [
-                {
-                    "bank": p.get("bank"),
-                    "product": p.get("product"),
-                    "rate": p.get("rate"),
-                    "fee": p.get("fee"),
-                    "tenure": p.get("tenure"),
-                }
-                for p in items[:20]
-                if isinstance(p, dict)
-            ],
+            "total": len(products),
+            "list_all": True,
+            "products": products,
         }
 
     if action == "reseller_activities":
@@ -246,8 +267,33 @@ def summarize_action(action: str, raw: Any) -> dict[str, Any]:
     return {"entity": action, "total": len(items), "raw_preview": items[:5]}
 
 
+def _format_row(item: dict[str, Any], kind: str) -> str:
+    if kind == "product":
+        name = item.get("name") or item.get("product") or "Product"
+        provider = item.get("provider") or item.get("bank") or "—"
+        ptype = item.get("type") or "—"
+        rate = item.get("rate") or "N/A"
+        fee = item.get("fee") or "N/A"
+        return f"**{provider}** — {name} · `{ptype}` · rate: {rate} · fee: {fee}"
+    if kind == "application":
+        return (
+            f"#{item.get('id')} · `{item.get('status')}` · "
+            f"{item.get('product_type') or '—'} · "
+            f"{item.get('amount') or '—'} {item.get('currency') or ''}".strip()
+        )
+    if kind == "client":
+        return (
+            f"#{item.get('id')} · **{item.get('name') or '—'}** · "
+            f"`{item.get('lifecycle_stage')}` · {item.get('email') or ''}"
+        )
+    if kind == "claim":
+        return f"#{item.get('id')} · `{item.get('status')}` · {item.get('claim_type') or '—'}"
+    # generic
+    return ", ".join(f"{k}={v}" for k, v in item.items() if v is not None)
+
+
 def facts_to_markdown(facts: dict[str, Any]) -> str:
-    """Deterministic answer — used as ground truth for the model and UI."""
+    """Deterministic answer — full lists when list_all is set."""
     lines: list[str] = []
     entity = facts.get("entity", "data")
     lines.append(f"**{entity.replace('_', ' ').title()}** (computed from live DB, read-only)")
@@ -281,10 +327,40 @@ def facts_to_markdown(facts: dict[str, Any]) -> str:
     if facts.get("note"):
         lines.append(f"- Note: {facts['note']}")
 
-    samples = facts.get("samples") or facts.get("products")
-    if isinstance(samples, list) and samples:
+    products = facts.get("products")
+    items = facts.get("items")
+    samples = facts.get("samples")
+
+    if isinstance(products, list) and products:
+        lines.append(f"- **All products ({len(products)}):**")
+        current_type = None
+        n = 0
+        for p in products:
+            if not isinstance(p, dict):
+                continue
+            ptype = p.get("type")
+            if ptype != current_type:
+                current_type = ptype
+                lines.append(f"  - **{ptype}**")
+            n += 1
+            lines.append(f"    {n}. {_format_row(p, 'product')}")
+
+    elif isinstance(items, list) and items:
+        kind = "application"
+        if entity == "clients":
+            kind = "client"
+        elif entity == "claims":
+            kind = "claim"
+        lines.append(f"- **Full list ({len(items)}):**")
+        for i, row in enumerate(items, 1):
+            if isinstance(row, dict):
+                lines.append(f"  {i}. {_format_row(row, kind)}")
+            else:
+                lines.append(f"  {i}. {row}")
+
+    elif isinstance(samples, list) and samples:
         lines.append("- Examples:")
-        for s in samples[:6]:
+        for s in samples:
             lines.append(f"  - {s}")
 
     return "\n".join(lines)

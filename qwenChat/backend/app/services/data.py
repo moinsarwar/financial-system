@@ -162,7 +162,7 @@ QUICK_ACTIONS: list[dict[str, Any]] = [
         "label": "Marketplace",
         "group": "finOS",
         "description": "Active marketplace catalog",
-        "prompt": "Summarize marketplace products using FACTS only.",
+        "prompt": "List ALL marketplace products from FACTS with totals and full catalog.",
     },
     {
         "id": "finos_clients",
