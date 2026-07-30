@@ -4,7 +4,7 @@ import { fetchActions, fetchData, fetchHealth, streamChat } from "./api.js";
 const WELCOME = {
   role: "assistant",
   content:
-    "Ask anything — general questions use Qwen; quick actions give exact finOS/reseller tables.",
+    "Ask anything — general questions use Qwen; quick actions give exact Comparison Engine tables.",
 };
 
 function StatusDot({ ok, label }) {
@@ -293,9 +293,9 @@ export default function App() {
     <div className="shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark">F</span>
+          <span className="brand-mark">C</span>
           <div>
-            <h1>Financial System</h1>
+            <h1>Comparison Engine</h1>
             <p>Read-only assistant · powered by Qwen</p>
           </div>
         </div>
@@ -372,7 +372,7 @@ export default function App() {
               {busy ? "…" : "Send"}
             </button>
           </form>
-          <p className="footnote">Quick actions = exact DB tables. Free-form chat = Qwen (general + financial). Read-only DB.</p>
+          <p className="footnote">Quick actions = exact DB tables. Free-form chat = Qwen. Read-only.</p>
         </main>
 
         {panelOpen ? (

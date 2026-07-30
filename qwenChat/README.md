@@ -1,6 +1,6 @@
-# QwenChat
+# Comparison Engine Chat
 
-Professional read-only chatbot for the Financial System monorepo.
+Read-only chatbot for the Comparison Engine (finOS + reseller data) with optional general Q&A via Ollama.
 
 - **Frontend**: React (Vite) → `http://localhost:9010`
 - **Backend**: FastAPI → `http://localhost:9011`

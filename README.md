@@ -37,10 +37,10 @@ This repository is structured into distinct projects, each serving a specific ro
 - **Role**: API gateway for external agents and dashboard analytics.
 
 ### 7. [qwenChat](./qwenChat/)
-**QwenChat** is a professional Ollama-powered chatbot for exploring finOS and reseller data in read-only mode.
-- **Tech Stack**: React (Vite), FastAPI, Ollama (`qwen2.5:0.5b`), Docker Compose.
+**Comparison Engine** chatbot (qwenChat) is an Ollama-powered read-only assistant for finOS and reseller data, with optional general Q&A.
+- **Tech Stack**: React (Vite), FastAPI, Ollama, Docker Compose.
 - **Ports**: Frontend `9010`, Backend `9011`.
-- **Role**: Streaming chat UI with quick-action buttons that GET live marketplace, applications, clients, resellers, and commission data (no writes).
+- **Role**: Streaming chat UI with quick-action tables (GET-only live data) and free-form Qwen chat.
 
 ## Setup Instructions
 
