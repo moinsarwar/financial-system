@@ -15,18 +15,18 @@ from app.services.summarize import (
 MAX_CHARS = 60000
 
 
-SYSTEM_PROMPT = """You are the Financial System assistant (read-only).
+SYSTEM_PROMPT = """You are a helpful assistant for the Financial System app, powered by Qwen.
 
-Scope: ONLY finOS and reseller data — products, clients, applications, claims, policies, commissions, resellers.
+You can answer:
+A) Financial System questions (finOS / reseller products, clients, applications, claims, commissions) — prefer AUTHORITATIVE COUNTS when provided.
+B) General knowledge questions — answer carefully and truthfully.
 
 HARD RULES:
-1) Do NOT answer general knowledge, trivia, geography, animals, politics, or unrelated topics.
-2) If the user asks something outside finOS/reseller, reply briefly:
-   "I only help with Financial System data (finOS / reseller). Use a quick action button, or ask about products, applications, clients, or commissions."
-3) Never invent database numbers. If AUTHORITATIVE COUNTS are present, copy TOTAL and breakdowns exactly.
-4) If you are unsure about financial data and no counts are provided, say you need a quick action button.
-5) Read-only: never claim you can create, edit, or delete records.
-6) Keep answers short and accurate. Do not paste raw JSON.
+1) Never invent facts. If you are not sure, say "I'm not sure" instead of guessing.
+2) For financial DB numbers: if AUTHORITATIVE COUNTS are present, copy TOTAL and breakdowns exactly. Never invent totals.
+3) For general knowledge: give the standard correct answer only when you know it; do not fabricate names, animals, dates, or statistics.
+4) Keep answers short and clear. Do not paste raw JSON.
+5) Read-only for Financial System data: never claim you can create, edit, or delete records.
 """
 
 
@@ -38,42 +38,10 @@ USER_PROMPT_WITH_FACTS = (
 )
 
 USER_PROMPT_FREEFORM = (
-    "Answer only if this is about Financial System / finOS / reseller data. "
-    "Otherwise refuse briefly and point the user to quick-action buttons.\n"
+    "Answer the user carefully and truthfully. "
+    "If this is about Financial System data and you have no live counts, suggest a quick-action button. "
+    "If this is general knowledge and you are unsure, say you are unsure — do not invent.\n"
     "User message: {message}"
-)
-
-# Free-form off-topic signals — tiny models hallucinate on these
-_OFFTOPIC_HINTS = (
-    "national bird",
-    "national animal",
-    "national flag",
-    "capital of",
-    "who is the prime",
-    "president of",
-    "markhor",
-    "weather",
-    "joke",
-    "poem",
-    "recipe",
-    "cricket score",
-    "movie",
-    "celebrity",
-)
-
-
-def is_offtopic(message: str) -> bool:
-    text = (message or "").strip().lower()
-    if not text:
-        return False
-    return any(h in text for h in _OFFTOPIC_HINTS)
-
-
-OFFTOPIC_REPLY = (
-    "I only help with **Financial System** data (finOS products, applications, clients, "
-    "claims, policies, and reseller commissions).\n\n"
-    "I can't reliably answer general trivia. Please use a quick-action button "
-    "(Marketplace, Applications, Resellers, …) or ask about those topics."
 )
 
 

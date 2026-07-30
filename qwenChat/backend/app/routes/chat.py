@@ -8,12 +8,10 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.schemas import ActionRequest, ChatRequest, ChatResponse
 from app.services.data import (
-    OFFTOPIC_REPLY,
     QUICK_ACTIONS,
     build_user_message,
     data_service,
     format_context_block,
-    is_offtopic,
 )
 from app.services.ollama import ollama_service
 
@@ -71,9 +69,6 @@ async def chat(body: ChatRequest) -> ChatResponse:
                 data_preview=data_preview,
             )
         context = format_context_block(action, result)
-    elif is_offtopic(body.message):
-        # Tiny models invent trivia — refuse without calling Ollama
-        return ChatResponse(reply=OFFTOPIC_REPLY, action=None, data_ok=None, data_preview=None)
 
     history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
     user_msg = build_user_message(body.message, has_facts=bool(context))
@@ -103,13 +98,6 @@ async def chat_stream(body: ChatRequest):
         meta["data_preview"] = _preview_from_result(result)
         natural = result.get("natural_summary")
         context = format_context_block(body.action, result)
-    elif is_offtopic(body.message):
-        async def off_topic_gen():
-            yield {"event": "meta", "data": json.dumps(meta)}
-            yield {"event": "token", "data": json.dumps({"token": OFFTOPIC_REPLY})}
-            yield {"event": "done", "data": json.dumps({"source": "guard"})}
-
-        return EventSourceResponse(off_topic_gen())
 
     history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
     user_msg = build_user_message(body.message, has_facts=bool(context))
