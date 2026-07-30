@@ -6,29 +6,27 @@ from typing import Any
 import httpx
 
 from app.config import settings
-from app.services.summarize import facts_to_markdown, summarize_action
+from app.services.summarize import compact_for_llm, facts_to_markdown, summarize_action
 
-MAX_CHARS = 100000
+MAX_CHARS = 60000
 
 
 SYSTEM_PROMPT = """You are the Financial System assistant (read-only), powered by Qwen.
 
-You receive live database data and must write a clear natural-language SUMMARY for the user.
-
 HARD RULES:
-1) Summarize in plain professional English (or match the user's language). Do NOT paste raw JSON.
-2) Use AUTHORITATIVE COUNTS exactly when stating totals or breakdowns — never invent or recount.
-3) Each status/category appears once. Do not split the same status into two labels.
-4) If the fetch failed (ok=false), say so briefly and suggest retrying a quick action.
-5) Read-only: you cannot create, edit, or delete data.
-6) Structure: short overview → key totals/breakdown → notable items or groups. No duplicate sections.
-7) Be informative but readable — group marketplace products by type/provider; do not dump every field.
+1) The FIRST number you must respect is TOTAL in AUTHORITATIVE COUNTS. Never invent a different total.
+2) Copy every count in AUTHORITATIVE COUNTS exactly (by_product_type, by_provider, by_status, etc.).
+3) Do NOT recount rows. If TOTAL says 74, you must say 74 — never 3 or any other guessed number.
+4) Write a clear natural-language SUMMARY. Do NOT paste raw JSON.
+5) Structure: total → breakdowns → brief groups/highlights. No duplicate sections.
+6) Read-only only.
 """
 
 
 USER_PROMPT_WITH_FACTS = (
-    "Summarize the live database data below for the user in clear prose. "
-    "Do not output raw JSON. Use AUTHORITATIVE COUNTS for every number. "
+    "Summarize using AUTHORITATIVE COUNTS first. "
+    "Your opening sentence MUST include the exact TOTAL. "
+    "Do not invent totals. Do not output JSON.\n"
     "User request: {message}"
 )
 
@@ -255,14 +253,16 @@ def format_context_block(action: str, result: dict[str, Any]) -> str:
 
     facts = result.get("facts") or summarize_action(action, result.get("data"))
     counts = _authoritative_counts(facts)
-    raw = result.get("data")
+    compact = compact_for_llm(action, facts)
+    total = counts.get("total")
     return (
-        "### AUTHORITATIVE COUNTS (copy these numbers exactly — do not recount)\n"
+        f"TOTAL = {total}\n"
+        "### AUTHORITATIVE COUNTS (MANDATORY — copy exactly, never recount)\n"
         f"```json\n{_serialize(counts)}\n```\n\n"
-        "### RAW DATABASE DATA (write a natural-language summary — do NOT paste this JSON back)\n"
+        "### COMPACT DATABASE ROWS (for summary detail only — counts above win on conflicts)\n"
         f"action: {action}\n"
         f"source: {result.get('source')}\n"
-        f"```json\n{_serialize(raw)}\n```\n"
+        f"```json\n{_serialize(compact)}\n```\n"
     )
 
 

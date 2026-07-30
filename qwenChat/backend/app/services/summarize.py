@@ -206,6 +206,148 @@ def summarize_action(action: str, raw: Any) -> dict[str, Any]:
     return base
 
 
+def _product_name(p: dict[str, Any]) -> str:
+    features = p.get("features") or []
+    if isinstance(features, list):
+        for f in features:
+            if isinstance(f, dict) and f.get("name") == "Product Name":
+                return str(f.get("details") or p.get("product_id") or "Product")
+    return str(p.get("product") or p.get("product_id") or p.get("name") or "Product")
+
+
+def compact_for_llm(action: str, facts: dict[str, Any]) -> dict[str, Any]:
+    """
+    Small structured payload for Ollama.
+    Full raw JSON blows past 0.5b/4k context so the model only sees the first
+    few rows and invents wrong totals (e.g. 3 instead of 74).
+    """
+    records = facts.get("records")
+    rows: list[Any] = records if isinstance(records, list) else []
+
+    compact_rows: list[dict[str, Any]] = []
+    if action in ("finos_products", "finos_marketplace"):
+        for p in rows:
+            if not isinstance(p, dict):
+                continue
+            pricing = p.get("pricing") or {}
+            compact_rows.append(
+                {
+                    "name": _product_name(p),
+                    "provider": p.get("provider_id") or p.get("bank"),
+                    "type": p.get("product_type"),
+                    "status": p.get("status"),
+                    "rate": pricing.get("apr")
+                    or pricing.get("interest_rate")
+                    or pricing.get("profit_rate"),
+                }
+            )
+    elif action == "finos_applications":
+        for a in rows:
+            if not isinstance(a, dict):
+                continue
+            compact_rows.append(
+                {
+                    "id": a.get("id"),
+                    "status": _norm_status(a.get("status")),
+                    "product_type": a.get("product_type") or a.get("product_label"),
+                    "amount": a.get("amount"),
+                    "currency": a.get("currency"),
+                }
+            )
+    elif action == "finos_clients":
+        for c in rows:
+            if not isinstance(c, dict):
+                continue
+            compact_rows.append(
+                {
+                    "id": c.get("id"),
+                    "name": c.get("name"),
+                    "lifecycle_stage": _norm_status(c.get("lifecycle_stage")),
+                    "email": c.get("email"),
+                }
+            )
+    elif action == "finos_claims":
+        for c in rows:
+            if not isinstance(c, dict):
+                continue
+            compact_rows.append(
+                {
+                    "id": c.get("id"),
+                    "status": _norm_status(c.get("status")),
+                    "type": c.get("claim_type") or c.get("type"),
+                }
+            )
+    elif action == "reseller_list":
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            compact_rows.append(
+                {
+                    "id": r.get("id"),
+                    "name": r.get("name") or r.get("business_name"),
+                    "status": _norm_status(r.get("status")),
+                    "conversions": r.get("conversions"),
+                    "commission": r.get("commission"),
+                }
+            )
+    elif action == "reseller_products":
+        for p in rows:
+            if not isinstance(p, dict):
+                continue
+            compact_rows.append(
+                {
+                    "bank": p.get("bank"),
+                    "product": p.get("product"),
+                    "rate": p.get("rate"),
+                    "fee": p.get("fee"),
+                    "tenure": p.get("tenure"),
+                }
+            )
+    elif action in ("reseller_activities", "reseller_customers"):
+        for row in rows:
+            if isinstance(row, dict):
+                # drop huge nested blobs if any
+                compact_rows.append({k: v for k, v in row.items() if not isinstance(v, (dict, list)) or k in ("id",)})
+    elif action == "finos_policies":
+        if isinstance(records, dict):
+            for key, lst in records.items():
+                if isinstance(lst, list):
+                    for row in lst:
+                        if isinstance(row, dict):
+                            compact_rows.append({"kind": key, **{k: row.get(k) for k in ("id", "status", "product_type", "client_id") if k in row}})
+        else:
+            compact_rows = [r for r in rows if isinstance(r, dict)]
+    else:
+        # stats / categories / fallback — keep as-is but small
+        if isinstance(records, list):
+            compact_rows = records
+        elif records is not None:
+            return {
+                "total": facts.get("total"),
+                "data": records,
+            }
+
+    out: dict[str, Any] = {
+        "total": facts.get("total"),
+        "row_count": len(compact_rows),
+        "rows": compact_rows,
+    }
+    for key in (
+        "by_status",
+        "by_lifecycle_stage",
+        "by_product_type",
+        "by_provider",
+        "by_conversion_status",
+        "stats",
+        "categories",
+        "total_commission",
+        "entity",
+    ):
+        if key in facts and facts[key] is not None:
+            out[key] = facts[key]
+    return out
+
+
 def facts_to_markdown(facts: dict[str, Any]) -> str:
     """Full DB dump in the reply — every record, no sample cutoff."""
     lines: list[str] = []
