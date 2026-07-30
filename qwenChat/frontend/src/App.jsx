@@ -4,7 +4,7 @@ import { fetchActions, fetchData, fetchHealth, streamChat } from "./api.js";
 const WELCOME = {
   role: "assistant",
   content:
-    "Ask a question or tap a quick action. Numbers for applications, clients, and commissions come from live read-only DB facts — not guessed by the model.",
+    "Ask a question or tap a quick action. Replies use full live DB records (read-only) — not samples.",
 };
 
 function StatusDot({ ok, label }) {
@@ -297,7 +297,7 @@ export default function App() {
               {busy ? "…" : "Send"}
             </button>
           </form>
-          <p className="footnote">Quick actions return computed DB facts. Read-only — no create, edit, or delete.</p>
+          <p className="footnote">Quick actions return full live DB records (read-only). No samples.</p>
         </main>
 
         {panelOpen ? (

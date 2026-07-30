@@ -8,9 +8,7 @@ import httpx
 from app.config import settings
 from app.services.summarize import facts_to_markdown, summarize_action
 
-# Keep raw preview small for the UI panel; LLM gets facts only
-MAX_ITEMS = 25
-MAX_CHARS = 8000
+MAX_CHARS = 200000
 
 
 SYSTEM_PROMPT = """You are the Financial System assistant (read-only).
@@ -21,45 +19,26 @@ finOS = core banking/insurance data. Reseller = partner commissions and catalog.
 HARD RULES:
 1) NEVER invent numbers, statuses, products, clients, or commissions.
 2) NEVER recount or re-group data. Copy counts EXACTLY from FACTS.
-3) Each status/category appears ONCE. Do not list "completed" and "application completed" as two different things — FACTS are already normalized.
+3) Each status/category appears ONCE. FACTS are already normalized.
 4) If FACTS is missing or ok=false, say the live API failed and ask the user to retry a quick action.
 5) Do not claim you can create, edit, or delete anything.
-6) Keep answers short: total, then breakdown, then 2–4 examples max.
-7) Prefer plain language. No long essays. No duplicate sections (do not repeat the same summary twice).
+6) When FACTS include a full record list, include ALL records — never say "for example" or show only samples.
+7) Prefer plain language. No duplicate sections.
 """
 
 
 USER_PROMPT_WITH_FACTS = (
-    "Using ONLY the FACTS below, write a short accurate summary. "
-    "Copy every number exactly. Do not add statuses that are not in FACTS. "
-    "Do not repeat the same breakdown twice.\n\n"
+    "Using ONLY the FACTS below, answer the user. "
+    "Copy every number exactly. If a full DB list is present, include every record. "
+    "Do not truncate to examples.\n\n"
     "User request: {message}"
 )
-
-
-def _trim(data: Any, max_items: int = MAX_ITEMS) -> Any:
-    if isinstance(data, list):
-        trimmed = data[:max_items]
-        if len(data) > max_items:
-            return {"items": trimmed, "truncated": True, "total": len(data), "showing": max_items}
-        return trimmed
-    if isinstance(data, dict):
-        if "products" in data and isinstance(data["products"], list):
-            products = data["products"][:max_items]
-            out = {**data, "products": products}
-            if len(data["products"]) > max_items:
-                out["truncated"] = True
-                out["total"] = len(data["products"])
-                out["showing"] = max_items
-            return out
-        return data
-    return data
 
 
 def _serialize(data: Any) -> str:
     text = json.dumps(data, default=str, ensure_ascii=False, indent=2)
     if len(text) > MAX_CHARS:
-        return text[:MAX_CHARS] + "\n...[truncated]"
+        return text[:MAX_CHARS] + "\n...[truncated for context size]"
     return text
 
 
@@ -149,7 +128,8 @@ class DataService:
             facts = summarize_action(action, result["data"])
             result["facts"] = facts
             result["facts_markdown"] = facts_to_markdown(facts)
-            result["data_preview"] = _trim(result["data"])
+            # Full payload for UI — no sample truncation
+            result["data_preview"] = result["data"]
         return result
 
 
@@ -161,88 +141,88 @@ QUICK_ACTIONS: list[dict[str, Any]] = [
         "id": "finos_products",
         "label": "Marketplace",
         "group": "finOS",
-        "description": "Active marketplace catalog",
-        "prompt": "List ALL marketplace products from FACTS with totals and full catalog.",
+        "description": "Full marketplace catalog from DB",
+        "prompt": "Show ALL marketplace products from the full DB FACTS list.",
     },
     {
         "id": "finos_clients",
         "label": "Clients",
         "group": "finOS",
-        "description": "Clients list (read-only)",
-        "prompt": "Summarize clients using FACTS only.",
+        "description": "Full clients list from DB",
+        "prompt": "Show ALL clients from the full DB FACTS list.",
     },
     {
         "id": "finos_applications",
         "label": "Applications",
         "group": "finOS",
-        "description": "Applications by status (read-only)",
-        "prompt": "Summarize applications using FACTS only. Use by_status exactly once.",
+        "description": "Full applications list from DB",
+        "prompt": "Show ALL applications from the full DB FACTS list.",
     },
     {
         "id": "finos_claims",
         "label": "Claims",
         "group": "finOS",
-        "description": "Claims (read-only)",
-        "prompt": "Summarize claims using FACTS only.",
+        "description": "Full claims list from DB",
+        "prompt": "Show ALL claims from the full DB FACTS list.",
     },
     {
         "id": "finos_policies",
         "label": "Policies",
         "group": "finOS",
-        "description": "Policies and holdings",
-        "prompt": "Summarize policies and holdings using FACTS only.",
+        "description": "Full policies and holdings from DB",
+        "prompt": "Show ALL policies and holdings from the full DB FACTS list.",
     },
     {
         "id": "reseller_list",
         "label": "Resellers",
         "group": "Reseller",
-        "description": "Reseller list and commissions",
-        "prompt": "Summarize resellers using FACTS only.",
+        "description": "Full resellers list from DB",
+        "prompt": "Show ALL resellers from the full DB FACTS list.",
     },
     {
         "id": "reseller_stats",
         "label": "Stats",
         "group": "Reseller",
         "description": "Aggregate reseller stats",
-        "prompt": "Summarize reseller stats using FACTS only.",
+        "prompt": "Show full reseller stats from FACTS.",
     },
     {
         "id": "reseller_product_stats",
         "label": "Catalog stats",
         "group": "Reseller",
         "description": "Banks and product counts",
-        "prompt": "Summarize catalog stats using FACTS only.",
+        "prompt": "Show full catalog stats from FACTS.",
     },
     {
         "id": "reseller_categories",
         "label": "Categories",
         "group": "Reseller",
-        "description": "Product categories",
-        "prompt": "List product categories using FACTS only.",
+        "description": "All product categories",
+        "prompt": "Show ALL product categories from FACTS.",
     },
     {
         "id": "reseller_products",
         "label": "Personal loans",
         "group": "Reseller",
-        "description": "Personal category products",
+        "description": "Full personal category products",
         "params": {"category": "personal"},
-        "prompt": "Compare personal loan products using FACTS only.",
+        "prompt": "Show ALL personal loan products from the full DB FACTS list.",
     },
     {
         "id": "reseller_activities",
         "label": "Commissions",
         "group": "Reseller",
-        "description": "Activities for reseller 1",
+        "description": "Full activities for reseller 1",
         "params": {"reseller_id": 1},
-        "prompt": "Summarize commissions using FACTS only.",
+        "prompt": "Show ALL commission activities from the full DB FACTS list.",
     },
     {
         "id": "reseller_customers",
         "label": "Customers",
         "group": "Reseller",
-        "description": "Customers for reseller 1",
+        "description": "Full customers for reseller 1",
         "params": {"reseller_id": 1},
-        "prompt": "Summarize customers using FACTS only.",
+        "prompt": "Show ALL customers from the full DB FACTS list.",
     },
 ]
 
