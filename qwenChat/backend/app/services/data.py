@@ -6,25 +6,35 @@ from typing import Any
 import httpx
 
 from app.config import settings
+from app.services.summarize import facts_to_markdown, summarize_action
 
-# Truncate payloads so qwen2.5:0.5b stays usable
-MAX_ITEMS = 40
-MAX_CHARS = 12000
+# Keep raw preview small for the UI panel; LLM gets facts only
+MAX_ITEMS = 25
+MAX_CHARS = 8000
 
 
-SYSTEM_PROMPT = """You are QwenChat, a professional assistant for the Financial System monorepo.
+SYSTEM_PROMPT = """You are the Financial System assistant (read-only).
 
-You help users understand and explore READ-ONLY data from:
-1) finOS — core banking/insurance system (clients, applications, claims, marketplace products, policies/holdings, dashboard).
-2) reseller (Comparison Engine) — resellers, customers, commissions/activities, product categories, stats.
+You answer using ONLY the FACTS block when it is provided.
+finOS = core banking/insurance data. Reseller = partner commissions and catalog.
 
-Rules:
-- Never invent database records. Prefer facts from the "Live data context" block when present.
-- If data is missing or APIs are unreachable, say so clearly and suggest using the quick-action buttons.
-- You cannot create, edit, or delete anything. Read-only only.
-- Keep answers concise, structured, and professional.
-- When listing products, include bank/provider, product name, rate/fee when available.
+HARD RULES:
+1) NEVER invent numbers, statuses, products, clients, or commissions.
+2) NEVER recount or re-group data. Copy counts EXACTLY from FACTS.
+3) Each status/category appears ONCE. Do not list "completed" and "application completed" as two different things — FACTS are already normalized.
+4) If FACTS is missing or ok=false, say the live API failed and ask the user to retry a quick action.
+5) Do not claim you can create, edit, or delete anything.
+6) Keep answers short: total, then breakdown, then 2–4 examples max.
+7) Prefer plain language. No long essays. No duplicate sections (do not repeat the same summary twice).
 """
+
+
+USER_PROMPT_WITH_FACTS = (
+    "Using ONLY the FACTS below, write a short accurate summary. "
+    "Copy every number exactly. Do not add statuses that are not in FACTS. "
+    "Do not repeat the same breakdown twice.\n\n"
+    "User request: {message}"
+)
 
 
 def _trim(data: Any, max_items: int = MAX_ITEMS) -> Any:
@@ -66,11 +76,9 @@ class DataService:
                 resp = await client.get(url)
                 resp.raise_for_status()
                 payload = resp.json()
-                return {"ok": True, "source": url, "data": _trim(payload)}
-        except Exception as exc:  # noqa: BLE001 — surface as chat-friendly error
+                return {"ok": True, "source": url, "data": payload}
+        except Exception as exc:  # noqa: BLE001
             return {"ok": False, "source": url, "error": str(exc), "data": None}
-
-    # --- finOS (prefer unauthenticated / admin_portal mirrors for local chatbot) ---
 
     async def finos_products(self) -> dict[str, Any]:
         return await self._get(f"{self.finos}/front_products")
@@ -89,8 +97,6 @@ class DataService:
 
     async def finos_marketplace(self) -> dict[str, Any]:
         return await self._get(f"{self.finos}/admin_portal/marketplace")
-
-    # --- reseller ---
 
     async def reseller_list(self) -> dict[str, Any]:
         return await self._get(f"{self.reseller}/resellers/")
@@ -128,17 +134,23 @@ class DataService:
             "reseller_categories": self.reseller_categories,
         }
         if action == "reseller_products":
-            category = str(params.get("category", "personal"))
-            return await self.reseller_products(category)
-        if action == "reseller_customers":
-            return await self.reseller_customers(int(params.get("reseller_id", 1)))
-        if action == "reseller_activities":
-            return await self.reseller_activities(int(params.get("reseller_id", 1)))
+            result = await self.reseller_products(str(params.get("category", "personal")))
+        elif action == "reseller_customers":
+            result = await self.reseller_customers(int(params.get("reseller_id", 1)))
+        elif action == "reseller_activities":
+            result = await self.reseller_activities(int(params.get("reseller_id", 1)))
+        else:
+            handler = handlers.get(action)
+            if not handler:
+                return {"ok": False, "error": f"Unknown read-only action: {action}", "data": None}
+            result = await handler()
 
-        handler = handlers.get(action)
-        if not handler:
-            return {"ok": False, "error": f"Unknown read-only action: {action}", "data": None}
-        return await handler()
+        if result.get("ok") and result.get("data") is not None:
+            facts = summarize_action(action, result["data"])
+            result["facts"] = facts
+            result["facts_markdown"] = facts_to_markdown(facts)
+            result["data_preview"] = _trim(result["data"])
+        return result
 
 
 data_service = DataService()
@@ -147,99 +159,121 @@ data_service = DataService()
 QUICK_ACTIONS: list[dict[str, Any]] = [
     {
         "id": "finos_products",
-        "label": "Marketplace products",
+        "label": "Marketplace",
         "group": "finOS",
-        "description": "Read active front_products catalog from finOS",
-        "prompt": "Summarize the finOS marketplace products from the live data.",
+        "description": "Active marketplace catalog",
+        "prompt": "Summarize marketplace products using FACTS only.",
     },
     {
         "id": "finos_clients",
         "label": "Clients",
         "group": "finOS",
-        "description": "List clients (read-only)",
-        "prompt": "Summarize the finOS clients from the live data.",
+        "description": "Clients list (read-only)",
+        "prompt": "Summarize clients using FACTS only.",
     },
     {
         "id": "finos_applications",
         "label": "Applications",
         "group": "finOS",
-        "description": "List applications (read-only)",
-        "prompt": "Summarize finOS applications: counts by status and recent items.",
+        "description": "Applications by status (read-only)",
+        "prompt": "Summarize applications using FACTS only. Use by_status exactly once.",
     },
     {
         "id": "finos_claims",
         "label": "Claims",
         "group": "finOS",
-        "description": "List claims (read-only)",
-        "prompt": "Summarize finOS claims from the live data.",
+        "description": "Claims (read-only)",
+        "prompt": "Summarize claims using FACTS only.",
     },
     {
         "id": "finos_policies",
-        "label": "Policies & holdings",
+        "label": "Policies",
         "group": "finOS",
-        "description": "Issued policies and holdings (read-only)",
-        "prompt": "Summarize issued policies and holdings from finOS.",
+        "description": "Policies and holdings",
+        "prompt": "Summarize policies and holdings using FACTS only.",
     },
     {
         "id": "reseller_list",
         "label": "Resellers",
         "group": "Reseller",
-        "description": "List resellers and commission totals",
-        "prompt": "Summarize resellers, conversions, and commissions.",
+        "description": "Reseller list and commissions",
+        "prompt": "Summarize resellers using FACTS only.",
     },
     {
         "id": "reseller_stats",
-        "label": "Reseller stats",
+        "label": "Stats",
         "group": "Reseller",
         "description": "Aggregate reseller stats",
-        "prompt": "Explain the overall reseller stats from the live data.",
+        "prompt": "Summarize reseller stats using FACTS only.",
     },
     {
         "id": "reseller_product_stats",
-        "label": "Product stats",
+        "label": "Catalog stats",
         "group": "Reseller",
-        "description": "Banks and product counts via reseller proxy",
-        "prompt": "Summarize product catalog stats (banks and products).",
+        "description": "Banks and product counts",
+        "prompt": "Summarize catalog stats using FACTS only.",
     },
     {
         "id": "reseller_categories",
-        "label": "Product categories",
+        "label": "Categories",
         "group": "Reseller",
-        "description": "Available product categories",
-        "prompt": "List available product categories and what they mean.",
+        "description": "Product categories",
+        "prompt": "List product categories using FACTS only.",
     },
     {
         "id": "reseller_products",
         "label": "Personal loans",
         "group": "Reseller",
-        "description": "Products in personal category",
+        "description": "Personal category products",
         "params": {"category": "personal"},
-        "prompt": "Compare personal loan products from the live data.",
+        "prompt": "Compare personal loan products using FACTS only.",
     },
     {
         "id": "reseller_activities",
-        "label": "Commissions (R1)",
+        "label": "Commissions",
         "group": "Reseller",
-        "description": "Activities/commissions for reseller id=1",
+        "description": "Activities for reseller 1",
         "params": {"reseller_id": 1},
-        "prompt": "Summarize commission activities for reseller 1.",
+        "prompt": "Summarize commissions using FACTS only.",
     },
     {
         "id": "reseller_customers",
-        "label": "Customers (R1)",
+        "label": "Customers",
         "group": "Reseller",
-        "description": "Customers for reseller id=1",
+        "description": "Customers for reseller 1",
         "params": {"reseller_id": 1},
-        "prompt": "Summarize customers for reseller 1.",
+        "prompt": "Summarize customers using FACTS only.",
     },
 ]
 
 
 def format_context_block(action: str, result: dict[str, Any]) -> str:
+    if not result.get("ok"):
+        return (
+            f"### FACTS\n"
+            f"ok: false\n"
+            f"action: {action}\n"
+            f"error: {result.get('error')}\n"
+            f"Tell the user the live data fetch failed.\n"
+        )
+
+    facts = result.get("facts") or summarize_action(action, result.get("data"))
+    md = result.get("facts_markdown") or facts_to_markdown(facts)
     return (
-        f"### Live data context\n"
-        f"Action: `{action}` (READ-ONLY)\n"
-        f"OK: {result.get('ok')}\n"
-        f"Source: {result.get('source')}\n"
-        f"Payload:\n```json\n{_serialize(result.get('data') if result.get('ok') else result)}\n```\n"
+        f"### FACTS (authoritative — copy numbers exactly, do not recount)\n"
+        f"action: {action}\n"
+        f"ok: true\n"
+        f"source: {result.get('source')}\n\n"
+        f"{md}\n\n"
+        f"JSON facts:\n```json\n{_serialize(facts)}\n```\n"
+    )
+
+
+def build_user_message(message: str, has_facts: bool) -> str:
+    if has_facts:
+        return USER_PROMPT_WITH_FACTS.format(message=message)
+    return (
+        f"{message}\n\n"
+        "(No FACTS block was attached. If the question needs live DB numbers, "
+        "ask the user to press a quick-action button.)"
     )

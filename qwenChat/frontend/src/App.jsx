@@ -4,34 +4,67 @@ import { fetchActions, fetchData, fetchHealth, streamChat } from "./api.js";
 const WELCOME = {
   role: "assistant",
   content:
-    "Welcome to Financial System. I can explain finOS and reseller data using live read-only database queries. Use a quick action below, or ask a question.",
+    "Ask a question or tap a quick action. Numbers for applications, clients, and commissions come from live read-only DB facts — not guessed by the model.",
 };
 
 function StatusDot({ ok, label }) {
+  const state = ok === true ? "ok" : ok === false ? "bad" : "unknown";
   return (
-    <span className={`status-pill ${ok ? "ok" : "bad"}`} title={label}>
+    <span className={`status-pill ${state}`} title={label}>
       <span className="dot" />
-      {label}
+      <span className="status-text">{label}</span>
     </span>
   );
 }
 
-function DataPanel({ preview, action }) {
+function renderBody(text) {
+  if (!text) return null;
+  // Lightweight formatting for our facts markdown
+  return text.split("\n").map((line, i) => {
+    const trimmed = line.trimEnd();
+    if (!trimmed) return <br key={i} />;
+    const html = trimmed
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>");
+    if (trimmed.startsWith("- ")) {
+      return (
+        <div key={i} className="line bullet" dangerouslySetInnerHTML={{ __html: html.slice(2) }} />
+      );
+    }
+    return <div key={i} className="line" dangerouslySetInnerHTML={{ __html: html }} />;
+  });
+}
+
+function DataPanel({ preview, actionLabel }) {
   if (!preview) {
     return (
       <div className="data-empty">
-        <p>No live snapshot yet.</p>
-        <p className="muted">Click a quick action to load read-only data from finOS or reseller.</p>
+        <p>No snapshot yet</p>
+        <p className="muted">Tap a quick action to load computed facts from finOS or Reseller.</p>
       </div>
     );
   }
+
+  const facts = preview.facts;
+  const md = preview.facts_markdown;
+  const err = preview.error;
+
   return (
     <div className="data-panel-body">
       <div className="data-panel-meta">
         <span className="chip">READ-ONLY</span>
-        {action ? <span className="chip soft">{action}</span> : null}
+        {actionLabel ? <span className="chip soft">{actionLabel}</span> : null}
       </div>
-      <pre>{JSON.stringify(preview, null, 2)}</pre>
+      {err ? <pre className="err">{JSON.stringify({ error: err }, null, 2)}</pre> : null}
+      {md ? <div className="facts-md">{renderBody(md)}</div> : null}
+      {facts ? (
+        <details className="facts-json">
+          <summary>Raw facts JSON</summary>
+          <pre>{JSON.stringify(facts, null, 2)}</pre>
+        </details>
+      ) : !err && !md ? (
+        <pre>{JSON.stringify(preview, null, 2)}</pre>
+      ) : null}
     </div>
   );
 }
@@ -45,7 +78,8 @@ export default function App() {
   const [activeAction, setActiveAction] = useState(null);
   const [dataPreview, setDataPreview] = useState(null);
   const [error, setError] = useState(null);
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [actionTab, setActionTab] = useState("finOS");
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -64,6 +98,12 @@ export default function App() {
     fetchHealth()
       .then(setHealth)
       .catch(() => setHealth(null));
+    const t = setInterval(() => {
+      fetchHealth()
+        .then(setHealth)
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
@@ -81,11 +121,14 @@ export default function App() {
 
     const history = messages
       .filter((m) => m.role === "user" || m.role === "assistant")
-      .slice(-12)
+      .slice(-4)
       .map((m) => ({ role: m.role, content: m.content }));
 
-    setMessages((prev) => [...prev, { role: "user", content: message, action: actionObj?.id }]);
-    setMessages((prev) => [...prev, { role: "assistant", content: "", streaming: true }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: message, action: actionObj?.label || actionObj?.id },
+      { role: "assistant", content: "", streaming: true },
+    ]);
 
     let assembled = "";
     try {
@@ -111,7 +154,10 @@ export default function App() {
         onDone: () => {
           setMessages((prev) => {
             const copy = [...prev];
-            copy[copy.length - 1] = { role: "assistant", content: assembled || "No response from model." };
+            copy[copy.length - 1] = {
+              role: "assistant",
+              content: assembled || "No response.",
+            };
             return copy;
           });
         },
@@ -123,7 +169,7 @@ export default function App() {
         const copy = [...prev];
         copy[copy.length - 1] = {
           role: "assistant",
-          content: `I could not reach the model. ${e.message || e}`,
+          content: `Could not reach the model. ${e.message || e}`,
         };
         return copy;
       });
@@ -135,13 +181,17 @@ export default function App() {
   }
 
   async function onQuickAction(actionObj) {
-    // Also load raw data for the side panel immediately
     try {
       const raw = await fetchData(actionObj.id, actionObj.params || null);
-      setDataPreview(raw.data ?? { error: raw.error });
+      setDataPreview({
+        facts: raw.facts,
+        facts_markdown: raw.facts_markdown,
+        source: raw.source,
+        error: raw.ok ? undefined : raw.error,
+      });
       setPanelOpen(true);
     } catch {
-      /* chat path will still attempt */
+      /* chat path still runs */
     }
     await runChat({ text: actionObj.prompt, actionObj });
   }
@@ -153,9 +203,16 @@ export default function App() {
     runChat({ text, actionObj: null });
   }
 
+  function clearChat() {
+    setMessages([WELCOME]);
+    setDataPreview(null);
+    setError(null);
+  }
+
   const ollamaOk = health?.ollama?.ok;
   const finosOk = health?.finos?.reachable;
   const resellerOk = health?.reseller?.reachable;
+  const tabActions = grouped[actionTab] || [];
 
   return (
     <div className="shell">
@@ -168,11 +225,14 @@ export default function App() {
           </div>
         </div>
         <div className="status-row">
-          <StatusDot ok={!!ollamaOk} label={`Ollama ${health?.ollama?.configured_model || ""}`} />
-          <StatusDot ok={!!finosOk} label="finOS" />
-          <StatusDot ok={!!resellerOk} label="Reseller" />
+          <StatusDot ok={ollamaOk} label="Ollama" />
+          <StatusDot ok={finosOk} label="finOS" />
+          <StatusDot ok={resellerOk} label="Reseller" />
+          <button type="button" className="ghost" onClick={clearChat} disabled={busy}>
+            New chat
+          </button>
           <button type="button" className="ghost" onClick={() => setPanelOpen((v) => !v)}>
-            {panelOpen ? "Hide data" : "Show data"}
+            {panelOpen ? "Hide facts" : "Show facts"}
           </button>
         </div>
       </header>
@@ -182,12 +242,12 @@ export default function App() {
           <div className="messages">
             {messages.map((m, i) => (
               <article key={i} className={`bubble ${m.role}`}>
-                <div className="bubble-label">{m.role === "user" ? "You" : "Qwen"}</div>
+                <div className="bubble-label">{m.role === "user" ? "You" : "Assistant"}</div>
                 <div className="bubble-body">
-                  {m.content}
+                  {m.role === "assistant" ? renderBody(m.content) : m.content}
                   {m.streaming ? <span className="caret" /> : null}
                 </div>
-                {m.action ? <div className="bubble-tag">via {m.action}</div> : null}
+                {m.action ? <div className="bubble-tag">{m.action}</div> : null}
               </article>
             ))}
             <div ref={bottomRef} />
@@ -196,27 +256,32 @@ export default function App() {
           {error ? <div className="banner error">{error}</div> : null}
 
           <section className="actions">
-            {Object.entries(grouped).map(([group, items]) =>
-              items.length ? (
-                <div key={group} className="action-group">
-                  <h3>{group}</h3>
-                  <div className="action-row">
-                    {items.map((a) => (
-                      <button
-                        key={a.id + JSON.stringify(a.params || {})}
-                        type="button"
-                        className={`action-btn ${activeAction === a.id ? "active" : ""}`}
-                        disabled={busy}
-                        title={a.description}
-                        onClick={() => onQuickAction(a)}
-                      >
-                        {a.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null
-            )}
+            <div className="action-tabs">
+              {["finOS", "Reseller"].map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  className={`tab ${actionTab === tab ? "on" : ""}`}
+                  onClick={() => setActionTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <div className="action-row">
+              {tabActions.map((a) => (
+                <button
+                  key={a.id + JSON.stringify(a.params || {})}
+                  type="button"
+                  className={`action-btn ${activeAction === a.id ? "active" : ""}`}
+                  disabled={busy}
+                  title={a.description}
+                  onClick={() => onQuickAction(a)}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
           </section>
 
           <form className="composer" onSubmit={onSubmit}>
@@ -224,24 +289,24 @@ export default function App() {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about products, applications, resellers, commissions…"
+              placeholder="Ask anything — or use quick actions for exact DB counts"
               disabled={busy}
               autoComplete="off"
             />
             <button type="submit" disabled={busy || !input.trim()}>
-              {busy ? "Thinking…" : "Send"}
+              {busy ? "…" : "Send"}
             </button>
           </form>
-          <p className="footnote">Buttons and APIs are read-only — no create, edit, or delete.</p>
+          <p className="footnote">Quick actions return computed DB facts. Read-only — no create, edit, or delete.</p>
         </main>
 
         {panelOpen ? (
           <aside className="data-panel">
             <div className="data-panel-head">
-              <h2>Live data</h2>
-              <span className="muted">DB snapshot</span>
+              <h2>Facts</h2>
+              <span className="muted">normalized counts</span>
             </div>
-            <DataPanel preview={dataPreview} action={activeAction} />
+            <DataPanel preview={dataPreview} actionLabel={activeAction} />
           </aside>
         ) : null}
       </div>

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import Any, AsyncIterator
 
 import httpx
@@ -43,22 +44,23 @@ class OllamaService:
     ) -> list[dict[str, str]]:
         messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
         if context:
-            messages.append(
-                {
-                    "role": "system",
-                    "content": (
-                        "Use the following live database snapshot. "
-                        "Do not invent records beyond it.\n\n" + context
-                    ),
-                }
-            )
-        for item in history or []:
+            messages.append({"role": "system", "content": context})
+        # Keep history short — 0.5b loses accuracy with long context
+        for item in (history or [])[-4:]:
             role = item.get("role")
             content = item.get("content")
             if role in ("user", "assistant") and content:
-                messages.append({"role": role, "content": content})
+                messages.append({"role": role, "content": content[:1500]})
         messages.append({"role": "user", "content": user_message})
         return messages
+
+    def _options(self) -> dict[str, Any]:
+        return {
+            "temperature": 0.05,
+            "top_p": 0.8,
+            "repeat_penalty": 1.2,
+            "num_predict": 400,
+        }
 
     async def chat(
         self,
@@ -70,7 +72,7 @@ class OllamaService:
             "model": self.model,
             "messages": self._messages(user_message, history, context),
             "stream": False,
-            "options": {"temperature": 0.3},
+            "options": self._options(),
         }
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(f"{self.base}/api/chat", json=payload)
@@ -88,7 +90,7 @@ class OllamaService:
             "model": self.model,
             "messages": self._messages(user_message, history, context),
             "stream": True,
-            "options": {"temperature": 0.3},
+            "options": self._options(),
         }
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             async with client.stream("POST", f"{self.base}/api/chat", json=payload) as resp:
@@ -96,8 +98,6 @@ class OllamaService:
                 async for line in resp.aiter_lines():
                     if not line:
                         continue
-                    import json
-
                     try:
                         chunk = json.loads(line)
                     except json.JSONDecodeError:

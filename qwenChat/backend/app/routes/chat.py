@@ -7,10 +7,26 @@ from fastapi import APIRouter, HTTPException
 from sse_starlette.sse import EventSourceResponse
 
 from app.schemas import ActionRequest, ChatRequest, ChatResponse
-from app.services.data import QUICK_ACTIONS, data_service, format_context_block
+from app.services.data import (
+    QUICK_ACTIONS,
+    build_user_message,
+    data_service,
+    format_context_block,
+)
 from app.services.ollama import ollama_service
 
 router = APIRouter(prefix="/api")
+
+
+def _preview_from_result(result: dict[str, Any]) -> Any:
+    if not result.get("ok"):
+        return {"error": result.get("error")}
+    # Prefer compact facts in the UI panel
+    return {
+        "facts": result.get("facts"),
+        "facts_markdown": result.get("facts_markdown"),
+        "source": result.get("source"),
+    }
 
 
 @router.get("/actions")
@@ -20,9 +36,17 @@ async def list_actions() -> dict[str, Any]:
 
 @router.post("/data")
 async def fetch_data(body: ActionRequest) -> dict[str, Any]:
-    """Fetch read-only data without calling the LLM (for UI tables/previews)."""
+    """Fetch read-only data + deterministic facts (no LLM)."""
     result = await data_service.run_action(body.action, body.params)
-    return {"action": body.action, **result}
+    return {
+        "action": body.action,
+        "ok": result.get("ok"),
+        "source": result.get("source"),
+        "error": result.get("error"),
+        "facts": result.get("facts"),
+        "facts_markdown": result.get("facts_markdown"),
+        "data": result.get("data_preview") or result.get("data"),
+    }
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -31,17 +55,29 @@ async def chat(body: ChatRequest) -> ChatResponse:
     data_ok = None
     data_preview = None
     action = body.action
+    facts_md = None
 
     if action:
         result = await data_service.run_action(action, body.params)
         data_ok = bool(result.get("ok"))
-        data_preview = result.get("data") if data_ok else {"error": result.get("error")}
+        data_preview = _preview_from_result(result)
+        facts_md = result.get("facts_markdown")
         context = format_context_block(action, result)
 
-    history = [{"role": m.role, "content": m.content} for m in body.history[-12:]]
+        # Small models invent counts — for quick actions return computed facts directly
+        if data_ok and facts_md:
+            return ChatResponse(
+                reply=facts_md,
+                action=action,
+                data_ok=data_ok,
+                data_preview=data_preview,
+            )
+
+    history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
+    user_msg = build_user_message(body.message, has_facts=bool(context))
 
     try:
-        reply = await ollama_service.chat(body.message, history=history, context=context)
+        reply = await ollama_service.chat(user_msg, history=history, context=context)
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"Ollama error: {exc}") from exc
 
@@ -57,20 +93,29 @@ async def chat(body: ChatRequest) -> ChatResponse:
 async def chat_stream(body: ChatRequest):
     context = None
     meta: dict[str, Any] = {"action": body.action}
+    facts_md = None
 
     if body.action:
         result = await data_service.run_action(body.action, body.params)
         meta["data_ok"] = bool(result.get("ok"))
-        meta["data_preview"] = result.get("data") if result.get("ok") else {"error": result.get("error")}
+        meta["data_preview"] = _preview_from_result(result)
+        facts_md = result.get("facts_markdown")
         context = format_context_block(body.action, result)
 
-    history = [{"role": m.role, "content": m.content} for m in body.history[-12:]]
+    history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
+    user_msg = build_user_message(body.message, has_facts=bool(context))
 
     async def event_gen():
         yield {"event": "meta", "data": json.dumps(meta, default=str)}
         try:
+            # Quick-action path: stream deterministic facts (no LLM counting errors)
+            if body.action and meta.get("data_ok") and facts_md:
+                yield {"event": "token", "data": json.dumps({"token": facts_md})}
+                yield {"event": "done", "data": json.dumps({"source": "facts"})}
+                return
+
             async for token in ollama_service.chat_stream(
-                body.message, history=history, context=context
+                user_msg, history=history, context=context
             ):
                 yield {"event": "token", "data": json.dumps({"token": token})}
             yield {"event": "done", "data": "{}"}
