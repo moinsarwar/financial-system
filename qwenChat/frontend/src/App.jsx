@@ -17,22 +17,97 @@ function StatusDot({ ok, label }) {
   );
 }
 
+function formatInline(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
+function isTableSep(line) {
+  return /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?\s*$/.test(line.trim());
+}
+
+function parseTableRow(line) {
+  let s = line.trim();
+  if (s.startsWith("|")) s = s.slice(1);
+  if (s.endsWith("|")) s = s.slice(0, -1);
+  return s.split("|").map((c) => c.trim());
+}
+
 function renderBody(text) {
   if (!text) return null;
-  // Lightweight formatting for our facts markdown
-  return text.split("\n").map((line, i) => {
+  const lines = text.split("\n");
+  const nodes = [];
+  let i = 0;
+  let key = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
     const trimmed = line.trimEnd();
-    if (!trimmed) return <br key={i} />;
-    const html = trimmed
-      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-      .replace(/`([^`]+)`/g, "<code>$1</code>");
-    if (trimmed.startsWith("- ")) {
-      return (
-        <div key={i} className="line bullet" dangerouslySetInnerHTML={{ __html: html.slice(2) }} />
+
+    // Markdown table block
+    if (
+      trimmed.includes("|") &&
+      i + 1 < lines.length &&
+      isTableSep(lines[i + 1])
+    ) {
+      const headers = parseTableRow(trimmed);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim()) {
+        if (isTableSep(lines[i])) {
+          i += 1;
+          continue;
+        }
+        rows.push(parseTableRow(lines[i]));
+        i += 1;
+      }
+      nodes.push(
+        <div key={key++} className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                {headers.map((h, hi) => (
+                  <th key={hi} dangerouslySetInnerHTML={{ __html: formatInline(h) }} />
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, ri) => (
+                <tr key={ri}>
+                  {headers.map((_, ci) => (
+                    <td
+                      key={ci}
+                      dangerouslySetInnerHTML={{ __html: formatInline(row[ci] ?? "") }}
+                    />
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       );
+      continue;
     }
-    return <div key={i} className="line" dangerouslySetInnerHTML={{ __html: html }} />;
-  });
+
+    if (!trimmed) {
+      nodes.push(<br key={key++} />);
+      i += 1;
+      continue;
+    }
+
+    const html = formatInline(trimmed);
+    if (trimmed.startsWith("- ")) {
+      nodes.push(
+        <div key={key++} className="line bullet" dangerouslySetInnerHTML={{ __html: html.slice(2) }} />
+      );
+    } else {
+      nodes.push(<div key={key++} className="line" dangerouslySetInnerHTML={{ __html: html }} />);
+    }
+    i += 1;
+  }
+
+  return nodes;
 }
 
 function DataPanel({ preview, actionLabel }) {

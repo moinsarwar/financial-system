@@ -348,136 +348,314 @@ def compact_for_llm(action: str, facts: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _fmt_breakdown(title: str, bucket: dict[str, Any] | None) -> str:
+def _md_table(headers: list[str], rows: list[list[Any]]) -> str:
+    """Build a markdown table. Empty rows → empty string."""
+    if not rows:
+        return ""
+    head = "| " + " | ".join(headers) + " |"
+    sep = "| " + " | ".join("---" for _ in headers) + " |"
+    body = [
+        "| " + " | ".join("" if c is None else str(c) for c in row) + " |"
+        for row in rows
+    ]
+    return "\n".join([head, sep, *body])
+
+
+def _count_table(title: str, bucket: dict[str, Any] | None, key_header: str = "Key") -> str:
     if not isinstance(bucket, dict) or not bucket:
         return ""
-    parts = [f"{k.replace('_', ' ')} (**{v}**)" for k, v in bucket.items()]
-    return f"{title}: " + ", ".join(parts) + "."
+    rows = [[str(k).replace("_", " "), v] for k, v in bucket.items()]
+    return f"**{title}**\n\n" + _md_table([key_header, "Count"], rows)
 
 
 def natural_summary(action: str, facts: dict[str, Any]) -> str:
     """
-    Deterministic natural-language summary from live DB facts.
-    Guarantees correct totals (no LLM counting) and responds instantly.
+    Deterministic summary in markdown tables from live DB facts.
+    Guarantees correct totals and responds instantly.
     """
     entity = str(facts.get("entity") or action).replace("_", " ")
     total = facts.get("total")
-    lines: list[str] = []
+    parts: list[str] = []
 
     if action in ("finos_products", "finos_marketplace"):
-        lines.append(
-            f"The live marketplace catalog has a total of **{total}** products."
-        )
-        bt = _fmt_breakdown("By product type", facts.get("by_product_type"))
-        bp = _fmt_breakdown("By provider", facts.get("by_provider"))
-        if bt:
-            lines.append(bt)
-        if bp:
-            lines.append(bp)
+        parts.append(f"**Marketplace products** — total **{total}**")
+        ct = _count_table("By product type", facts.get("by_product_type"), "Type")
+        cp = _count_table("By provider", facts.get("by_provider"), "Provider")
+        if ct:
+            parts.append(ct)
+        if cp:
+            parts.append(cp)
         records = facts.get("records") or []
-        if isinstance(records, list) and records:
-            # Highlight a few named products without dumping all JSON
-            samples = []
-            for p in records[:8]:
-                if isinstance(p, dict):
-                    samples.append(
-                        f"{_product_name(p)} ({p.get('provider_id') or p.get('bank')}, {p.get('product_type')})"
-                    )
-            if samples:
-                lines.append("Examples: " + "; ".join(samples) + ".")
-            if len(records) > 8:
-                lines.append(f"See the Facts panel for the complete list of all **{total}** products.")
-        return "\n\n".join(lines)
+        product_rows: list[list[Any]] = []
+        if isinstance(records, list):
+            for p in records:
+                if not isinstance(p, dict):
+                    continue
+                pricing = p.get("pricing") or {}
+                rate = (
+                    pricing.get("apr")
+                    or pricing.get("interest_rate")
+                    or pricing.get("profit_rate")
+                    or "—"
+                )
+                fee = (
+                    pricing.get("processing_fee")
+                    or pricing.get("annual_fee")
+                    or pricing.get("annual_premium")
+                    or pricing.get("maintenance_fee")
+                    or "—"
+                )
+                product_rows.append(
+                    [
+                        _product_name(p),
+                        p.get("provider_id") or p.get("bank") or "—",
+                        str(p.get("product_type") or "—").replace("_", " "),
+                        rate,
+                        fee,
+                        p.get("status") or "—",
+                    ]
+                )
+        if product_rows:
+            parts.append(
+                f"**All products ({len(product_rows)})**\n\n"
+                + _md_table(
+                    ["Product", "Provider", "Type", "Rate", "Fee", "Status"],
+                    product_rows,
+                )
+            )
+        return "\n\n".join(parts)
 
     if action == "finos_applications":
-        lines.append(f"There are **{total}** applications in finOS.")
-        bs = _fmt_breakdown("By status", facts.get("by_status"))
-        if bs:
-            lines.append(bs)
-        lines.append("Full application rows are available in the Facts panel.")
-        return "\n\n".join(lines)
+        parts.append(f"**Applications** — total **{total}**")
+        cs = _count_table("By status", facts.get("by_status"), "Status")
+        if cs:
+            parts.append(cs)
+        records = facts.get("records") or []
+        rows = []
+        if isinstance(records, list):
+            for a in records:
+                if isinstance(a, dict):
+                    rows.append(
+                        [
+                            a.get("id"),
+                            _norm_status(a.get("status")),
+                            a.get("product_type") or a.get("product_label") or "—",
+                            a.get("amount") if a.get("amount") is not None else "—",
+                            a.get("currency") or "—",
+                        ]
+                    )
+        if rows:
+            parts.append(
+                f"**All applications ({len(rows)})**\n\n"
+                + _md_table(["ID", "Status", "Product", "Amount", "Currency"], rows)
+            )
+        return "\n\n".join(parts)
 
     if action == "finos_clients":
-        lines.append(f"There are **{total}** clients in finOS.")
-        bs = _fmt_breakdown("By lifecycle stage", facts.get("by_lifecycle_stage"))
-        if bs:
-            lines.append(bs)
-        return "\n\n".join(lines)
+        parts.append(f"**Clients** — total **{total}**")
+        cs = _count_table("By lifecycle stage", facts.get("by_lifecycle_stage"), "Stage")
+        if cs:
+            parts.append(cs)
+        records = facts.get("records") or []
+        rows = []
+        if isinstance(records, list):
+            for c in records:
+                if isinstance(c, dict):
+                    rows.append(
+                        [
+                            c.get("id"),
+                            c.get("name") or "—",
+                            _norm_status(c.get("lifecycle_stage")),
+                            c.get("email") or "—",
+                            c.get("phone") or "—",
+                        ]
+                    )
+        if rows:
+            parts.append(
+                f"**All clients ({len(rows)})**\n\n"
+                + _md_table(["ID", "Name", "Stage", "Email", "Phone"], rows)
+            )
+        return "\n\n".join(parts)
 
     if action == "finos_claims":
-        lines.append(f"There are **{total}** claims in finOS.")
-        bs = _fmt_breakdown("By status", facts.get("by_status"))
-        if bs:
-            lines.append(bs)
-        return "\n\n".join(lines)
+        parts.append(f"**Claims** — total **{total}**")
+        cs = _count_table("By status", facts.get("by_status"), "Status")
+        if cs:
+            parts.append(cs)
+        records = facts.get("records") or []
+        rows = []
+        if isinstance(records, list):
+            for c in records:
+                if isinstance(c, dict):
+                    rows.append(
+                        [
+                            c.get("id"),
+                            _norm_status(c.get("status")),
+                            c.get("claim_type") or c.get("type") or "—",
+                        ]
+                    )
+        if rows:
+            parts.append(
+                f"**All claims ({len(rows)})**\n\n"
+                + _md_table(["ID", "Status", "Type"], rows)
+            )
+        return "\n\n".join(parts)
 
     if action == "finos_policies":
-        lines.append(f"There are **{total}** policies/holdings records.")
-        bs = _fmt_breakdown("By status", facts.get("by_status"))
-        if bs:
-            lines.append(bs)
-        return "\n\n".join(lines)
-
-    if action == "reseller_list":
-        lines.append(f"There are **{total}** resellers.")
-        bs = _fmt_breakdown("By status", facts.get("by_status"))
-        if bs:
-            lines.append(bs)
-        records = facts.get("records") or []
+        parts.append(f"**Policies & holdings** — total **{total}**")
+        cs = _count_table("By status", facts.get("by_status"), "Status")
+        if cs:
+            parts.append(cs)
+        records = facts.get("records")
+        rows = []
         if isinstance(records, list):
             for r in records:
                 if isinstance(r, dict):
-                    lines.append(
-                        f"- **{r.get('name') or r.get('business_name') or r.get('id')}**: "
-                        f"status `{_norm_status(r.get('status'))}`, "
-                        f"conversions {r.get('conversions')}, commission {r.get('commission')}"
+                    rows.append(
+                        [
+                            r.get("id"),
+                            r.get("status") or "—",
+                            r.get("product_type") or r.get("type") or "—",
+                            r.get("client_id") or "—",
+                        ]
                     )
-        return "\n".join(lines)
+        elif isinstance(records, dict):
+            for kind, lst in records.items():
+                if isinstance(lst, list):
+                    for r in lst:
+                        if isinstance(r, dict):
+                            rows.append(
+                                [
+                                    r.get("id"),
+                                    kind,
+                                    r.get("status") or "—",
+                                    r.get("product_type") or r.get("type") or "—",
+                                ]
+                            )
+        if rows:
+            parts.append(
+                f"**All records ({len(rows)})**\n\n"
+                + _md_table(["ID", "Kind/Status", "Type", "Client"], rows)
+            )
+        return "\n\n".join(parts)
+
+    if action == "reseller_list":
+        parts.append(f"**Resellers** — total **{total}**")
+        cs = _count_table("By status", facts.get("by_status"), "Status")
+        if cs:
+            parts.append(cs)
+        records = facts.get("records") or []
+        rows = []
+        if isinstance(records, list):
+            for r in records:
+                if isinstance(r, dict):
+                    rows.append(
+                        [
+                            r.get("id"),
+                            r.get("name") or r.get("business_name") or "—",
+                            _norm_status(r.get("status")),
+                            r.get("conversions") if r.get("conversions") is not None else "—",
+                            r.get("commission") if r.get("commission") is not None else "—",
+                        ]
+                    )
+        if rows:
+            parts.append(
+                f"**All resellers ({len(rows)})**\n\n"
+                + _md_table(["ID", "Name", "Status", "Conversions", "Commission"], rows)
+            )
+        return "\n\n".join(parts)
 
     if action in ("reseller_stats", "reseller_product_stats"):
         stats = facts.get("stats") or facts.get("records") or {}
-        lines.append(f"**{entity.title()}** from live DB:")
+        parts.append(f"**{entity.title()}**")
         if isinstance(stats, dict):
-            for k, v in stats.items():
-                lines.append(f"- `{k}`: **{v}**")
-        return "\n".join(lines)
+            rows = [[k, v] for k, v in stats.items()]
+            parts.append(_md_table(["Metric", "Value"], rows))
+        return "\n\n".join(parts)
 
     if action == "reseller_categories":
         cats = facts.get("categories") or facts.get("records") or []
-        lines.append(f"There are **{total}** product categories: " + ", ".join(map(str, cats)) + ".")
-        return "\n".join(lines)
+        parts.append(f"**Product categories** — total **{total}**")
+        rows = [[i, c] for i, c in enumerate(cats, 1)]
+        parts.append(_md_table(["#", "Category"], rows))
+        return "\n\n".join(parts)
 
     if action == "reseller_products":
-        lines.append(f"There are **{total}** products in this reseller category.")
+        parts.append(f"**Reseller products** — total **{total}**")
         records = facts.get("records") or []
+        rows = []
         if isinstance(records, list):
             for p in records:
                 if isinstance(p, dict):
-                    lines.append(
-                        f"- **{p.get('bank')}** — {p.get('product')} "
-                        f"(rate: {p.get('rate')}, fee: {p.get('fee')}, tenure: {p.get('tenure')})"
+                    rows.append(
+                        [
+                            p.get("bank") or "—",
+                            p.get("product") or "—",
+                            p.get("rate") or "—",
+                            p.get("fee") or "—",
+                            p.get("tenure") or "—",
+                        ]
                     )
-        return "\n".join(lines)
+        if rows:
+            parts.append(_md_table(["Bank", "Product", "Rate", "Fee", "Tenure"], rows))
+        return "\n\n".join(parts)
 
     if action == "reseller_activities":
-        lines.append(f"There are **{total}** commission activity records.")
-        bs = _fmt_breakdown("By conversion status", facts.get("by_conversion_status"))
-        if bs:
-            lines.append(bs)
+        parts.append(f"**Commission activities** — total **{total}**")
         if "total_commission" in facts:
-            lines.append(f"Total commission: **{facts['total_commission']}**.")
-        return "\n\n".join(lines)
+            parts.append(f"Total commission: **{facts['total_commission']}**")
+        cs = _count_table("By conversion status", facts.get("by_conversion_status"), "Status")
+        if cs:
+            parts.append(cs)
+        records = facts.get("records") or []
+        rows = []
+        if isinstance(records, list):
+            for a in records:
+                if isinstance(a, dict):
+                    rows.append(
+                        [
+                            a.get("id"),
+                            a.get("product") or "—",
+                            a.get("conversion_status") or "—",
+                            a.get("commission") if a.get("commission") is not None else "—",
+                            a.get("date") or "—",
+                        ]
+                    )
+        if rows:
+            parts.append(
+                f"**All activities ({len(rows)})**\n\n"
+                + _md_table(["ID", "Product", "Status", "Commission", "Date"], rows)
+            )
+        return "\n\n".join(parts)
 
     if action == "reseller_customers":
-        lines.append(f"There are **{total}** customers for this reseller.")
-        bs = _fmt_breakdown("By status", facts.get("by_status"))
-        if bs:
-            lines.append(bs)
-        return "\n\n".join(lines)
+        parts.append(f"**Customers** — total **{total}**")
+        cs = _count_table("By status", facts.get("by_status"), "Status")
+        if cs:
+            parts.append(cs)
+        records = facts.get("records") or []
+        rows = []
+        if isinstance(records, list):
+            for c in records:
+                if isinstance(c, dict):
+                    rows.append(
+                        [
+                            c.get("id"),
+                            c.get("name") or "—",
+                            c.get("email") or "—",
+                            c.get("product") or "—",
+                            c.get("status") or "—",
+                        ]
+                    )
+        if rows:
+            parts.append(
+                f"**All customers ({len(rows)})**\n\n"
+                + _md_table(["ID", "Name", "Email", "Product", "Status"], rows)
+            )
+        return "\n\n".join(parts)
 
-    # fallback
-    lines.append(f"**{entity.title()}** — total **{total}** records (read-only live DB).")
-    return "\n".join(lines)
+    parts.append(f"**{entity.title()}** — total **{total}** (read-only live DB)")
+    return "\n\n".join(parts)
 
 
 def facts_to_markdown(facts: dict[str, Any]) -> str:

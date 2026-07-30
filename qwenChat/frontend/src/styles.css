@@ -258,7 +258,51 @@ button.ghost:disabled {
 
 .bubble.assistant .bubble-body {
   background: var(--assistant);
+  max-width: 100%;
+  overflow-x: auto;
 }
+
+.table-wrap {
+  margin: 10px 0 14px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  min-width: 420px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background: rgba(36, 44, 39, 0.98);
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.data-table tbody tr:hover td {
+  background: rgba(196, 165, 116, 0.06);
+}
+
+.data-table td strong {
+  color: #f3eadc;
+}
+
 
 .bubble-tag {
   margin-top: 5px;
