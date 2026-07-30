@@ -6,7 +6,11 @@ from typing import Any
 import httpx
 
 from app.config import settings
-from app.services.summarize import compact_for_llm, facts_to_markdown, summarize_action
+from app.services.summarize import (
+    facts_to_markdown,
+    natural_summary,
+    summarize_action,
+)
 
 MAX_CHARS = 60000
 
@@ -124,6 +128,7 @@ class DataService:
             facts = summarize_action(action, result["data"])
             result["facts"] = facts
             result["facts_markdown"] = facts_to_markdown(facts)
+            result["natural_summary"] = natural_summary(action, facts)
             # Full payload for UI — no sample truncation
             result["data_preview"] = result["data"]
         return result
@@ -253,16 +258,13 @@ def format_context_block(action: str, result: dict[str, Any]) -> str:
 
     facts = result.get("facts") or summarize_action(action, result.get("data"))
     counts = _authoritative_counts(facts)
-    compact = compact_for_llm(action, facts)
+    # Counts only for free-form LLM — never send huge row lists (slow + wrong totals)
     total = counts.get("total")
     return (
         f"TOTAL = {total}\n"
         "### AUTHORITATIVE COUNTS (MANDATORY — copy exactly, never recount)\n"
-        f"```json\n{_serialize(counts)}\n```\n\n"
-        "### COMPACT DATABASE ROWS (for summary detail only — counts above win on conflicts)\n"
-        f"action: {action}\n"
-        f"source: {result.get('source')}\n"
-        f"```json\n{_serialize(compact)}\n```\n"
+        f"```json\n{_serialize(counts)}\n```\n"
+        "Do not invent other totals. Prefer a short prose summary.\n"
     )
 
 

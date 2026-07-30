@@ -44,6 +44,7 @@ async def fetch_data(body: ActionRequest) -> dict[str, Any]:
         "error": result.get("error"),
         "facts": result.get("facts"),
         "facts_markdown": result.get("facts_markdown"),
+        "natural_summary": result.get("natural_summary"),
         "data": result.get("data_preview") or result.get("data"),
     }
 
@@ -59,6 +60,14 @@ async def chat(body: ChatRequest) -> ChatResponse:
         result = await data_service.run_action(action, body.params)
         data_ok = bool(result.get("ok"))
         data_preview = _preview_from_result(result)
+        # Quick actions: exact DB-computed summary (correct totals, instant)
+        if data_ok and result.get("natural_summary"):
+            return ChatResponse(
+                reply=result["natural_summary"],
+                action=action,
+                data_ok=data_ok,
+                data_preview=data_preview,
+            )
         context = format_context_block(action, result)
 
     history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
@@ -81,11 +90,13 @@ async def chat(body: ChatRequest) -> ChatResponse:
 async def chat_stream(body: ChatRequest):
     context = None
     meta: dict[str, Any] = {"action": body.action}
+    natural = None
 
     if body.action:
         result = await data_service.run_action(body.action, body.params)
         meta["data_ok"] = bool(result.get("ok"))
         meta["data_preview"] = _preview_from_result(result)
+        natural = result.get("natural_summary")
         context = format_context_block(body.action, result)
 
     history = [{"role": m.role, "content": m.content} for m in body.history[-4:]]
@@ -94,6 +105,12 @@ async def chat_stream(body: ChatRequest):
     async def event_gen():
         yield {"event": "meta", "data": json.dumps(meta, default=str)}
         try:
+            # Quick actions: stream deterministic accurate summary (no 5-min LLM wait)
+            if body.action and meta.get("data_ok") and natural:
+                yield {"event": "token", "data": json.dumps({"token": natural})}
+                yield {"event": "done", "data": json.dumps({"source": "db_summary"})}
+                return
+
             async for token in ollama_service.chat_stream(
                 user_msg, history=history, context=context
             ):

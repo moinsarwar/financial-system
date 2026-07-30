@@ -56,10 +56,11 @@ class OllamaService:
 
     def _options(self) -> dict[str, Any]:
         return {
-            "temperature": 0.2,
-            "top_p": 0.85,
+            "temperature": 0.15,
+            "top_p": 0.8,
             "repeat_penalty": 1.15,
-            "num_predict": 900,
+            # Keep free-form chat short — CPU 3b is slow on this VPS
+            "num_predict": 280,
         }
 
     async def chat(

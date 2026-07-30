@@ -348,6 +348,138 @@ def compact_for_llm(action: str, facts: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _fmt_breakdown(title: str, bucket: dict[str, Any] | None) -> str:
+    if not isinstance(bucket, dict) or not bucket:
+        return ""
+    parts = [f"{k.replace('_', ' ')} (**{v}**)" for k, v in bucket.items()]
+    return f"{title}: " + ", ".join(parts) + "."
+
+
+def natural_summary(action: str, facts: dict[str, Any]) -> str:
+    """
+    Deterministic natural-language summary from live DB facts.
+    Guarantees correct totals (no LLM counting) and responds instantly.
+    """
+    entity = str(facts.get("entity") or action).replace("_", " ")
+    total = facts.get("total")
+    lines: list[str] = []
+
+    if action in ("finos_products", "finos_marketplace"):
+        lines.append(
+            f"The live marketplace catalog has a total of **{total}** products."
+        )
+        bt = _fmt_breakdown("By product type", facts.get("by_product_type"))
+        bp = _fmt_breakdown("By provider", facts.get("by_provider"))
+        if bt:
+            lines.append(bt)
+        if bp:
+            lines.append(bp)
+        records = facts.get("records") or []
+        if isinstance(records, list) and records:
+            # Highlight a few named products without dumping all JSON
+            samples = []
+            for p in records[:8]:
+                if isinstance(p, dict):
+                    samples.append(
+                        f"{_product_name(p)} ({p.get('provider_id') or p.get('bank')}, {p.get('product_type')})"
+                    )
+            if samples:
+                lines.append("Examples: " + "; ".join(samples) + ".")
+            if len(records) > 8:
+                lines.append(f"See the Facts panel for the complete list of all **{total}** products.")
+        return "\n\n".join(lines)
+
+    if action == "finos_applications":
+        lines.append(f"There are **{total}** applications in finOS.")
+        bs = _fmt_breakdown("By status", facts.get("by_status"))
+        if bs:
+            lines.append(bs)
+        lines.append("Full application rows are available in the Facts panel.")
+        return "\n\n".join(lines)
+
+    if action == "finos_clients":
+        lines.append(f"There are **{total}** clients in finOS.")
+        bs = _fmt_breakdown("By lifecycle stage", facts.get("by_lifecycle_stage"))
+        if bs:
+            lines.append(bs)
+        return "\n\n".join(lines)
+
+    if action == "finos_claims":
+        lines.append(f"There are **{total}** claims in finOS.")
+        bs = _fmt_breakdown("By status", facts.get("by_status"))
+        if bs:
+            lines.append(bs)
+        return "\n\n".join(lines)
+
+    if action == "finos_policies":
+        lines.append(f"There are **{total}** policies/holdings records.")
+        bs = _fmt_breakdown("By status", facts.get("by_status"))
+        if bs:
+            lines.append(bs)
+        return "\n\n".join(lines)
+
+    if action == "reseller_list":
+        lines.append(f"There are **{total}** resellers.")
+        bs = _fmt_breakdown("By status", facts.get("by_status"))
+        if bs:
+            lines.append(bs)
+        records = facts.get("records") or []
+        if isinstance(records, list):
+            for r in records:
+                if isinstance(r, dict):
+                    lines.append(
+                        f"- **{r.get('name') or r.get('business_name') or r.get('id')}**: "
+                        f"status `{_norm_status(r.get('status'))}`, "
+                        f"conversions {r.get('conversions')}, commission {r.get('commission')}"
+                    )
+        return "\n".join(lines)
+
+    if action in ("reseller_stats", "reseller_product_stats"):
+        stats = facts.get("stats") or facts.get("records") or {}
+        lines.append(f"**{entity.title()}** from live DB:")
+        if isinstance(stats, dict):
+            for k, v in stats.items():
+                lines.append(f"- `{k}`: **{v}**")
+        return "\n".join(lines)
+
+    if action == "reseller_categories":
+        cats = facts.get("categories") or facts.get("records") or []
+        lines.append(f"There are **{total}** product categories: " + ", ".join(map(str, cats)) + ".")
+        return "\n".join(lines)
+
+    if action == "reseller_products":
+        lines.append(f"There are **{total}** products in this reseller category.")
+        records = facts.get("records") or []
+        if isinstance(records, list):
+            for p in records:
+                if isinstance(p, dict):
+                    lines.append(
+                        f"- **{p.get('bank')}** — {p.get('product')} "
+                        f"(rate: {p.get('rate')}, fee: {p.get('fee')}, tenure: {p.get('tenure')})"
+                    )
+        return "\n".join(lines)
+
+    if action == "reseller_activities":
+        lines.append(f"There are **{total}** commission activity records.")
+        bs = _fmt_breakdown("By conversion status", facts.get("by_conversion_status"))
+        if bs:
+            lines.append(bs)
+        if "total_commission" in facts:
+            lines.append(f"Total commission: **{facts['total_commission']}**.")
+        return "\n\n".join(lines)
+
+    if action == "reseller_customers":
+        lines.append(f"There are **{total}** customers for this reseller.")
+        bs = _fmt_breakdown("By status", facts.get("by_status"))
+        if bs:
+            lines.append(bs)
+        return "\n\n".join(lines)
+
+    # fallback
+    lines.append(f"**{entity.title()}** — total **{total}** records (read-only live DB).")
+    return "\n".join(lines)
+
+
 def facts_to_markdown(facts: dict[str, Any]) -> str:
     """Full DB dump in the reply — every record, no sample cutoff."""
     lines: list[str] = []
