@@ -7,7 +7,7 @@ services:
     environment:
       # Ollama on the VPS host (not in Docker)
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:0.5b}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
       # finOS is NOT published on host :8000 — reach it on Docker network
       FINOS_API_URL: ${FINOS_API_URL:-http://finos-backend-1:8000/api}
       # reseller container listens on 8000 internally (host maps 9005)

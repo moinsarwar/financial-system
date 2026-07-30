@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     app_name: str = "QwenChat"
     ollama_base_url: str = "http://127.0.0.1:11434"
-    ollama_model: str = "qwen2.5:0.5b"
+    ollama_model: str = "qwen2.5:3b"
     ollama_timeout: float = 120.0
 
     # Host-side defaults for local Docker / host networking
