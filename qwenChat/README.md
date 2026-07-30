@@ -50,8 +50,11 @@ Vite proxies `/api` and `/health` to `http://127.0.0.1:9011`.
 
 ## Docker Compose
 
+Backend reads config from **`qwenChat/.env`** (`env_file` in compose). Copy the example first:
+
 ```bash
 cd qwenChat
+cp -n .env.example .env   # edit values for local or server
 docker compose up --build
 ```
 
@@ -61,9 +64,17 @@ docker compose up --build
 
 On Linux, compose uses `host.docker.internal` via `extra_hosts` so the container can reach host Ollama.
 
-**Server note:** `finos-backend-1` often has **no host port** (`8000/tcp` only). Compose joins `finos_default` and calls:
-- `http://finos-backend-1:8000/api`
-- `http://comparison_backend:8000/api`
+**Server `.env` example** (finOS has no host `:8000` publish):
+
+```bash
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+OLLAMA_MODEL=qwen2.5:3b
+FINOS_API_URL=http://finos-backend-1:8000/api
+RESELLER_API_URL=http://comparison_backend:8000/api
+CORS_ORIGINS=http://localhost:9010,http://127.0.0.1:9010,http://163.245.222.160:9010
+```
+
+Compose joins `finos_default` so backend can reach `finos-backend-1` and `comparison_backend`.
 
 ## Read-only guarantee
 
