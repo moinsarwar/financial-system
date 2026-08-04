@@ -25,7 +25,7 @@ const AdminDashboard = () => {
     try {  
       const [statsRes, resellersRes] = await Promise.all([  
         apiClient.get('/resellers/stats'),  
-        apiClient.get('/resellers'),  
+        apiClient.get('/resellers/'),  
       ]);  
       setStats(statsRes.data);  
       setResellers(resellersRes.data);  

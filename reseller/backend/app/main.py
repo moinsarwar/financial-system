@@ -1,5 +1,6 @@
 from fastapi import FastAPI  
 from fastapi.middleware.cors import CORSMiddleware  
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
   
 from .database import engine, Base  
 from .routers import resellers, customers, activities, testimonials, products, auth, webhooks
@@ -11,7 +12,10 @@ app = FastAPI(
     title="The Comparison Engine API",  
     description="Backend for reseller program",  
     version="1.0.0"  
-)  
+)
+
+# Trust X-Forwarded-* from nginx so redirects stay on https://
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
   
 # CORS - allow all for development (adjust in production)  
 app.add_middleware(  

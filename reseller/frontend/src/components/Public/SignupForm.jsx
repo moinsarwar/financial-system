@@ -48,7 +48,7 @@ const SignupForm = () => {
         market_focus: formData.marketFocus
       };
       
-      const response = await apiClient.post('/resellers', payload);
+      const response = await apiClient.post('/resellers/', payload);
       const newReseller = response.data;
       
       showToast(`✅ Application submitted! Welcome, ${newReseller.name}.`, 'success');
