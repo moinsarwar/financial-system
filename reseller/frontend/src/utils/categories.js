@@ -29,10 +29,12 @@ export function decodeCategories(marketFocus, allIds = ALL_CATEGORY_IDS) {
     personal: ['personal_loan'],
     mortgage: ['personal_loan'],
     auto: ['motor_insurance'],
-    insurance: ['health_insurance', 'motor_insurance', 'life_insurance'],
+    insurance: ['health_insurance'],
     health: ['health_insurance'],
     credit: ['credit_card'],
-    Insurance: ['health_insurance', 'motor_insurance', 'life_insurance'],
+    life: ['life_insurance'],
+    savings: ['savings'],
+    Insurance: ['health_insurance'],
     Mortgage: ['personal_loan'],
   };
   return legacy[marketFocus] || [...allIds];

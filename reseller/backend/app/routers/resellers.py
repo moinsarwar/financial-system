@@ -42,11 +42,24 @@ def verify_reseller_domain(domain: str, db: Session = Depends(get_db)):
         "life_insurance",
     ]
     focus = (db_reseller.market_focus or "all").strip()
+    legacy = {
+        "insurance": ["health_insurance"],
+        "mortgage": ["personal_loan"],
+        "personal": ["personal_loan"],
+        "auto": ["motor_insurance"],
+        "health": ["health_insurance"],
+        "credit": ["credit_card"],
+        "life": ["life_insurance"],
+        "savings": ["savings"],
+    }
     if focus.lower() in ("all", ""):
         categories = ALL
     else:
         parts = [p.strip() for p in focus.split(",") if p.strip()]
-        categories = [p for p in parts if p in ALL] or ALL
+        categories = [p for p in parts if p in ALL]
+        if not categories:
+            # single legacy label
+            categories = legacy.get(focus.lower(), ALL)
 
     return {
         "id": db_reseller.id,
