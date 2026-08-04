@@ -922,7 +922,6 @@
             <span class="source" id="totalProductsCount">· v7.1 · Board‑Ready · ... Products</span>
             <div> <a href="/login" class="btn btn-danger">Login</a> </div>
         </div>
-        <div id="resellerBanner" style="display:none;background:#ecfdf5;color:#065f46;text-align:center;padding:8px 12px;font-weight:600;border-bottom:1px solid #a7f3d0;"></div>
 
         <!-- ===== HEADER ===== -->
         <div class="app-header">
@@ -1454,7 +1453,6 @@
                 applyResellerCategoryFilter(null);
                 return null;
             }
-            const banner = document.getElementById('resellerBanner');
             try {
                 const res = await fetch(
                     `${resellerApiBase()}/api/resellers/verify?domain=${encodeURIComponent(subdomain)}`
@@ -1464,13 +1462,6 @@
                     localStorage.removeItem('reseller_subdomain');
                     localStorage.removeItem('reseller_categories');
                     applyResellerCategoryFilter(null);
-                    if (banner) {
-                        banner.style.display = 'block';
-                        banner.style.background = '#fff7ed';
-                        banner.style.color = '#9a3412';
-                        banner.style.borderBottom = '1px solid #fed7aa';
-                        banner.textContent = `Unknown partner subdomain “${subdomain}”. This site still works — sign up as a reseller to claim it.`;
-                    }
                     return null;
                 }
                 const data = await res.json();
@@ -1481,24 +1472,10 @@
                 else localStorage.removeItem('reseller_categories');
                 CONFIG.RESELLER_CATEGORIES = cats;
                 applyResellerCategoryFilter(cats);
-                if (banner) {
-                    banner.style.display = 'block';
-                    banner.style.background = '#ecfdf5';
-                    banner.style.color = '#065f46';
-                    banner.style.borderBottom = '1px solid #a7f3d0';
-                    const catLabel = cats && cats.length < 6 ? ` · ${cats.length} categories` : '';
-                    banner.textContent = `Partner site: ${data.name || data.subdomain}${catLabel}`;
-                }
                 return data;
             } catch (err) {
                 console.warn('Reseller verify failed', err);
                 localStorage.setItem('reseller_subdomain', subdomain);
-                if (banner) {
-                    banner.style.display = 'block';
-                    banner.style.background = '#fff7ed';
-                    banner.style.color = '#9a3412';
-                    banner.textContent = `Partner subdomain “${subdomain}” (verification unavailable right now).`;
-                }
                 return { subdomain };
             }
         }
