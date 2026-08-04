@@ -43,9 +43,9 @@ function getResellerApiHost(hostname: string): string {
     return 'http://localhost:9005';
   }
 
-  // Production: reseller portal / API on reseller.<apex>
+  // Production: reseller portal / API on reseller.<apex> (HTTPS)
   if (hostname === APEX_DOMAIN || hostname.endsWith(`.${APEX_DOMAIN}`)) {
-    return `http://reseller.${APEX_DOMAIN}`;
+    return `https://reseller.${APEX_DOMAIN}`;
   }
 
   // Legacy server IP fallback

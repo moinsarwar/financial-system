@@ -49,7 +49,7 @@ services:
       - /app/node_modules  
     environment:  
       - VITE_API_URL=/api
-      - VITE_RESELLER_API_URL=http://reseller.thecomparisonengine.com
+      - VITE_RESELLER_API_URL=https://reseller.thecomparisonengine.com
     ports:  
       - "5173:5173"  
     depends_on:  
