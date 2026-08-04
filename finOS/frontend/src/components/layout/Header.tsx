@@ -1,6 +1,7 @@
 import React from 'react';  
 import { useNavigate } from 'react-router-dom';  
 import { useAuth } from '../../contexts/AuthContext';  
+import { useReseller } from '../../contexts/ResellerContext';  
 import { getInitials } from '../../utils/helpers';  
   
 interface User { full_name: string; role: string; id: string; }  
@@ -8,6 +9,7 @@ interface Props { user: User | null; onMenuToggle: () => void; }
   
 export const Header: React.FC<Props> = ({ user, onMenuToggle }) => {  
   const { logout } = useAuth();  
+  const { resellerSubdomain } = useReseller();  
   const navigate = useNavigate();  
   if (!user) return null;  
   return (  
@@ -18,6 +20,11 @@ export const Header: React.FC<Props> = ({ user, onMenuToggle }) => {
         <span className="bg-accent-soft text-accent px-3 py-0.5 rounded-full text-xs font-semibold hidden sm:inline">  
           {user.role === 'client' ? 'Client Portal' : user.role === 'super_admin' ? 'Company Admin Portal' : 'Operations Portal'}  
         </span>  
+        {resellerSubdomain && (  
+          <span className="bg-emerald-100 text-emerald-800 px-3 py-0.5 rounded-full text-xs font-semibold hidden sm:inline">  
+            Reseller: {resellerSubdomain}  
+          </span>  
+        )}  
       </div>  
       <div className="flex items-center gap-4 text-sm">  
         <span className="hidden sm:inline">{user.full_name}</span>  

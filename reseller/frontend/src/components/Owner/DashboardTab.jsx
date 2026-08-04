@@ -1,4 +1,5 @@
 import React from 'react';  
+import { getResellerSiteUrl } from '../../utils/resellerSiteUrl';  
   
 const DashboardTab = ({ reseller, stats, customers, activities, testimonials, onAddTestimonial, onCopyLink, onShowModal }) => {  
   return (  
@@ -60,7 +61,7 @@ const DashboardTab = ({ reseller, stats, customers, activities, testimonials, on
         <div style={{ marginTop: '12px', background: 'var(--bg)', padding: '10px 16px', borderRadius: '12px', wordBreak: 'break-all' }}>  
           <span style={{ fontWeight: '600' }}>Your link:</span>  
           <code style={{ background: 'var(--card-bg)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border)', display: 'inline-block', marginTop: '4px' }}>  
-            http://{reseller.subdomain}.compareengine.pk:5173?ref=owner  
+            {getResellerSiteUrl(reseller.subdomain)}  
           </code>  
         </div>  
       </div>  

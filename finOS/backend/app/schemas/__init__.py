@@ -43,7 +43,7 @@ class ApplicationBase(BaseModel):
 class ApplicationCreate(ApplicationBase):
     product_label: Optional[str] = None
     department: Optional[str] = None
-    reseller_id: Optional[int] = None
+    reseller_id: Optional[str] = None  # reseller subdomain (e.g. ahmedfin)
   
 class ApplicationResponse(ApplicationBase):  
     id: str  

@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
   
 export const Applications: React.FC = () => {  
   const { user } = useAuth();  
-  const { resellerId } = useReseller();
+  const { resellerId, resellerSubdomain } = useReseller();
   const queryClient = useQueryClient();  
   const [searchParams, setSearchParams] = useSearchParams();  
   const navigate = useNavigate();  
@@ -185,8 +185,8 @@ export const Applications: React.FC = () => {
             department: selectedProduct?.provider_id || '',
             amount: newApp.amount
           };
-          if (resellerId) {
-            payload.reseller_id = resellerId;
+          if (resellerSubdomain || resellerId) {
+            payload.reseller_id = resellerSubdomain || String(resellerId);
           }
           createAppMut.mutate(payload);  
         }}  

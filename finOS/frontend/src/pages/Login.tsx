@@ -50,6 +50,11 @@ export const Login: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-md w-full max-w-md border-t-4 border-accent p-8">  
         <h1 className="text-2xl font-extrabold text-primary">FinOS</h1>  
         <p className="text-gray-400 mb-6">Client &amp; Admin Portal</p>  
+        {(typeof window !== 'undefined' && localStorage.getItem('reseller_subdomain')) && (
+          <div className="mb-4 rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm text-emerald-800">
+            Partner site: <strong>{localStorage.getItem('reseller_subdomain')}</strong>
+          </div>
+        )}
         <div className="flex gap-2 mb-4">  
           <button  
             type="button"

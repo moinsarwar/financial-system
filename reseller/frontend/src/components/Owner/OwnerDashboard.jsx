@@ -10,6 +10,7 @@ import CustomersTab from './CustomersTab';
 import MarketingTab from './MarketingTab';  
 import SettingsTab from './SettingsTab';  
 import SupportTab from './SupportTab';  
+import { getResellerSiteUrl } from '../../utils/resellerSiteUrl';  
   
 const OwnerDashboard = () => {  
   const { id } = useParams();  
@@ -79,9 +80,11 @@ const OwnerDashboard = () => {
         </div>  
         <div className="subdomain-box">  
           <i className="fas fa-globe"></i>  
-          <span>{reseller.subdomain}.compareengine.pk:5173</span>  
+          <a href={getResellerSiteUrl(reseller.subdomain)} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+            {getResellerSiteUrl(reseller.subdomain, { withProtocol: false })}
+          </a>
           <button className="btn btn-sm btn-secondary" style={{ padding: '2px 10px', fontSize: '0.7rem' }} onClick={() => {  
-            navigator.clipboard.writeText(`${reseller.subdomain}.compareengine.pk:5173`);  
+            navigator.clipboard.writeText(getResellerSiteUrl(reseller.subdomain));  
             showToast('Subdomain copied!', 'success');  
           }}><i className="fas fa-copy"></i></button>  
         </div>  
@@ -98,7 +101,7 @@ const OwnerDashboard = () => {
           testimonials={testimonials}  
           onAddTestimonial={fetchData}  
           onCopyLink={() => {  
-            navigator.clipboard.writeText(`http://${reseller.subdomain}.compareengine.pk:5173?ref=owner`);  
+            navigator.clipboard.writeText(getResellerSiteUrl(reseller.subdomain));  
             showToast('Referral link copied!', 'success');  
           }}  
           onShowModal={showModal}  

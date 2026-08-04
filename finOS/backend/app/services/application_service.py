@@ -41,6 +41,9 @@ def create_application(db: Session, data: ApplicationCreate, current_user: User,
     if current_user.role == UserRole.CLIENT and client.id != current_user.client_id:  
         raise PermissionError("Cannot create application for another client")  
     steps = get_workflow(data.product_type, "application")  
+    unified_data = None
+    if getattr(data, "reseller_id", None):
+        unified_data = {"reseller_subdomain": str(data.reseller_id)}
     app = Application(  
         id=f"APP-{uuid.uuid4().hex[:8].upper()}",  
         client_id=data.client_id,  
@@ -53,6 +56,7 @@ def create_application(db: Session, data: ApplicationCreate, current_user: User,
         amount=data.amount,  
         currency="PKR",  
         status="in-progress",  
+        unified_data=unified_data,
         timeline=[{"time": datetime.now(timezone.utc).isoformat(), "event": "Application created", "user": current_user.full_name or current_user.id}]  
     )  
     db.add(app)  

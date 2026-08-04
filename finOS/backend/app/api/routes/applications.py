@@ -178,7 +178,7 @@ def create_new_application(
         if data.reseller_id:
             client = db.query(Client).filter(Client.id == data.client_id).first()
             if client:
-                reseller_subdomain = data.reseller_id if isinstance(data.reseller_id, str) else str(data.reseller_id) # Ensure it's a string as subdomain
+                reseller_subdomain = str(data.reseller_id)
                 notify_reseller_status(app_res, client, reseller_subdomain, "pending")
 
         return app_res
@@ -369,6 +369,9 @@ def create_unified_application(
         raise HTTPException(500, "Workflow configuration unavailable")
 
     app_id = f"APP-{uuid.uuid4().hex[:8].upper()}"
+    unified_payload = data.model_dump(mode="json")
+    if data.reseller_id:
+        unified_payload["reseller_subdomain"] = str(data.reseller_id)
     application = Application(
         id=app_id,
         client_id=client.id,
@@ -382,7 +385,7 @@ def create_unified_application(
         step_index=0,
         steps=steps,
         unified_schema_version="1.0",
-        unified_data=data.model_dump(mode="json"),
+        unified_data=unified_payload,
         timeline=[{
             "time": datetime.now(timezone.utc).isoformat(),
             "event": "Unified application created",
@@ -412,7 +415,7 @@ def create_unified_application(
         
         notify_finvault(application, client)
         if data.reseller_id:
-            reseller_subdomain = data.reseller_id if isinstance(data.reseller_id, str) else str(data.reseller_id)
+            reseller_subdomain = str(data.reseller_id)
             notify_reseller_status(application, client, reseller_subdomain, "pending")
     except Exception:
         db.rollback()

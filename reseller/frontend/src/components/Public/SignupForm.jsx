@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import Toast from '../Common/Toast';
+import { getResellerSiteUrl } from '../../utils/resellerSiteUrl';
 
 const SignupForm = () => {
   const { loginAsReseller } = useAuth();
@@ -16,6 +17,8 @@ const SignupForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
+
+  const previewSubdomain = (formData.subdomain || 'yourbrand').toLowerCase().replace(/[^a-z0-9-]/g, '');
 
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -91,7 +94,7 @@ const SignupForm = () => {
         <div className="form-group">
           <label htmlFor="subdomain">Your Subdomain *</label>
           <input type="text" id="subdomain" placeholder="yourbrand" required value={formData.subdomain} onChange={handleChange} />
-          <div className="hint">🔗 Your site will be available at <strong>{(formData.subdomain || 'yourbrand').toLowerCase().replace(/[^a-z0-9-]/g, '')}.compareengine.pk:5173</strong></div>
+          <div className="hint">🔗 Your site will be available at <strong>{getResellerSiteUrl(previewSubdomain, { withProtocol: false })}</strong></div>
         </div>
         <div className="form-group">
           <label htmlFor="marketFocus">Primary Product Focus</label>

@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 
 export const UnifiedApplication: React.FC = () => {
   const { user } = useAuth();
-  const { resellerId } = useReseller();
+  const { resellerId, resellerSubdomain } = useReseller();
   const navigate = useNavigate();
 
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -138,8 +138,8 @@ export const UnifiedApplication: React.FC = () => {
       simulation_metadata: { created_at: new Date().toISOString() },
     };
 
-    if (resellerId) {
-      payload.reseller_id = resellerId;
+    if (resellerSubdomain || resellerId) {
+      payload.reseller_id = resellerSubdomain || String(resellerId);
     }
 
     try {

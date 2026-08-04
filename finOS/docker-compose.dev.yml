@@ -48,7 +48,8 @@ services:
       - ./frontend:/app  
       - /app/node_modules  
     environment:  
-      - VITE_API_URL=http://localhost:8000/api  
+      - VITE_API_URL=/api
+      - VITE_RESELLER_API_URL=http://reseller.thecomparisonengine.com
     ports:  
       - "5173:5173"  
     depends_on:  
