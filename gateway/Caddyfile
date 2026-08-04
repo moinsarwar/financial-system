@@ -2,8 +2,6 @@
 	email admin@thecomparisonengine.com
 	on_demand_tls {
 		ask http://127.0.0.1:9191/check
-		interval 2m
-		burst 10
 	}
 }
 
