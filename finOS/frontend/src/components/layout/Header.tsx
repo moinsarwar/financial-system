@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getInitials } from '../../utils/helpers';
 
 interface User { full_name: string; role: string; id: string; }
-interface Props { user: User |"null; onMenuToggle: () => void; }
+interface Props { user: User | null; onMenuToggle: () => void; }
 
 export const Header: React.FC<Props> = ({ user, onMenuToggle }) => {
   const { logout } = useAuth();
