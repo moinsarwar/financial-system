@@ -19,7 +19,7 @@ const SignupForm = () => {
     email: '',
     phone: '',
     subdomain: '',
-    categories: FINOS_CATEGORIES.map((c) => c.id),
+    categories: [],
     termsCheck: false,
   });
   const [loading, setLoading] = useState(false);
@@ -27,6 +27,7 @@ const SignupForm = () => {
 
   const previewSubdomain = (formData.subdomain || 'yourbrand').toLowerCase().replace(/[^a-z0-9-]/g, '');
   const allIds = categories.map((c) => c.id);
+  const allSelected = allIds.length > 0 && allIds.every((id) => formData.categories.includes(id));
 
   useEffect(() => {
     let cancelled = false;
@@ -35,10 +36,10 @@ const SignupForm = () => {
         const list = await fetchMarketplaceCategories(apiClient);
         if (cancelled) return;
         setCategories(list);
+        // Default: no categories selected
         setFormData((prev) => ({
           ...prev,
-          // keep previous selection if still valid; otherwise select all fetched
-          categories: list.map((c) => c.id),
+          categories: [],
         }));
       } catch (err) {
         console.warn('Failed to load categories, using defaults', err);
@@ -67,8 +68,11 @@ const SignupForm = () => {
     });
   };
 
-  const selectAllCategories = () => {
-    setFormData((prev) => ({ ...prev, categories: [...allIds] }));
+  const toggleSelectAllCategories = () => {
+    setFormData((prev) => ({
+      ...prev,
+      categories: allSelected ? [] : [...allIds],
+    }));
   };
 
   const showToast = (message, type = 'info') => {
@@ -150,8 +154,8 @@ const SignupForm = () => {
                 (live from FinOS{categoriesLoading ? ' · loading…' : ''})
               </span>
             </label>
-            <button type="button" className="btn btn-secondary btn-sm" onClick={selectAllCategories} disabled={categoriesLoading}>
-              Select all
+            <button type="button" className="btn btn-secondary btn-sm" onClick={toggleSelectAllCategories} disabled={categoriesLoading || !allIds.length}>
+              {allSelected ? 'Unselect all' : 'Select all'}
             </button>
           </div>
           <div className="category-multi-grid">
