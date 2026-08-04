@@ -1452,24 +1452,43 @@
                 localStorage.removeItem('reseller_subdomain');
                 return null;
             }
+            const banner = document.getElementById('resellerBanner');
             try {
                 const res = await fetch(
                     `${resellerApiBase()}/api/resellers/verify?domain=${encodeURIComponent(subdomain)}`
                 );
-                if (!res.ok) throw new Error('verify failed');
+                if (!res.ok) {
+                    localStorage.removeItem('reseller_id');
+                    localStorage.removeItem('reseller_subdomain');
+                    if (banner) {
+                        banner.style.display = 'block';
+                        banner.style.background = '#fff7ed';
+                        banner.style.color = '#9a3412';
+                        banner.style.borderBottom = '1px solid #fed7aa';
+                        banner.textContent = `Unknown partner subdomain “${subdomain}”. This site still works — sign up as a reseller to claim it.`;
+                    }
+                    return null;
+                }
                 const data = await res.json();
                 localStorage.setItem('reseller_id', String(data.id));
                 localStorage.setItem('reseller_subdomain', data.subdomain);
-                const banner = document.getElementById('resellerBanner');
                 if (banner) {
                     banner.style.display = 'block';
+                    banner.style.background = '#ecfdf5';
+                    banner.style.color = '#065f46';
+                    banner.style.borderBottom = '1px solid #a7f3d0';
                     banner.textContent = `Partner site: ${data.name || data.subdomain}`;
                 }
                 return data;
             } catch (err) {
                 console.warn('Reseller verify failed', err);
-                // Still keep subdomain from hostname for application payload
                 localStorage.setItem('reseller_subdomain', subdomain);
+                if (banner) {
+                    banner.style.display = 'block';
+                    banner.style.background = '#fff7ed';
+                    banner.style.color = '#9a3412';
+                    banner.textContent = `Partner subdomain “${subdomain}” (verification unavailable right now).`;
+                }
                 return { subdomain };
             }
         }

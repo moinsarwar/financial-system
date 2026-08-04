@@ -1,0 +1,27 @@
+{
+	email admin@thecomparisonengine.com
+	on_demand_tls {
+		ask http://127.0.0.1:9191/check
+		interval 2m
+		burst 10
+	}
+}
+
+# Known portal — automatic HTTPS (managed cert)
+reseller.thecomparisonengine.com {
+	reverse_proxy 127.0.0.1:9004
+}
+
+# Apex + www — automatic HTTPS
+thecomparisonengine.com, www.thecomparisonengine.com {
+	reverse_proxy 127.0.0.1:3000
+}
+
+# ANY other hostname on :443 (partner subdomains like hello/moin/ahmedfin)
+# First visit obtains a Let's Encrypt cert automatically (HTTP-01).
+:443 {
+	tls {
+		on_demand
+	}
+	reverse_proxy 127.0.0.1:3000
+}
