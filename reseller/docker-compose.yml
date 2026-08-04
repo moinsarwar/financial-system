@@ -38,7 +38,11 @@ services:
       - finos_net
 
   frontend:  
-    build: ./frontend  
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: /api
+        REACT_APP_FINOS_PUBLIC_HOST: thecomparisonengine.com
     container_name: comparison_frontend  
     depends_on:  
       - backend  

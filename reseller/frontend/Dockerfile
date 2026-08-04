@@ -9,6 +9,10 @@ RUN npm ci --silent || npm install
   
 # Copy source and build  
 COPY . .  
+ARG REACT_APP_API_URL=/api
+ARG REACT_APP_FINOS_PUBLIC_HOST=thecomparisonengine.com
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_FINOS_PUBLIC_HOST=$REACT_APP_FINOS_PUBLIC_HOST
 RUN npm run build  
   
 # Production stage with nginx  

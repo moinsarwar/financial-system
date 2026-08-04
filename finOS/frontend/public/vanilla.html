@@ -922,6 +922,7 @@
             <span class="source" id="totalProductsCount">· v7.1 · Board‑Ready · ... Products</span>
             <div> <a href="/login" class="btn btn-danger">Login</a> </div>
         </div>
+        <div id="resellerBanner" style="display:none;background:#ecfdf5;color:#065f46;text-align:center;padding:8px 12px;font-weight:600;border-bottom:1px solid #a7f3d0;"></div>
 
         <!-- ===== HEADER ===== -->
         <div class="app-header">
@@ -1409,6 +1410,70 @@
         // ============================================================
         // 1. CONFIGURATION (Single Source of Truth)
         // ============================================================
+        const APEX_DOMAIN = 'thecomparisonengine.com';
+        const RESERVED_SUBDOMAINS = new Set(['www', 'reseller', 'api', 'admin', 'mail', 'ftp']);
+
+        function detectPartnerSubdomain() {
+            const host = window.location.hostname.toLowerCase();
+            const suffixes = [
+                `.${APEX_DOMAIN}`,
+                '.compareengine.pk',
+                '.fincompare.pk',
+                '.localhost',
+            ];
+            for (const suffix of suffixes) {
+                if (host.endsWith(suffix) && host !== suffix.slice(1)) {
+                    const sub = host.slice(0, -suffix.length);
+                    if (sub && !sub.includes('.') && !RESERVED_SUBDOMAINS.has(sub)) {
+                        return sub;
+                    }
+                }
+            }
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref && ref !== 'owner') return ref.toLowerCase();
+            return null;
+        }
+
+        function resellerApiBase() {
+            const host = window.location.hostname.toLowerCase();
+            if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost')) {
+                return 'http://localhost:9005';
+            }
+            if (host === APEX_DOMAIN || host.endsWith(`.${APEX_DOMAIN}`)) {
+                return `https://reseller.${APEX_DOMAIN}`;
+            }
+            return 'https://reseller.thecomparisonengine.com';
+        }
+
+        async function verifyResellerAttribution(subdomain) {
+            if (!subdomain) {
+                localStorage.removeItem('reseller_id');
+                localStorage.removeItem('reseller_subdomain');
+                return null;
+            }
+            try {
+                const res = await fetch(
+                    `${resellerApiBase()}/api/resellers/verify?domain=${encodeURIComponent(subdomain)}`
+                );
+                if (!res.ok) throw new Error('verify failed');
+                const data = await res.json();
+                localStorage.setItem('reseller_id', String(data.id));
+                localStorage.setItem('reseller_subdomain', data.subdomain);
+                const banner = document.getElementById('resellerBanner');
+                if (banner) {
+                    banner.style.display = 'block';
+                    banner.textContent = `Partner site: ${data.name || data.subdomain}`;
+                }
+                return data;
+            } catch (err) {
+                console.warn('Reseller verify failed', err);
+                // Still keep subdomain from hostname for application payload
+                localStorage.setItem('reseller_subdomain', subdomain);
+                return { subdomain };
+            }
+        }
+
         const CONFIG = {
             WHITE_LABEL_PROVIDER: 'HBL',
             ENGINE_VERSION: '7.1-Enterprise',
@@ -1416,9 +1481,10 @@
             CORRELATION_ID: 'corr_' + Math.random().toString(36).substring(2, 10),
             OPERATOR: 'admin@finos',
             KIBOR_6M: 19.8,
-            RESELLER_SUBDOMAIN: window.location.hostname.includes('.compareengine.pk') ? window.location.hostname.split('.')[0] : null
+            RESELLER_SUBDOMAIN: detectPartnerSubdomain()
         };
         document.getElementById('kiborDisplay').textContent = CONFIG.KIBOR_6M;
+        verifyResellerAttribution(CONFIG.RESELLER_SUBDOMAIN);
 
         const INCOME_MAP = { '<50k': 40000, '50k-100k': 75000, '100k-250k': 175000, '>250k': 300000 };
         const INCOME_RANK = { '<50k': 0, '50k-100k': 1, '100k-250k': 2, '>250k': 3 };
@@ -2715,7 +2781,7 @@
                         iban: iban,
                         products: productsPayload,
                         kyc_documents: state.kyc,
-                        reseller_subdomain: CONFIG.RESELLER_SUBDOMAIN
+                        reseller_subdomain: CONFIG.RESELLER_SUBDOMAIN || localStorage.getItem('reseller_subdomain')
                     })
                 });
                 const data = await res.json();
