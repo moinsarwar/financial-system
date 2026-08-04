@@ -957,23 +957,23 @@
                 <h2>🇵🇰 Choose a financial product</h2>
                 <p>We’ll show you representative offers from banks and insurers operating in Pakistan.</p>
             </div>
-            <div class="category-grid">
-                <div class="category-card" onclick="setIntent('savings')"><span class="icon">🏦</span>
+            <div class="category-grid" id="categoryGrid">
+                <div class="category-card" data-category="savings" onclick="setIntent('savings')"><span class="icon">🏦</span>
                     <h4>Savings</h4>
                 </div>
-                <div class="category-card" onclick="setIntent('credit_card')"><span class="icon">💳</span>
+                <div class="category-card" data-category="credit_card" onclick="setIntent('credit_card')"><span class="icon">💳</span>
                     <h4>Credit Cards</h4>
                 </div>
-                <div class="category-card" onclick="setIntent('personal_loan')"><span class="icon">💰</span>
+                <div class="category-card" data-category="personal_loan" onclick="setIntent('personal_loan')"><span class="icon">💰</span>
                     <h4>Personal Loans</h4>
                 </div>
-                <div class="category-card" onclick="setIntent('health_insurance')"><span class="icon">❤️</span>
+                <div class="category-card" data-category="health_insurance" onclick="setIntent('health_insurance')"><span class="icon">❤️</span>
                     <h4>Health Insurance</h4>
                 </div>
-                <div class="category-card" onclick="setIntent('motor_insurance')"><span class="icon">🚗</span>
+                <div class="category-card" data-category="motor_insurance" onclick="setIntent('motor_insurance')"><span class="icon">🚗</span>
                     <h4>Motor Insurance</h4>
                 </div>
-                <div class="category-card" onclick="setIntent('life_insurance')"><span class="icon">👨‍👩‍👧</span>
+                <div class="category-card" data-category="life_insurance" onclick="setIntent('life_insurance')"><span class="icon">👨‍👩‍👧</span>
                     <h4>Life / Takaful</h4>
                 </div>
             </div>
@@ -1450,6 +1450,8 @@
             if (!subdomain) {
                 localStorage.removeItem('reseller_id');
                 localStorage.removeItem('reseller_subdomain');
+                localStorage.removeItem('reseller_categories');
+                applyResellerCategoryFilter(null);
                 return null;
             }
             const banner = document.getElementById('resellerBanner');
@@ -1460,6 +1462,8 @@
                 if (!res.ok) {
                     localStorage.removeItem('reseller_id');
                     localStorage.removeItem('reseller_subdomain');
+                    localStorage.removeItem('reseller_categories');
+                    applyResellerCategoryFilter(null);
                     if (banner) {
                         banner.style.display = 'block';
                         banner.style.background = '#fff7ed';
@@ -1472,12 +1476,18 @@
                 const data = await res.json();
                 localStorage.setItem('reseller_id', String(data.id));
                 localStorage.setItem('reseller_subdomain', data.subdomain);
+                const cats = Array.isArray(data.categories) ? data.categories : null;
+                if (cats) localStorage.setItem('reseller_categories', JSON.stringify(cats));
+                else localStorage.removeItem('reseller_categories');
+                CONFIG.RESELLER_CATEGORIES = cats;
+                applyResellerCategoryFilter(cats);
                 if (banner) {
                     banner.style.display = 'block';
                     banner.style.background = '#ecfdf5';
                     banner.style.color = '#065f46';
                     banner.style.borderBottom = '1px solid #a7f3d0';
-                    banner.textContent = `Partner site: ${data.name || data.subdomain}`;
+                    const catLabel = cats && cats.length < 6 ? ` · ${cats.length} categories` : '';
+                    banner.textContent = `Partner site: ${data.name || data.subdomain}${catLabel}`;
                 }
                 return data;
             } catch (err) {
@@ -1493,6 +1503,21 @@
             }
         }
 
+        function applyResellerCategoryFilter(categories) {
+            const cards = document.querySelectorAll('#categoryGrid .category-card');
+            if (!cards.length) return;
+            const allowAll = !categories || !categories.length;
+            cards.forEach(card => {
+                const key = card.getAttribute('data-category');
+                const show = allowAll || categories.includes(key);
+                card.style.display = show ? '' : 'none';
+            });
+            // If current intent is hidden, reset selection state quietly
+            if (!allowAll && window.state && state.intent && !categories.includes(state.intent)) {
+                state.intent = null;
+            }
+        }
+
         const CONFIG = {
             WHITE_LABEL_PROVIDER: 'HBL',
             ENGINE_VERSION: '7.1-Enterprise',
@@ -1500,7 +1525,8 @@
             CORRELATION_ID: 'corr_' + Math.random().toString(36).substring(2, 10),
             OPERATOR: 'admin@finos',
             KIBOR_6M: 19.8,
-            RESELLER_SUBDOMAIN: detectPartnerSubdomain()
+            RESELLER_SUBDOMAIN: detectPartnerSubdomain(),
+            RESELLER_CATEGORIES: null
         };
         document.getElementById('kiborDisplay').textContent = CONFIG.KIBOR_6M;
         verifyResellerAttribution(CONFIG.RESELLER_SUBDOMAIN);
@@ -1794,6 +1820,11 @@
         // 5. NAVIGATION
         // ============================================================
         function setIntent(intent) {
+            const allowed = CONFIG.RESELLER_CATEGORIES;
+            if (allowed && allowed.length && !allowed.includes(intent)) {
+                showToast('This category is not enabled for this partner site.', 'error');
+                return;
+            }
             state.intent = intent;
             logAudit(`Requirements set: ${intent}`);
             transitionTo('eligibility');

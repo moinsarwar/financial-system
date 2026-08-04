@@ -1661,4 +1661,51 @@
       gap: 8px;
       flex-wrap: wrap;
     }
+
+    /* Signup multi-category picker (matches finOS marketplace cards) */
+    .category-multi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .category-multi-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 10px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: var(--card-bg, #fff);
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+      transition: border-color .15s, background .15s, box-shadow .15s;
+    }
+    .category-multi-card:hover {
+      border-color: var(--primary, #2563eb);
+    }
+    .category-multi-card.selected {
+      border-color: var(--primary, #2563eb);
+      background: #eff6ff;
+      box-shadow: 0 0 0 1px var(--primary, #2563eb);
+    }
+    .category-multi-card .icon {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+    .category-multi-card .label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .category-multi-card .check {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 0.85rem;
+      color: var(--primary, #2563eb);
+      font-weight: 700;
+    }
   

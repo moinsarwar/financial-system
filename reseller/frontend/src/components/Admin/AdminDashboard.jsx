@@ -57,6 +57,7 @@ const AdminDashboard = () => {
         <div className="detail-row"><span className="label">Name</span><span>{reseller.name}</span></div>  
         <div className="detail-row"><span className="label">Business</span><span>{reseller.business_name || 'N/A'}</span></div>  
         <div className="detail-row"><span className="label">Subdomain</span><span>{getResellerSiteUrl(reseller.subdomain, { withProtocol: false })}</span></div>  
+        <div className="detail-row"><span className="label">Categories</span><span>{reseller.market_focus || 'all'}</span></div>  
         <div className="detail-row"><span className="label">Email</span><span>{reseller.email}</span></div>  
         <div className="detail-row"><span className="label">Status</span><span className={`status-badge ${reseller.status}`}>{reseller.status}</span></div>  
         <div className="detail-row"><span className="label">Conversions</span><span>{reseller.conversions}</span></div>  

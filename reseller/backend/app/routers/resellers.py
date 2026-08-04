@@ -32,7 +32,29 @@ def verify_reseller_domain(domain: str, db: Session = Depends(get_db)):
     db_reseller = crud.get_reseller_by_subdomain(db, subdomain_prefix)
     if not db_reseller:
         raise HTTPException(status_code=404, detail="Reseller not found for this domain")
-    return {"id": db_reseller.id, "subdomain": db_reseller.subdomain, "name": db_reseller.name}
+
+    ALL = [
+        "savings",
+        "credit_card",
+        "personal_loan",
+        "health_insurance",
+        "motor_insurance",
+        "life_insurance",
+    ]
+    focus = (db_reseller.market_focus or "all").strip()
+    if focus.lower() in ("all", ""):
+        categories = ALL
+    else:
+        parts = [p.strip() for p in focus.split(",") if p.strip()]
+        categories = [p for p in parts if p in ALL] or ALL
+
+    return {
+        "id": db_reseller.id,
+        "subdomain": db_reseller.subdomain,
+        "name": db_reseller.name,
+        "categories": categories,
+        "market_focus": db_reseller.market_focus,
+    }
 
 @router.get("/{reseller_id}", response_model=schemas.Reseller)  
 def read_reseller(reseller_id: int, db: Session = Depends(get_db)):  

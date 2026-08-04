@@ -1,31 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import Toast from '../Common/Toast';
 import { getResellerSiteUrl } from '../../utils/resellerSiteUrl';
+import {
+  FINOS_CATEGORIES,
+  encodeCategories,
+  fetchMarketplaceCategories,
+} from '../../utils/categories';
 
 const SignupForm = () => {
   const { loginAsReseller } = useAuth();
+  const [categories, setCategories] = useState(FINOS_CATEGORIES);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
     businessName: '',
     email: '',
     phone: '',
     subdomain: '',
-    marketFocus: 'all',
-    termsCheck: false
+    categories: FINOS_CATEGORIES.map((c) => c.id),
+    termsCheck: false,
   });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
 
   const previewSubdomain = (formData.subdomain || 'yourbrand').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const allIds = categories.map((c) => c.id);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await fetchMarketplaceCategories(apiClient);
+        if (cancelled) return;
+        setCategories(list);
+        setFormData((prev) => ({
+          ...prev,
+          // keep previous selection if still valid; otherwise select all fetched
+          categories: list.map((c) => c.id),
+        }));
+      } catch (err) {
+        console.warn('Failed to load categories, using defaults', err);
+      } finally {
+        if (!cancelled) setCategoriesLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleChange = (e) => {
     const { id, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [id]: type === 'checkbox' ? checked : value
+      [id]: type === 'checkbox' ? checked : value,
     }));
+  };
+
+  const toggleCategory = (id) => {
+    setFormData((prev) => {
+      const has = prev.categories.includes(id);
+      const next = has
+        ? prev.categories.filter((c) => c !== id)
+        : [...prev.categories, id];
+      return { ...prev, categories: next };
+    });
+  };
+
+  const selectAllCategories = () => {
+    setFormData((prev) => ({ ...prev, categories: [...allIds] }));
   };
 
   const showToast = (message, type = 'info') => {
@@ -36,7 +79,11 @@ const SignupForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.termsCheck) return;
-    
+    if (!formData.categories.length) {
+      showToast('Select at least one product category.', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -45,20 +92,18 @@ const SignupForm = () => {
         email: formData.email,
         phone: formData.phone || undefined,
         subdomain: formData.subdomain.toLowerCase().replace(/[^a-z0-9-]/g, ''),
-        market_focus: formData.marketFocus
+        market_focus: encodeCategories(formData.categories, allIds),
       };
-      
+
       const response = await apiClient.post('/resellers/', payload);
       const newReseller = response.data;
-      
+
       showToast(`✅ Application submitted! Welcome, ${newReseller.name}.`, 'success');
-      
-      // Auto login and redirect
+
       setTimeout(() => {
         loginAsReseller(newReseller);
         window.location.href = `/owner/${newReseller.id}`;
       }, 1500);
-
     } catch (error) {
       showToast(error.response?.data?.detail || 'Failed to create account.', 'error');
       setLoading(false);
@@ -69,7 +114,7 @@ const SignupForm = () => {
     <div className="signup-section" id="signupForm">
       <h2>🚀 Start Your Reseller Journey</h2>
       <p className="sub">Join today — no fees, no commitment. Get approved within 24 hours.</p>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="form-row">
           <div className="form-group">
@@ -96,30 +141,56 @@ const SignupForm = () => {
           <input type="text" id="subdomain" placeholder="yourbrand" required value={formData.subdomain} onChange={handleChange} />
           <div className="hint">🔗 Your site will be available at <strong>{getResellerSiteUrl(previewSubdomain, { withProtocol: false })}</strong></div>
         </div>
+
         <div className="form-group">
-          <label htmlFor="marketFocus">Primary Product Focus</label>
-          <select id="marketFocus" value={formData.marketFocus} onChange={handleChange}>
-            <option value="all">All Categories</option>
-            <option value="personal">Personal Loans</option>
-            <option value="mortgage">Home Loans</option>
-            <option value="auto">Car Loans</option>
-            <option value="insurance">Insurance</option>
-            <option value="health">Health</option>
-            <option value="credit">Credit Cards</option>
-          </select>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
+            <label style={{ margin: 0 }}>
+              Product Categories *{' '}
+              <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>
+                (live from FinOS{categoriesLoading ? ' · loading…' : ''})
+              </span>
+            </label>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={selectAllCategories} disabled={categoriesLoading}>
+              Select all
+            </button>
+          </div>
+          <div className="category-multi-grid">
+            {categories.map((cat) => {
+              const selected = formData.categories.includes(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`category-multi-card${selected ? ' selected' : ''}`}
+                  onClick={() => toggleCategory(cat.id)}
+                  aria-pressed={selected}
+                  disabled={categoriesLoading}
+                >
+                  <span className="icon">{cat.icon || '📦'}</span>
+                  <span className="label">{cat.label}</span>
+                  {typeof cat.product_count === 'number' && (
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{cat.product_count} products</span>
+                  )}
+                  <span className="check">{selected ? '✓' : ''}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="hint">Customers on your subdomain will only see these categories on FinOS.</div>
         </div>
+
         <div className="checkbox-group">
           <input type="checkbox" id="termsCheck" required checked={formData.termsCheck} onChange={handleChange} />
           <label htmlFor="termsCheck">
             I agree to the <a href="#" onClick={(e) => { e.preventDefault(); alert('Agreement Modal Placeholder'); }}>Reseller Agreement</a> and confirm that I am a single account holder.
           </label>
         </div>
-        
-        <button type="submit" className="btn btn-primary" style={{width: '100%', padding: '14px', fontSize: '1.1rem'}} disabled={loading}>
+
+        <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1.1rem' }} disabled={loading}>
           {loading ? 'Creating Account...' : 'Submit Application'}
         </button>
       </form>
-      
+
       {toast.message && <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />}
     </div>
   );
