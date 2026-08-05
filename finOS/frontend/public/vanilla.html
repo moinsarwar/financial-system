@@ -164,6 +164,19 @@
             font-size: 12px;
         }
 
+        #workflowSlotProduct .workflow-bar {
+            margin: 8px 0 4px;
+            padding: 12px 4px;
+            border: none;
+            border-bottom: none;
+            background: transparent;
+        }
+
+        #workflowSlotProduct:empty,
+        #workflowSlotTop:empty {
+            display: none;
+        }
+
         .wf-step {
             display: flex;
             align-items: center;
@@ -910,6 +923,274 @@
         }
 
         /* ===== TCE marketing (finOS theme) ===== */
+        .tce-welcome {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 28px;
+            align-items: start;
+            margin: 8px 0 28px;
+            padding: 28px 24px;
+            border-radius: var(--radius-md);
+            background:
+                radial-gradient(ellipse at 12% 20%, rgba(0, 136, 204, 0.08), transparent 55%),
+                radial-gradient(ellipse at 90% 80%, rgba(245, 166, 35, 0.07), transparent 50%),
+                var(--gray-50);
+            border: 1px solid var(--gray-200);
+        }
+
+        .tce-welcome-copy h1 {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            color: var(--primary);
+            margin-bottom: 14px;
+        }
+
+        .tce-welcome-copy h1 .tce-highlight {
+            background: linear-gradient(135deg, var(--accent), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tce-welcome-copy p {
+            font-size: 14px;
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-bottom: 12px;
+            max-width: 560px;
+        }
+
+        .tce-welcome-copy .tce-subtext {
+            font-size: 13px;
+            color: var(--gray-600);
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        .tce-cta-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tce-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 20px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, transform .15s, box-shadow .15s;
+        }
+
+        .tce-cta.primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .tce-cta.primary:hover {
+            background: #0077b3;
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+
+        .tce-cta.outline {
+            background: white;
+            color: var(--primary);
+            border-color: var(--gray-200);
+        }
+
+        .tce-cta.outline:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .tce-welcome-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .tce-dash-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: 18px 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tce-dash-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .tce-dash-head .as-of {
+            font-weight: 600;
+            color: var(--gray-400);
+            font-size: 11px;
+        }
+
+        .tce-dash-head i {
+            color: var(--accent);
+            margin-right: 6px;
+        }
+
+        .tce-bar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tce-bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .tce-bar-item .label {
+            width: 96px;
+            flex-shrink: 0;
+            font-size: 12px;
+            color: var(--gray-600);
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tce-bar-item .track {
+            flex: 1;
+            height: 8px;
+            background: var(--gray-100);
+            border-radius: 10px;
+            overflow: hidden;
+            min-width: 40px;
+        }
+
+        .tce-bar-item .fill {
+            height: 100%;
+            width: 0;
+            border-radius: 10px;
+            background: #7a92b5;
+            transition: width 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tce-bar-item .fill.accent { background: var(--accent); }
+        .tce-bar-item .fill.gold { background: var(--gold); }
+
+        .tce-bar-item .value {
+            width: 46px;
+            flex-shrink: 0;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .tce-dash-foot {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--gray-400);
+        }
+
+        .tce-trust-mini {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            justify-content: space-between;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tce-trust-mini .item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            color: var(--gray-600);
+        }
+
+        .tce-trust-mini .item i {
+            color: var(--accent);
+        }
+
+        .tce-trust-mini .item strong {
+            color: var(--primary);
+        }
+
+        .tce-partners {
+            margin: 0 0 22px;
+            text-align: center;
+        }
+
+        .tce-partners .label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gray-400);
+            margin-bottom: 10px;
+        }
+
+        .tce-partner-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .tce-partner-row span {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 40px;
+            padding: 7px 12px;
+        }
+
+        @media (max-width: 900px) {
+            .tce-welcome {
+                grid-template-columns: 1fr;
+                padding: 20px 16px;
+            }
+
+            .tce-welcome-copy h1 {
+                font-size: 24px;
+            }
+
+            .tce-bar-item .label {
+                width: 78px;
+                font-size: 11px;
+            }
+        }
+
         .tce-jump {
             display: flex;
             flex-wrap: wrap;
@@ -1536,30 +1817,82 @@
             </div>
         </div>
 
-        <!-- ===== WORKFLOW ===== -->
-        <div class="workflow-bar" id="workflowBar">
-            <div class="wf-step active" data-step="requirements"><span class="num">1</span> Requirements</div>
-            <span class="wf-arrow">›</span>
-            <div class="wf-step" data-step="eligibility"><span class="num">2</span> Eligibility</div>
-            <span class="wf-arrow">›</span>
-            <div class="wf-step" data-step="workspace"><span class="num">3</span> Decision Workspace</div>
-            <span class="wf-arrow">›</span>
-            <div class="wf-step" data-step="consent"><span class="num">4</span> Consent</div>
-            <span class="wf-arrow">›</span>
-            <div class="wf-step" data-step="application"><span class="num">5</span> Application</div>
-            <span class="wf-arrow">›</span>
-            <div class="wf-step" data-step="tracking"><span class="num">6</span> Tracking</div>
-        </div>
+        <div id="workflowSlotTop"></div>
 
         <!-- ============================================================ -->
         <!-- SCREEN 1: REQUIREMENTS -->
         <!-- ============================================================ -->
         <div class="screen active" id="screen-requirements">
-            <div class="hero">
+            <section class="tce-welcome" id="tce-hero" aria-label="Welcome to The Comparison Engine">
+                <div class="tce-welcome-copy">
+                    <h1>Welcome to <span class="tce-highlight">The Comparison Engine</span></h1>
+                    <p>
+                        An independent financial comparison and digital engagement platform designed to help individuals, families, businesses and financial institutions navigate the Pakistani financial landscape with clarity and confidence.
+                    </p>
+                    <p class="tce-subtext">
+                        Rather than visiting multiple websites and interpreting different product descriptions, The Comparison Engine presents information in a consistent format to help users make more informed decisions. Depending on the product selected, users may compare features, pricing, eligibility requirements, fees, charges, benefits and other relevant information before deciding whether to proceed with an application.
+                    </p>
+                    <div class="tce-cta-group">
+                        <a href="#categoryGrid" class="tce-cta primary" onclick="return tceJump(event,'categoryGrid')">
+                            <i class="fas fa-arrow-right"></i> Explore the Platform
+                        </a>
+                        <a href="#how-it-works" class="tce-cta outline" onclick="return tceJump(event,'how-it-works')">
+                            <i class="fas fa-info-circle"></i> How It Works
+                        </a>
+                    </div>
+                </div>
+                <div class="tce-welcome-visual">
+                    <div class="tce-dash-card" id="tceDashCard">
+                        <div class="tce-dash-head">
+                            <span><i class="fas fa-chart-simple"></i> Representative Comparison Dashboard</span>
+                            <span class="as-of" id="tceDashAsOf">Loading live rates…</span>
+                        </div>
+                        <div class="tce-bar-group" id="tceBarGroup">
+                            <div class="tce-bar-item" style="justify-content:center;color:var(--gray-400);font-size:12px;">Loading savings rates from catalogue…</div>
+                        </div>
+                        <div class="tce-dash-foot">
+                            <span><i class="fas fa-info-circle"></i> Savings profit rates (live catalogue)</span>
+                            <span><i class="fas fa-database"></i> Source: finOS product DB</span>
+                        </div>
+                    </div>
+                    <div class="tce-trust-mini">
+                        <span class="item"><i class="fas fa-check-circle"></i> <strong id="tceTrustProducts">—</strong> products</span>
+                        <span class="item"><i class="fas fa-university"></i> <strong id="tceTrustInstitutions">—</strong> institutions</span>
+                        <span class="item"><i class="fas fa-file-contract"></i> Independent comparison</span>
+                        <span class="item"><i class="fas fa-lock"></i> Privacy-first</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="tce-partners" aria-label="Participating institutions">
+                <div class="label">Representative participating institutions</div>
+                <div class="tce-partner-row" id="tcePartnerRow">
+                    <span style="color:var(--gray-400)">Loading institutions…</span>
+                </div>
+            </div>
+
+            <div id="workflowSlotProduct">
+                <div class="workflow-bar" id="workflowBar">
+                    <div class="wf-step active" data-step="requirements"><span class="num">1</span> Requirements</div>
+                    <span class="wf-arrow">›</span>
+                    <div class="wf-step" data-step="eligibility"><span class="num">2</span> Eligibility</div>
+                    <span class="wf-arrow">›</span>
+                    <div class="wf-step" data-step="workspace"><span class="num">3</span> Decision Workspace</div>
+                    <span class="wf-arrow">›</span>
+                    <div class="wf-step" data-step="consent"><span class="num">4</span> Consent</div>
+                    <span class="wf-arrow">›</span>
+                    <div class="wf-step" data-step="application"><span class="num">5</span> Application</div>
+                    <span class="wf-arrow">›</span>
+                    <div class="wf-step" data-step="tracking"><span class="num">6</span> Tracking</div>
+                </div>
+            </div>
+
+            <div class="hero" id="chooseProductHero">
                 <h2>🇵🇰 Choose a financial product</h2>
                 <p>We’ll show you representative offers from banks and insurers operating in Pakistan.</p>
             </div>
             <nav class="tce-jump" aria-label="About The Comparison Engine">
+                <a href="#tce-hero" onclick="return tceJump(event,'tce-hero')">Platform</a>
                 <a href="#audience" onclick="return tceJump(event,'audience')">Who it's for</a>
                 <a href="#tce-matrix" onclick="return tceJump(event,'tce-matrix')">What we compare</a>
                 <a href="#how-it-works" onclick="return tceJump(event,'how-it-works')">How it works</a>
@@ -2700,6 +3033,18 @@
             }
         }
 
+        function placeWorkflowBar(stage) {
+            const bar = document.getElementById('workflowBar');
+            const topSlot = document.getElementById('workflowSlotTop');
+            const productSlot = document.getElementById('workflowSlotProduct');
+            if (!bar || !topSlot || !productSlot) return;
+            if (stage === 'requirements') {
+                productSlot.appendChild(bar);
+            } else {
+                topSlot.appendChild(bar);
+            }
+        }
+
         function transitionTo(stage) {
             state.stage = stage;
             document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -2712,6 +3057,7 @@
                 if (i < idx) el.classList.add('done');
                 else if (i === idx) el.classList.add('active');
             });
+            placeWorkflowBar(stage);
         }
 
         // ============================================================
@@ -4309,8 +4655,10 @@
                                     previousVersion: p.previous_version || 'v0.9'
                                 };
                             });
+                            renderTceComparisonDashboard();
                         } else {
                             alert("API returned empty products array.");
+                            renderTceComparisonDashboard();
                         }
                     } catch (parseErr) {
                         alert("JSON Parse Error! Text length: " + rawText.length + "\nText preview: " + rawText.substring(0, 100));
@@ -4325,6 +4673,7 @@
 
             logAudit('System initialised (Pakistan Enterprise)');
             transitionTo('requirements');
+            renderTceComparisonDashboard();
             console.log('🚀 FinOS v7.1 – Board-Ready Decision OS (API integrated)');
             console.log(`   Session: ${CONFIG.SESSION_ID}`);
             console.log(`   Engine: ${CONFIG.ENGINE_VERSION}`);
@@ -4545,7 +4894,99 @@
             return false;
         }
 
+        function animateTceBars() {
+            document.querySelectorAll('#tceDashCard .fill[data-width]').forEach((bar) => {
+                const w = bar.getAttribute('data-width');
+                requestAnimationFrame(() => {
+                    bar.style.width = w + '%';
+                });
+            });
+        }
+
+        /** Populate welcome dashboard from live PRODUCTS catalogue (finOS DB). */
+        function renderTceComparisonDashboard() {
+            const barGroup = document.getElementById('tceBarGroup');
+            const asOf = document.getElementById('tceDashAsOf');
+            const trustProducts = document.getElementById('tceTrustProducts');
+            const trustInstitutions = document.getElementById('tceTrustInstitutions');
+            const partnerRow = document.getElementById('tcePartnerRow');
+            if (!barGroup) return;
+
+            const providers = [...new Set((PRODUCTS || []).map(p => p.provider).filter(Boolean))];
+            if (trustProducts) trustProducts.textContent = String((PRODUCTS || []).length);
+            if (trustInstitutions) trustInstitutions.textContent = String(providers.length);
+
+            if (partnerRow) {
+                const shown = providers.slice(0, 8);
+                partnerRow.innerHTML = shown.length
+                    ? shown.map(name => {
+                        const isInsurer = /insur|efu|jubilee|takaful/i.test(name);
+                        const icon = isInsurer ? 'fa-shield-alt' : 'fa-university';
+                        return `<span><i class="fas ${icon}"></i> ${escapeHtml(name)}</span>`;
+                    }).join('')
+                    : '<span style="color:var(--gray-400)">No institutions in catalogue</span>';
+            }
+
+            // Best savings profit rate per provider (skip 0 / missing)
+            const bestByProvider = new Map();
+            (PRODUCTS || []).forEach((p) => {
+                if (p.type !== 'savings') return;
+                const rate = parseRatePercent(p.profitRate);
+                if (rate == null || rate <= 0) return;
+                const key = p.provider || 'Unknown';
+                const prev = bestByProvider.get(key);
+                if (!prev || rate > prev.rate) {
+                    bestByProvider.set(key, {
+                        provider: key,
+                        rate,
+                        label: String(rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(1)) + '%',
+                        effectiveDate: p.effectiveDate || null,
+                    });
+                }
+            });
+
+            const ranked = [...bestByProvider.values()]
+                .sort((a, b) => b.rate - a.rate)
+                .slice(0, 5);
+
+            if (!ranked.length) {
+                barGroup.innerHTML = '<div class="tce-bar-item" style="justify-content:center;color:var(--gray-400);font-size:12px;">No savings profit rates available in catalogue</div>';
+                if (asOf) asOf.textContent = 'Live catalogue';
+                return;
+            }
+
+            const maxRate = ranked[0].rate || 1;
+            barGroup.innerHTML = ranked.map((row, idx) => {
+                const width = Math.max(8, Math.round((row.rate / maxRate) * 100));
+                const fillClass = idx === 0 ? 'fill accent' : (idx === 1 ? 'fill gold' : 'fill');
+                return `<div class="tce-bar-item" title="${escapeHtml(row.provider)} — ${escapeHtml(row.label)}">
+                    <span class="label">${escapeHtml(row.provider)}</span>
+                    <div class="track"><div class="${fillClass}" data-width="${width}"></div></div>
+                    <span class="value">${escapeHtml(row.label)}</span>
+                </div>`;
+            }).join('');
+
+            const dates = ranked.map(r => r.effectiveDate).filter(Boolean).sort();
+            if (asOf) {
+                asOf.textContent = dates.length
+                    ? `As of ${dates[dates.length - 1]} · live DB`
+                    : 'Live catalogue';
+            }
+
+            animateTceBars();
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
         function initTceMarketing() {
+            animateTceBars();
+
             document.querySelectorAll('#tceFaqList .tce-faq-q').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     const item = btn.closest('.tce-faq-item');
