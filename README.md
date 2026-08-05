@@ -20,23 +20,12 @@ This repository is structured into distinct projects, each serving a specific ro
 **adminPortal** is a centralized administrative dashboard for managing the financial ecosystem.
 - **Role**: Provides admin capabilities across the financial system microservices.
 
-### 4. [finCompare](./finCompare/)
-**finCompare** is a microservices-based platform built to aggregate, analyze, and compare financial products from various banks and institutions. 
-- **Tech Stack**: FastAPI, Node.js/React, PostgreSQL, Redis, Kubernetes (K3s), Docker.
-- **Role**: Core comparison engine, policy ingestion, audit logging, and external product aggregation.
-
-### 5. [reseller](./reseller/)
+### 4. [reseller](./reseller/)
 **Reseller (The Comparison Engine)** is a white-labeled dashboard for external agents to view products, submit applications, and track commissions.
 - **Tech Stack**: React, FastAPI, PostgreSQL, Docker Compose.
 - **Role**: Partner portal for originating applications into finOS.
 
-
-### 6. [tezQarza-Gateway](./tezQarza-Gateway/)
-**TezQarza-Gateway** is a channel gateway connecting frontend applications with backend financial systems for loan originations and product listing.
-- **Tech Stack**: FastAPI, React, PostgreSQL, Docker Compose, Nginx.
-- **Role**: API gateway for external agents and dashboard analytics.
-
-### 7. [qwenChat](./qwenChat/)
+### 5. [qwenChat](./qwenChat/)
 **Comparison Engine** chatbot (qwenChat) is an Ollama-powered read-only assistant for finOS and reseller data, with optional general Q&A.
 - **Tech Stack**: React (Vite), FastAPI, Ollama, Docker Compose.
 - **Ports**: Frontend `9010`, Backend `9011`.
