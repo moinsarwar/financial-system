@@ -908,6 +908,415 @@
             background: var(--gray-400);
             border-radius: 10px;
         }
+
+        /* ===== TCE marketing (finOS theme) ===== */
+        .tce-jump {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 8px 0 20px;
+        }
+
+        .tce-jump a {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: 1px solid #c5e4f5;
+            border-radius: 40px;
+            padding: 6px 12px;
+            text-decoration: none;
+        }
+
+        .tce-jump a:hover {
+            background: #d9eef9;
+        }
+
+        #tce-marketing {
+            margin-top: 28px;
+            border-top: 1px solid var(--gray-200);
+            padding-top: 8px;
+        }
+
+        .tce-section {
+            padding: 28px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .tce-section.alt {
+            background: var(--gray-50);
+            margin: 0 -28px;
+            padding: 28px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .tce-section h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .tce-section .tce-sub {
+            color: var(--gray-600);
+            font-size: 14px;
+            margin-bottom: 18px;
+            max-width: 720px;
+            line-height: 1.5;
+        }
+
+        .tce-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .tce-grid.wide {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+
+        .tce-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tce-section.alt .tce-card {
+            background: white;
+        }
+
+        .tce-card .tce-icon {
+            font-size: 22px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .tce-card h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .tce-card p,
+        .tce-card .desc {
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .tce-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .tce-chips span {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-600);
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: 40px;
+            padding: 4px 10px;
+        }
+
+        .tce-diff-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+        }
+
+        .tce-diff-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .tce-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .tce-step {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 12px 14px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+        }
+
+        .tce-step .num {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tce-step h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: var(--primary);
+        }
+
+        .tce-step p {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .tce-eco {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            margin-top: 16px;
+            padding: 14px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+        }
+
+        .tce-eco .eco-step {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--gray-100);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+        }
+
+        .tce-eco .eco-arrow {
+            color: var(--gray-400);
+            font-size: 12px;
+        }
+
+        .tce-fi {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        @media (max-width:700px) {
+            .tce-fi {
+                grid-template-columns: 1fr;
+            }
+
+            .tce-section.alt {
+                margin: 0 -16px;
+                padding: 24px 16px;
+            }
+        }
+
+        .tce-badge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tce-badge-list span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+        }
+
+        .tce-disclosure {
+            margin-top: 16px;
+            padding: 14px 16px;
+            background: #fef9e7;
+            border: 1px solid #f5e6b3;
+            border-left: 4px solid var(--gold);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .tce-disclosure strong {
+            color: var(--primary);
+        }
+
+        .tce-note {
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--gray-600);
+            padding: 10px 12px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+        }
+
+        .tce-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .tce-pill-row span {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-600);
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 40px;
+            padding: 6px 12px;
+        }
+
+        .tce-faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tce-faq-item {
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            background: white;
+            overflow: hidden;
+        }
+
+        .tce-faq-item button.tce-faq-q {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            padding: 14px 16px;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tce-faq-item button.tce-faq-q .chev {
+            color: var(--gray-400);
+            transition: transform .15s;
+        }
+
+        .tce-faq-item.open button.tce-faq-q .chev {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .tce-faq-a {
+            display: none;
+            padding: 0 16px 14px;
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .tce-faq-item.open .tce-faq-a {
+            display: block;
+        }
+
+        .tce-legal-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .tce-legal-tabs button {
+            border: 1px solid var(--gray-200);
+            background: white;
+            color: var(--gray-600);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+
+        .tce-legal-tabs button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tce-legal-panel {
+            display: none;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            padding: 16px 18px;
+        }
+
+        .tce-legal-panel.active {
+            display: block;
+        }
+
+        .tce-legal-panel h4 {
+            font-size: 13px;
+            color: var(--primary);
+            margin: 12px 0 6px;
+        }
+
+        .tce-legal-panel h4:first-child {
+            margin-top: 0;
+        }
+
+        .tce-legal-panel p,
+        .tce-legal-panel li {
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.5;
+        }
+
+        .tce-legal-panel ul {
+            margin: 0 0 8px 18px;
+        }
+
+        .tce-notice {
+            padding: 14px 16px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 4px solid var(--red);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--gray-600);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .tce-closing {
+            font-size: 14px;
+            color: var(--gray-600);
+            line-height: 1.55;
+            margin-top: 12px;
+        }
     </style>
 </head>
 
@@ -956,6 +1365,13 @@
                 <h2>🇵🇰 Choose a financial product</h2>
                 <p>We’ll show you representative offers from banks and insurers operating in Pakistan.</p>
             </div>
+            <nav class="tce-jump" aria-label="About The Comparison Engine">
+                <a href="#audience" onclick="return tceJump(event,'audience')">Who it's for</a>
+                <a href="#tce-matrix" onclick="return tceJump(event,'tce-matrix')">What we compare</a>
+                <a href="#how-it-works" onclick="return tceJump(event,'how-it-works')">How it works</a>
+                <a href="#faq" onclick="return tceJump(event,'faq')">FAQ</a>
+                <a href="#legal" onclick="return tceJump(event,'legal')">Legal</a>
+            </nav>
             <div class="category-grid" id="categoryGrid">
                 <div class="category-card" data-category="savings" onclick="setIntent('savings')"><span class="icon">🏦</span>
                     <h4>Savings</h4>
@@ -975,6 +1391,263 @@
                 <div class="category-card" data-category="life_insurance" onclick="setIntent('life_insurance')"><span class="icon">👨‍👩‍👧</span>
                     <h4>Life / Takaful</h4>
                 </div>
+            </div>
+
+            <div id="tce-marketing">
+                <!-- Who it's for -->
+                <section class="tce-section" id="audience">
+                    <h3>Who The Comparison Engine is For</h3>
+                    <p class="tce-sub">Serving a broad range of users across the financial decision-making spectrum.</p>
+                    <div class="tce-grid">
+                        <div class="tce-card"><span class="tce-icon">👤</span><h4>Individuals</h4><p class="desc">Comparing personal financial products like savings, loans, and insurance.</p></div>
+                        <div class="tce-card"><span class="tce-icon">👨‍👩‍👧</span><h4>Families</h4><p class="desc">Planning major financial decisions together with clear, comparable information.</p></div>
+                        <div class="tce-card"><span class="tce-icon">💼</span><h4>SMEs</h4><p class="desc">Evaluating banking facilities, business loans and insurance for their operations.</p></div>
+                        <div class="tce-card"><span class="tce-icon">🏢</span><h4>Corporate Treasury</h4><p class="desc">Assessing corporate banking products and investment opportunities.</p></div>
+                        <div class="tce-card"><span class="tce-icon">🤝</span><h4>Financial Advisers</h4><p class="desc">Using the platform to research and recommend products to clients.</p></div>
+                        <div class="tce-card"><span class="tce-icon">🏦</span><h4>Banks &amp; Insurers</h4><p class="desc">Publishing products, receiving qualified applications and accessing analytics.</p></div>
+                    </div>
+                </section>
+
+                <!-- Static comparison matrix (not workspace Matrix tab) -->
+                <section class="tce-section alt" id="tce-matrix">
+                    <h3>Comparison Matrix</h3>
+                    <p class="tce-sub">What we compare by product type — features shown side-by-side in a consistent format. (Live product matrix opens in Decision Workspace after eligibility.)</p>
+                    <div class="tce-grid wide">
+                        <div class="tce-card"><span class="tce-icon">🏦</span><h4>Savings</h4><div class="tce-chips"><span>High Liquidity</span><span>Low Risk</span><span>Profit Rates</span><span>Min. Balance</span></div></div>
+                        <div class="tce-card"><span class="tce-icon">💳</span><h4>Credit Cards</h4><div class="tce-chips"><span>Rewards</span><span>Annual Fees</span><span>Credit Limit</span><span>Interest Rates</span></div></div>
+                        <div class="tce-card"><span class="tce-icon">💰</span><h4>Personal Loans</h4><div class="tce-chips"><span>Profit Rates</span><span>Processing Fees</span><span>Tenure</span><span>Eligibility</span></div></div>
+                        <div class="tce-card"><span class="tce-icon">❤️</span><h4>Health Insurance</h4><div class="tce-chips"><span>Coverage</span><span>Premiums</span><span>Network Hospitals</span><span>Claim Process</span></div></div>
+                        <div class="tce-card"><span class="tce-icon">🚗</span><h4>Motor Insurance</h4><div class="tce-chips"><span>Premium Rate</span><span>Coverage</span><span>Deductible</span><span>Claim Process</span></div></div>
+                        <div class="tce-card"><span class="tce-icon">👨‍👩‍👧</span><h4>Life / Takaful</h4><div class="tce-chips"><span>Death Benefit</span><span>Premiums</span><span>Term</span><span>Riders</span></div></div>
+                    </div>
+                </section>
+
+                <!-- Why different -->
+                <section class="tce-section" id="why-different">
+                    <h3>Why The Comparison Engine is Different</h3>
+                    <p class="tce-sub">Most comparison websites only compare prices. We go much further — we compare the full product spectrum.</p>
+                    <div class="tce-diff-grid">
+                        <div class="tce-diff-item">📋 Features</div>
+                        <div class="tce-diff-item">✅ Eligibility</div>
+                        <div class="tce-diff-item">🏷️ Fees &amp; Charges</div>
+                        <div class="tce-diff-item">📊 Profit Rates / Pricing</div>
+                        <div class="tce-diff-item">🎁 Benefits &amp; Rewards</div>
+                        <div class="tce-diff-item">📱 Digital Services</div>
+                        <div class="tce-diff-item">📝 Customer Requirements</div>
+                        <div class="tce-diff-item">📄 Documentation</div>
+                        <div class="tce-diff-item">✔️ Product Suitability</div>
+                    </div>
+                    <p class="tce-note">This comprehensive comparison helps you assess not just the cost, but the overall value and fit of each financial product.</p>
+                </section>
+
+                <!-- How it works -->
+                <section class="tce-section alt" id="how-it-works">
+                    <h3>How The Comparison Engine Works</h3>
+                    <p class="tce-sub">A simple, transparent process from discovery to application — aligned with the workflow above.</p>
+                    <div class="tce-steps">
+                        <div class="tce-step"><span class="num">1</span><div><h4>Select the type of financial product</h4><p>Choose from savings, credit cards, personal loans, health insurance, motor insurance, or life / Takaful.</p></div></div>
+                        <div class="tce-step"><span class="num">2</span><div><h4>Compare representative products</h4><p>Review offers from participating providers presented in a consistent, side-by-side format.</p></div></div>
+                        <div class="tce-step"><span class="num">3</span><div><h4>Review features, fees &amp; eligibility</h4><p>Examine product features, pricing, eligibility criteria, fees, charges, benefits and important disclosures.</p></div></div>
+                        <div class="tce-step"><span class="num">4</span><div><h4>Shortlist products</h4><p>Save the products that best meet your requirements for easy comparison and later reference.</p></div></div>
+                        <div class="tce-step"><span class="num">5</span><div><h4>Provide consent</h4><p>Where required, give explicit consent before any personal information is shared with a provider.</p></div></div>
+                        <div class="tce-step"><span class="num">6</span><div><h4>Submit your application</h4><p>Apply directly to your chosen financial institution through the platform where supported.</p></div></div>
+                        <div class="tce-step"><span class="num">7</span><div><h4>Track your application</h4><p>Monitor the progress of your application through the platform where supported.</p></div></div>
+                    </div>
+                    <p class="tce-sub" style="margin-top:18px;margin-bottom:8px;">The complete ecosystem — comparison is the first stage of a digital customer journey.</p>
+                    <div class="tce-eco" aria-label="Ecosystem flow">
+                        <span class="eco-step">Compare</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Understand</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Shortlist</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Consent</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Apply</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Assessment</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Decision</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Onboarding</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Issued</span><span class="eco-arrow">›</span>
+                        <span class="eco-step">Ongoing</span>
+                    </div>
+                </section>
+
+                <!-- Why organisations -->
+                <section class="tce-section" id="why-orgs">
+                    <h3>Why Organisations Choose The Comparison Engine</h3>
+                    <p class="tce-sub">Built as an enterprise-grade platform for financial institutions and large enterprises.</p>
+                    <div class="tce-grid wide">
+                        <div class="tce-card"><h4>Independent Comparison Engine</h4><p>Unbiased, transparent product comparisons based on consistent methodology.</p></div>
+                        <div class="tce-card"><h4>Standardised Product Framework</h4><p>Normalised data models ensure apples-to-apples comparisons across providers.</p></div>
+                        <div class="tce-card"><h4>Configurable Decision Workflows</h4><p>Tailor the comparison and application process to your specific business rules.</p></div>
+                        <div class="tce-card"><h4>Digital Consent Management</h4><p>Securely capture and manage user consent in compliance with privacy regulations.</p></div>
+                        <div class="tce-card"><h4>Secure Application Routing</h4><p>Transmit applications directly to financial institutions via encrypted channels.</p></div>
+                        <div class="tce-card"><h4>API Integration Capability</h4><p>Seamlessly integrate with existing systems, CRMs and core banking platforms.</p></div>
+                        <div class="tce-card"><h4>White-label Deployment</h4><p>Brand the platform as your own with customised look, feel and domain.</p></div>
+                        <div class="tce-card"><h4>Audit Trail &amp; Reporting</h4><p>Comprehensive logs and analytics for compliance, performance and insights.</p></div>
+                    </div>
+                </section>
+
+                <!-- For FIs -->
+                <section class="tce-section alt" id="for-institutions">
+                    <h3>For Financial Institutions</h3>
+                    <p class="tce-sub">The Comparison Engine is a powerful channel for banks and insurers.</p>
+                    <div class="tce-fi">
+                        <div class="tce-card">
+                            <h4>Engage qualified customers through a trusted digital channel</h4>
+                            <p>Financial institutions can publish products, maintain pricing, receive qualified applications, integrate via APIs and access reporting through the platform.</p>
+                            <div class="tce-pill-row">
+                                <span>Reduce acquisition costs</span>
+                                <span>Increase transparency</span>
+                                <span>Streamline onboarding</span>
+                            </div>
+                        </div>
+                        <div class="tce-badge-list">
+                            <span>Publish Products</span>
+                            <span>Maintain Pricing</span>
+                            <span>Receive Applications</span>
+                            <span>API Integration</span>
+                            <span>Access Reporting</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Transparency -->
+                <section class="tce-section" id="transparency">
+                    <h3>Our Commitment to Transparency</h3>
+                    <p class="tce-sub">Presenting financial information in a clear, fair and transparent manner.</p>
+                    <div class="tce-grid wide">
+                        <div class="tce-card"><h4>Consistent Comparison Methodology</h4><p>Product information is presented using a consistent comparison methodology to assist users in evaluating available options.</p></div>
+                        <div class="tce-card"><h4>No Provider Promotion</h4><p>The platform does not promote one provider over another and does not provide personalised financial, legal or tax advice.</p></div>
+                        <div class="tce-card"><h4>Clear Disclosures</h4><p>All material information, including fees, charges, and eligibility criteria, is clearly disclosed to help you make informed decisions.</p></div>
+                    </div>
+                    <div class="tce-disclosure">
+                        <strong>Understanding representative information.</strong>
+                        Some information displayed on The Comparison Engine is representative rather than personalised.
+                        It indicates typical product features and pricing. Your actual eligibility, pricing, profit rate, premium, fees or other commercial terms may differ depending on your circumstances and the assessment by the financial institution.
+                        Always review the provider's final documentation before accepting any product.
+                    </div>
+                </section>
+
+                <!-- Data sources -->
+                <section class="tce-section alt" id="data-sources">
+                    <h3>Data Sources</h3>
+                    <p class="tce-sub">Product information may be sourced from:</p>
+                    <div class="tce-grid wide">
+                        <div class="tce-card"><h4>Participating financial institutions</h4><p>Direct data feeds from partner banks and insurers.</p></div>
+                        <div class="tce-card"><h4>Official provider publications</h4><p>Product brochures, tariff sheets, and published terms.</p></div>
+                        <div class="tce-card"><h4>State Bank of Pakistan (SBP)</h4><p>Regulatory data and published financial information.</p></div>
+                        <div class="tce-card"><h4>SECP</h4><p>Securities and Exchange Commission of Pakistan disclosures.</p></div>
+                        <div class="tce-card"><h4>Publicly available regulatory information</h4><p>Information in the public domain from authoritative sources.</p></div>
+                        <div class="tce-card"><h4>Other authorised information providers</h4><p>Selected data partners and industry publications.</p></div>
+                    </div>
+                    <p class="tce-note">Information is reviewed and updated periodically; however, changes made by financial institutions may not appear immediately.</p>
+                </section>
+
+                <!-- Privacy -->
+                <section class="tce-section" id="privacy">
+                    <h3>Privacy and Consent</h3>
+                    <p class="tce-sub">You can browse and compare products without providing personal information.</p>
+                    <div class="tce-grid wide">
+                        <div class="tce-card"><h4>Browse Anonymously</h4><p>Compare products without providing personal information. No tracking, no profiling.</p></div>
+                        <div class="tce-card"><h4>Explicit Consent Required</h4><p>Where an application requires personal or financial information, your explicit consent will be obtained before any information is transmitted to a participating financial institution.</p></div>
+                        <div class="tce-card"><h4>Data Protection</h4><p>Your information is handled in accordance with applicable Pakistani laws, platform policies and data protection requirements.</p></div>
+                    </div>
+                    <div class="tce-pill-row">
+                        <span>No personal data collected during browsing</span>
+                        <span>Consent obtained before data sharing</span>
+                        <span>Compliant with Pakistani privacy laws</span>
+                    </div>
+                </section>
+
+                <!-- FAQ -->
+                <section class="tce-section alt" id="faq">
+                    <h3>Frequently Asked Questions</h3>
+                    <p class="tce-sub">Common questions about The Comparison Engine and how the platform works.</p>
+                    <div class="tce-faq-list" id="tceFaqList">
+                        <div class="tce-faq-item open">
+                            <button type="button" class="tce-faq-q" aria-expanded="true">Is The Comparison Engine a bank?<span class="chev">▼</span></button>
+                            <div class="tce-faq-a">No. The Comparison Engine is an independent comparison and decision platform. It does not accept deposits, issue loans or provide insurance.</div>
+                        </div>
+                        <div class="tce-faq-item">
+                            <button type="button" class="tce-faq-q" aria-expanded="false">Does the platform recommend products?<span class="chev">▼</span></button>
+                            <div class="tce-faq-a">No. The platform provides information to assist your decision. The final choice remains yours. It does not promote one provider over another.</div>
+                        </div>
+                        <div class="tce-faq-item">
+                            <button type="button" class="tce-faq-q" aria-expanded="false">Are all financial institutions included?<span class="chev">▼</span></button>
+                            <div class="tce-faq-a">Only participating institutions or products for which information is available are displayed. The platform continues to expand its coverage.</div>
+                        </div>
+                        <div class="tce-faq-item">
+                            <button type="button" class="tce-faq-q" aria-expanded="false">Are the displayed rates guaranteed?<span class="chev">▼</span></button>
+                            <div class="tce-faq-a">No. Rates, fees and other commercial terms are representative unless specifically stated otherwise. The final terms are determined by the financial institution based on your individual circumstances and their assessment.</div>
+                        </div>
+                        <div class="tce-faq-item">
+                            <button type="button" class="tce-faq-q" aria-expanded="false">Can I apply directly through the platform?<span class="chev">▼</span></button>
+                            <div class="tce-faq-a">Where supported, applications can be submitted electronically to participating providers after the required consent has been obtained. The platform facilitates the connection between you and the financial institution.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Legal -->
+                <section class="tce-section" id="legal">
+                    <h3>Legal &amp; Transparency</h3>
+                    <p class="tce-sub">Our terms, privacy policy, and comparison terms — all in one place.</p>
+                    <div class="tce-notice">
+                        <strong>Important notice.</strong>
+                        The Comparison Engine is an information, comparison and digital application platform. The platform does not make lending, underwriting or insurance decisions, guarantee approval, or provide financial advice. All approvals, pricing, profit rates, premiums, fees and contractual terms are determined solely by the relevant financial institution in accordance with its own policies, regulatory obligations and assessment criteria.
+                    </div>
+                    <div class="tce-legal-tabs" id="tceLegalTabs" role="tablist">
+                        <button type="button" class="active" data-tab="terms" role="tab" aria-selected="true">Website Terms</button>
+                        <button type="button" data-tab="privacy" role="tab" aria-selected="false">Privacy Policy</button>
+                        <button type="button" data-tab="comparison-terms" role="tab" aria-selected="false">Comparison Terms</button>
+                    </div>
+                    <div class="tce-legal-panel active" id="tce-tab-terms" role="tabpanel">
+                        <h4>1. Acceptance of Terms</h4>
+                        <p>By using The Comparison Engine v7.1 ("the Platform"), you agree to these Website Terms. If you do not agree, please do not use the Platform.</p>
+                        <h4>2. Use of Information</h4>
+                        <p>The Platform provides representative financial data for informational purposes only. It does not constitute financial advice, endorsement, or solicitation.</p>
+                        <h4>3. No Warranty</h4>
+                        <p>We make no representations or warranties about the accuracy, completeness, or reliability of any data displayed. All information is provided "as is."</p>
+                        <h4>4. Limitation of Liability</h4>
+                        <p>To the fullest extent permitted by law, The Comparison Engine and its affiliates shall not be liable for any direct, indirect, incidental, or consequential damages arising from your use of the Platform.</p>
+                        <h4>5. Governing Law</h4>
+                        <p>These terms are governed by the laws of Pakistan. Last updated: July 2026.</p>
+                    </div>
+                    <div class="tce-legal-panel" id="tce-tab-privacy" role="tabpanel">
+                        <h4>1. Information We Collect</h4>
+                        <p>We collect minimal data to operate the Platform: IP address, browser type, and usage patterns. We do not collect personal financial data unless you explicitly provide it during application.</p>
+                        <h4>2. How We Use Data</h4>
+                        <ul>
+                            <li>To display representative offers and comparisons.</li>
+                            <li>To improve the Platform's user experience.</li>
+                            <li>To comply with legal and regulatory obligations.</li>
+                        </ul>
+                        <h4>3. Data Sharing</h4>
+                        <p>We do not sell or share your personal data with third parties for marketing purposes. Aggregated, anonymised data may be used for analysis.</p>
+                        <h4>4. Cookies</h4>
+                        <p>We use essential cookies for session management. You can disable cookies in your browser, but some features may not function properly.</p>
+                        <h4>5. Your Rights</h4>
+                        <p>You may request access to, correction of, or deletion of your personal data by contacting privacy@comparisonengine.pk.</p>
+                    </div>
+                    <div class="tce-legal-panel" id="tce-tab-comparison-terms" role="tabpanel">
+                        <h4>1. Representative Data</h4>
+                        <p>All comparisons are based on representative data sourced from publicly available information. Rates, fees, and terms shown are indicative and may not match the exact product you receive.</p>
+                        <h4>2. No Guarantee of Accuracy</h4>
+                        <p>While we strive for accuracy, we do not guarantee that the information is error-free, complete, or current. Financial institutions change their terms frequently.</p>
+                        <h4>3. Not an Endorsement</h4>
+                        <p>The order in which products appear does not constitute an endorsement or ranking. We aim to present a fair and balanced view of the market.</p>
+                        <h4>4. Your Responsibility</h4>
+                        <p>You are solely responsible for verifying product details directly with the financial institution before making any decision. The Comparison Engine is not a financial advisor.</p>
+                        <h4>5. Updates</h4>
+                        <p>Data is updated periodically. The "As of" date is displayed in the banner. Always check the date of the data.</p>
+                    </div>
+                    <p class="tce-closing">
+                        The Comparison Engine has been designed to simplify financial decision-making through transparency, consistency and informed choice.
+                        By bringing product information into a single comparison environment, the platform helps consumers and businesses understand available options while enabling financial institutions to engage customers more efficiently through secure digital processes.
+                    </p>
+                    <div class="tce-pill-row">
+                        <span>Independent</span>
+                        <span>Transparent</span>
+                        <span>Digital-first</span>
+                        <span>Enterprise-ready</span>
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -3669,6 +4342,52 @@
                 alert('Error saving product.');
             }
         }
+
+        /* ===== TCE marketing: jump nav, FAQ, legal tabs ===== */
+        function tceJump(ev, id) {
+            if (ev) ev.preventDefault();
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return false;
+        }
+
+        function initTceMarketing() {
+            document.querySelectorAll('#tceFaqList .tce-faq-q').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const item = btn.closest('.tce-faq-item');
+                    const open = item.classList.contains('open');
+                    document.querySelectorAll('#tceFaqList .tce-faq-item').forEach((i) => {
+                        i.classList.remove('open');
+                        const q = i.querySelector('.tce-faq-q');
+                        if (q) q.setAttribute('aria-expanded', 'false');
+                    });
+                    if (!open) {
+                        item.classList.add('open');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+            });
+
+            document.querySelectorAll('#tceLegalTabs button').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.getAttribute('data-tab');
+                    document.querySelectorAll('#tceLegalTabs button').forEach((b) => {
+                        b.classList.toggle('active', b === btn);
+                        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+                    });
+                    document.querySelectorAll('.tce-legal-panel').forEach((panel) => {
+                        panel.classList.toggle('active', panel.id === 'tce-tab-' + tab);
+                    });
+                });
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTceMarketing);
+        } else {
+            initTceMarketing();
+        }
+
     </script>
 </body>
 
