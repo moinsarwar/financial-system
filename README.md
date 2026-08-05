@@ -1,31 +1,94 @@
 # Financial System Monorepo
 
-Welcome to the **Financial System** monorepo. This repository contains the core projects designed to facilitate financial product origination, comparison, backend administration, and core banking/insurance operations within the financial ecosystem.
+Active stack for **The Comparison Engine**: product comparison (finOS + reseller), admin tooling, and Ollama-backed AI assistants.
 
-## Projects Overview
+Live site: [thecomparisonengine.com](https://thecomparisonengine.com) · Reseller: [reseller.thecomparisonengine.com](https://reseller.thecomparisonengine.com)
 
-This repository is structured into distinct projects, each serving a specific role:
+## Active projects
+
+| Project | Role | Typical ports |
+|---------|------|----------------|
+| [finOS](./finOS/) | Core products/clients/applications API + public comparison UI (`vanilla.html`) | Frontend `3000`, API inside Docker |
+| [reseller](./reseller/) | White-label partner dashboard (products, applications, commissions) | Frontend `9004`, API `9005` |
+| [qwenChat](./qwenChat/) | Read-only chatbot over finOS + reseller data | Frontend `9010`, API `9011` |
+| [adminPortal](./adminPortal/) | Central admin dashboard | See `adminPortal/README.md` |
+
+Helper scripts live under [`scripts/`](./scripts/) (AI Explain verify, Ollama systemd override, server sync helpers).
+
+### Removed from this repo
+
+These projects were deleted from the monorepo (not part of the live stack):
+
+- `finCompare`, `tezQarza-Gateway`, `finVault`, `gateway`
+- Root dump files (`*.csv`, `*.xlsx`, static `index.html`)
+
+Do not re-add bytecode (`__pycache__`), `node_modules/`, or `dist/` — they are gitignored.
+
+---
 
 ### 1. [finOS](./finOS/)
-**finOS** is the core banking and insurance backend system. It maintains the source of truth for products, clients, applications, holdings, and policies.
-- **Tech Stack**: FastAPI, PostgreSQL, Docker Compose.
-- **Role**: Core backend system managing financial products, applications, and system of record. 
 
-### 2. [adminPortal](./adminPortal/)
-**adminPortal** is a centralized administrative dashboard for managing the financial ecosystem.
-- **Role**: Provides admin capabilities across the financial system microservices.
+Source of truth for products, clients, applications, holdings, and policies.
 
-### 3. [reseller](./reseller/)
-**Reseller (The Comparison Engine)** is a white-labeled dashboard for external agents to view products, submit applications, and track commissions.
-- **Tech Stack**: React, FastAPI, PostgreSQL, Docker Compose.
-- **Role**: Partner portal for originating applications into finOS.
+- **Stack**: FastAPI, PostgreSQL, Docker Compose, nginx frontend
+- **Public UI**: `finOS/frontend/public/vanilla.html` (eligibility, ranking, Cost/Matrix comparison)
+- **AI Explain**: `POST /api/ai/explain` streams a short recommendation via host **Ollama**
+  - Default model: `qwen2.5:1.5b` (CPU-friendly)
+  - Ranking rules are category-specific (e.g. savings → highest profit rate; credit card → lowest APR)
+  - Jurisdiction currency forced in the prompt (PK→PKR, UAE→AED, KSA→SAR)
+  - Frontend prefetches on eligibility; caches until inputs change; template fallback on failure
+- **Prod compose**: `docker compose -f docker-compose.prod.yml -p finos`
+  - Reaches Ollama at `host.docker.internal:11434` (`extra_hosts: host-gateway`)
 
-### 4. [qwenChat](./qwenChat/)
-**Comparison Engine** chatbot (qwenChat) is an Ollama-powered read-only assistant for finOS and reseller data, with optional general Q&A.
-- **Tech Stack**: React (Vite), FastAPI, Ollama, Docker Compose.
-- **Ports**: Frontend `9010`, Backend `9011`.
-- **Role**: Streaming chat UI with quick-action tables (GET-only live data) and free-form Qwen chat.
+### 2. [reseller](./reseller/)
 
-## Setup Instructions
+Partner portal for agents: browse products, submit applications into finOS, track commissions.
 
-To run the entire ecosystem locally, navigate to the respective directories and follow their `README.md` instructions to start the services (usually via `docker compose up`).
+- **Stack**: React (Vite), FastAPI, PostgreSQL
+- **Compose**: `reseller/docker-compose.yml` (`comparison_*` containers)
+
+### 3. [qwenChat](./qwenChat/)
+
+Streaming chat UI with quick-action tables (GET-only live data) plus free-form Qwen chat.
+
+- **Stack**: React (Vite), FastAPI, Ollama
+- **Data**: read-only calls to finOS + reseller (no create/edit/delete)
+- **Default model**: `qwen2.5:1.5b` (same lightweight model as finOS AI Explain)
+
+### 4. [adminPortal](./adminPortal/)
+
+Administrative dashboard across the financial ecosystem. See its own README for run details.
+
+---
+
+## Ollama (shared LLM)
+
+Both **finOS AI Explain** and **qwenChat** expect Ollama on the host:
+
+```bash
+ollama pull qwen2.5:1.5b
+# systemd: see scripts/ollama-override.conf (OLLAMA_HOST, parallel=1, keep_alive)
+```
+
+Env knobs (finOS / qwenChat):
+
+- `OLLAMA_BASE_URL` — default `http://host.docker.internal:11434` in Docker
+- `OLLAMA_MODEL` — default `qwen2.5:1.5b`
+- `OLLAMA_TIMEOUT` — finOS default `300` (SSE can run long on CPU)
+
+Quick check: `scripts/verify-ai-explain.sh`
+
+---
+
+## Setup
+
+Run each project from its directory (usually `docker compose up -d --build`). Copy `.env.example` → `.env` where present.
+
+**Production (VPS) sketch:**
+
+1. Host Ollama with `qwen2.5:1.5b`
+2. finOS: `docker compose -f docker-compose.prod.yml -p finos up -d --build`
+3. reseller + qwenChat compose stacks as deployed on the server
+4. Keep repo in sync: `git pull` on the VPS (avoid committing `__pycache__` / build artifacts)
+
+For project-specific credentials, seeds, and API details, use each subdirectory’s `README.md`.

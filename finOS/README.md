@@ -10,23 +10,47 @@
 
 ## Integration
 
-Other ecosystem modules, such as **finVault**, interface with `finOS` by writing directly to its `applications` table or via APIs. `finOS` holds the canonical state of all clients and the lifecycle timelines of their financial requests.
+**reseller** and **qwenChat** call finOS APIs for products, clients, and applications. `finOS` holds the canonical state of clients and financial request lifecycles.
+
+Public comparison UX lives in `frontend/public/vanilla.html` (eligibility → ranked products → Cost/Matrix → **AI Explain**).
+
+## AI Explain (Ollama)
+
+- **Endpoints**: `POST /api/ai/explain` (SSE stream), `GET /api/ai/health`
+- **Service**: `backend/app/services/ollama_explain.py`
+- **Default model**: `qwen2.5:1.5b` via `OLLAMA_BASE_URL` / `OLLAMA_MODEL` / `OLLAMA_TIMEOUT`
+- Prod compose uses `host.docker.internal:11434` so the backend container can reach host Ollama
+- Category Cost ranking (engine ranks; LLM must recommend the BEST product):
+
+| Category | Best product rule |
+|----------|-------------------|
+| savings | Highest profit rate; tie → lowest maintenance fee |
+| credit_card | Lowest APR; tie → lowest annual fee |
+| personal_loan | Lowest APR; tie → lowest processing fee |
+| health_insurance | Highest coverage limit |
+| motor_insurance | Lowest premium rate (% of vehicle) |
+| life_insurance | Highest death benefit |
 
 ## Recent Features & Fixes (Changelog)
 
-- **3-Role Portal System**: Implemented a unified 3-role portal (Client, Operations, and Company Admin).
-- **Admin Dashboard Integration**: Added a dedicated "Admin Login" and `super_admin` permissions, updating the database ENUMs dynamically to support this without losing existing operations data.
-- **Upload Bug Fixes**: Fixed a critical 422 Unprocessable Entity error in FastAPI by configuring the frontend Axios interceptors to automatically handle `multipart/form-data` for file uploads, overriding the default `application/json`.
-- **Frontend Stability**: Implemented safeguards in the global error handler (`client.ts`) to properly parse validation arrays, preventing React application crashes (White Screen of Death).
-- **UI Enhancements**: Restored the visual "Workflow" progress bar on the application details page. Added dynamic portal titles in the Header component.
-- **Information Request**: Added database models and infrastructure for Information Requests and Communications between Ops and Clients.
+- **AI Explain**: Streaming Ollama explanations with category Cost/Matrix context, currency by jurisdiction, prefetch + cache in `vanilla.html`, template fallback on failure.
+- **Product mapping**: Front products API maps real pricing fields (`profit_rate`, APR, fees, etc.) for comparison.
+- **3-Role Portal System**: Unified portal (Client, Operations, Company Admin) with `super_admin`.
+- **Upload / frontend stability**: Multipart upload handling and safer error parsing to avoid blank screens.
+- **Information Request**: Models and APIs for Ops ↔ Client communications.
 
 ## How to Run
 
-1. Navigate to the `finOS` directory.
-2. Start the services using Docker Compose:
+**Dev:**
 ```bash
-docker compose up -d --build
+cd finOS
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-The database initializes with seed data (e.g. `client@finos.com`, `ops@finos.com`, and `admin@finos.com`).
+**Prod (as on VPS):**
+```bash
+cd finOS
+docker compose -f docker-compose.prod.yml -p finos up -d --build
+```
+
+Ensure host Ollama is up with `qwen2.5:1.5b` before testing AI Explain. Seed logins (when seeding is enabled) include `client@finos.com`, `ops@finos.com`, and `admin@finos.com`.

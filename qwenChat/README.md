@@ -4,7 +4,7 @@ Read-only chatbot for the Comparison Engine (finOS + reseller data) with optiona
 
 - **Frontend**: React (Vite) → `http://localhost:9010`
 - **Backend**: FastAPI → `http://localhost:9011`
-- **LLM**: Ollama `qwen2.5:0.5b`
+- **LLM**: Ollama `qwen2.5:1.5b` (same default as finOS AI Explain)
 - **Data**: live **GET-only** calls to finOS + reseller (no create/edit/delete)
 
 ## Features
@@ -16,7 +16,7 @@ Read-only chatbot for the Comparison Engine (finOS + reseller data) with optiona
 
 ## Prerequisites
 
-1. Ollama running with model `qwen2.5:0.5b` (`ollama serve` / already running)
+1. Ollama running with model `qwen2.5:1.5b` (`ollama serve` / already running)
 2. Optional but recommended for live buttons:
    - finOS backend on `:8000`
    - reseller backend on `:9005`
@@ -32,7 +32,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp ../.env.example ../.env   # optional
 export OLLAMA_BASE_URL=http://127.0.0.1:11434
-export OLLAMA_MODEL=qwen2.5:0.5b
+export OLLAMA_MODEL=qwen2.5:1.5b
 export FINOS_API_URL=http://127.0.0.1:8000/api
 export RESELLER_API_URL=http://127.0.0.1:9005/api
 uvicorn app.main:app --host 0.0.0.0 --port 9011 --reload
@@ -68,7 +68,7 @@ On Linux, compose uses `host.docker.internal` via `extra_hosts` so the container
 
 ```bash
 OLLAMA_BASE_URL=http://host.docker.internal:11434
-OLLAMA_MODEL=qwen2.5:3b
+OLLAMA_MODEL=qwen2.5:1.5b
 FINOS_API_URL=http://finos-backend-1:8000/api
 RESELLER_API_URL=http://comparison_backend:8000/api
 CORS_ORIGINS=http://localhost:9010,http://127.0.0.1:9010,http://163.245.222.160:9010

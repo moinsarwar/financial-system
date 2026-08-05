@@ -11,4 +11,14 @@ This project provides a white-labeled dashboard for external resellers/agents. I
 - **Database**: PostgreSQL (comparison_db)
 
 ## Running the project
-Run `docker compose up -d` to start the frontend, backend, and database.
+
+```bash
+cd reseller
+docker compose up -d --build
+```
+
+- Frontend: http://localhost:9004  
+- Backend API: http://localhost:9005  
+- Postgres: host port `5433`  
+
+On the VPS this stack runs as `comparison_frontend` / `comparison_backend` / `comparison_db`, with finOS reachable via the Docker network (`FINOS_API_URL`).
