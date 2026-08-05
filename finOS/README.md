@@ -1,29 +1,71 @@
 # finOS
 
-**finOS** is the core backend and database system of record for the Financial System ecosystem. It is designed to emulate the central ledger and processing engine of a modern financial institution.
+Core system of record for **The Comparison Engine**: products, clients, applications, claims, documents, and policies. Also serves the **public comparison site** and a **staff portal**.
 
-## Architecture
+Live: [thecomparisonengine.com](https://thecomparisonengine.com)
 
-- **Database**: PostgreSQL database serving as the source of truth.
-- **Tables**: Includes core primitives such as `clients`, `products`, `applications`, `policies`, `claims`, `holdings`, `information_request`, and `communication`.
-- **API**: A FastAPI service that allows internal services (like the adminPortal) to query and manage the core data.
+## How it works
 
-## Integration
+### Public comparison (`vanilla.html`)
 
-**reseller** and **qwenChat** call finOS APIs for products, clients, and applications. `finOS` holds the canonical state of clients and financial request lifecycles.
+1. User opens apex or a **partner subdomain** (`{partner}.thecomparisonengine.com`).
+2. Optional: UI calls reseller `GET /api/resellers/verify` to restrict marketplace categories.
+3. User picks a category (savings, credit card, personal loan, health / motor / life insurance).
+4. Eligibility (age, income band, jurisdiction) → engine ranks eligible products.
+5. **Cost** and **Matrix** tabs compare pricing/features.
+6. **AI Explain** streams a short recommendation from host Ollama (prefetch + cache; template fallback on failure).
 
-Public comparison UX lives in `frontend/public/vanilla.html` (eligibility → ranked products → Cost/Matrix → **AI Explain**).
+### Staff portal (React)
 
-## AI Explain (Ollama)
+Three roles: **Client**, **Operations**, **Company Admin** (`super_admin`). Manage applications lifecycle, documents, dashboard, information requests.
 
-- **Endpoints**: `POST /api/ai/explain` (SSE stream), `GET /api/ai/health`
-- **Service**: `backend/app/services/ollama_explain.py`
-- **Default model**: `qwen2.5:1.5b` via `OLLAMA_BASE_URL` / `OLLAMA_MODEL` / `OLLAMA_TIMEOUT`
-- Prod compose uses `host.docker.internal:11434` so the backend container can reach host Ollama
-- Category Cost ranking (engine ranks; LLM must recommend the BEST product):
+### Backend (FastAPI)
 
-| Category | Best product rule |
-|----------|-------------------|
+PostgreSQL is the source of truth. Other apps (reseller, qwenChat, adminPortal) consume finOS APIs; they do not replace this DB.
+
+## Stack
+
+| Layer | Technology |
+|-------|------------|
+| Public UI | `frontend/public/vanilla.html` (served at `/` by nginx) |
+| Staff UI | React 18, Vite, TypeScript, Tailwind |
+| API | FastAPI (`backend/app/main.py`) |
+| DB | PostgreSQL 15 |
+| LLM | Host Ollama `qwen2.5:1.5b` |
+| Deploy | `docker-compose.dev.yml` · `docker-compose.prod.yml` (`-p finos`) |
+
+## Ports
+
+| Environment | Frontend | Backend | DB |
+|-------------|----------|---------|-----|
+| Prod | `3000→80` | expose `8000` (no host publish) | internal |
+| Dev | `5173` | `8000` | `5432` |
+
+## Relation to other projects
+
+| Direction | Integration |
+|-----------|-------------|
+| ← reseller | Proxies `GET /api/front_products`; verifies partner subdomains |
+| → reseller | On application status changes, `POST http://comparison_backend:8000/api/webhooks/commission` |
+| ← qwenChat | Read-only GETs for products/clients/applications/claims |
+| ← adminPortal (browser) | `/api/admin_portal/*` for ops CRUD |
+| → Ollama | AI Explain via `OLLAMA_BASE_URL` |
+
+Shared Docker network: **`finos_default`** (reseller + qwenChat join this to reach `finos-backend-1`).
+
+## AI Explain
+
+| Item | Detail |
+|------|--------|
+| Endpoints | `POST /api/ai/explain` (SSE), `GET /api/ai/health` |
+| Code | `backend/app/services/ollama_explain.py`, `backend/app/api/routes/ai.py` |
+| Env | `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_TIMEOUT` |
+| Prod networking | `extra_hosts: host.docker.internal:host-gateway` |
+
+Category **Cost** rules (engine ranks; model must recommend BEST):
+
+| Category | Best = |
+|----------|--------|
 | savings | Highest profit rate; tie → lowest maintenance fee |
 | credit_card | Lowest APR; tie → lowest annual fee |
 | personal_loan | Lowest APR; tie → lowest processing fee |
@@ -31,26 +73,32 @@ Public comparison UX lives in `frontend/public/vanilla.html` (eligibility → ra
 | motor_insurance | Lowest premium rate (% of vehicle) |
 | life_insurance | Highest death benefit |
 
-## Recent Features & Fixes (Changelog)
+Currency in prompts: PK→PKR, UAE→AED, KSA→SAR.
 
-- **AI Explain**: Streaming Ollama explanations with category Cost/Matrix context, currency by jurisdiction, prefetch + cache in `vanilla.html`, template fallback on failure.
-- **Product mapping**: Front products API maps real pricing fields (`profit_rate`, APR, fees, etc.) for comparison.
-- **3-Role Portal System**: Unified portal (Client, Operations, Company Admin) with `super_admin`.
-- **Upload / frontend stability**: Multipart upload handling and safer error parsing to avoid blank screens.
-- **Information Request**: Models and APIs for Ops ↔ Client communications.
+## Key API areas
 
-## How to Run
+`/api/auth`, `/clients`, `/applications`, `/claims`, `/products`, `/documents`, `/activity`, `/dashboard`, `/admin_portal`, `/ai`, `/front_products`
 
-**Dev:**
+Nginx (prod): `/` → vanilla; `/api/` → backend; AI routes with buffering off and long timeouts for SSE.
+
+## Notable changes
+
+- Streaming **AI Explain** with Cost/Matrix context, jurisdiction currency, prefetch/cache, fallback copy
+- **Front products** mapping exposes real pricing (`profit_rate`, APR, fees, coverage, etc.)
+- Partner subdomain + reseller verify for white-label category focus
+- Unified 3-role portal + `super_admin`
+- Application → reseller **commission webhook** path
+- Upload/multipart and frontend error-handling fixes
+- Information Request / Ops↔Client communication models
+
+## Run
+
 ```bash
-cd finOS
-docker compose -f docker-compose.dev.yml up -d --build
+# Dev
+cd finOS && docker compose -f docker-compose.dev.yml up -d --build
+
+# Prod (VPS)
+cd finOS && docker compose -f docker-compose.prod.yml -p finos up -d --build
 ```
 
-**Prod (as on VPS):**
-```bash
-cd finOS
-docker compose -f docker-compose.prod.yml -p finos up -d --build
-```
-
-Ensure host Ollama is up with `qwen2.5:1.5b` before testing AI Explain. Seed logins (when seeding is enabled) include `client@finos.com`, `ops@finos.com`, and `admin@finos.com`.
+Copy `.env.example` → `.env`. Ensure Ollama has `qwen2.5:1.5b` before testing AI Explain. Demo users (when seed enabled): `client@finos.com`, `ops@finos.com`, `admin@finos.com`.
