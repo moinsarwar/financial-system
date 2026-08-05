@@ -92,6 +92,8 @@ def verify_reseller_domain(domain: str, db: Session = Depends(get_db)):
     db_reseller = crud.get_reseller_by_subdomain(db, subdomain_prefix)
     if not db_reseller:
         raise HTTPException(status_code=404, detail="Reseller not found for this domain")
+    if db_reseller.status != models.ResellerStatus.ACTIVE:
+        raise HTTPException(status_code=403, detail="Reseller is not active")
 
     ALL = [
         "savings",
@@ -153,6 +155,15 @@ def resend_invite(reseller_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Approve the reseller before sending invite")
     _issue_invite_and_email(db, db_reseller)
     return {"ok": True, "email": db_reseller.email}
+
+
+@router.post("/{reseller_id}/pending", response_model=schemas.Reseller)
+def set_reseller_pending(reseller_id: int, db: Session = Depends(get_db)):
+    """Move reseller back to pending and revoke login until re-approved."""
+    db_reseller = crud.set_reseller_pending(db, reseller_id)
+    if not db_reseller:
+        raise HTTPException(status_code=404, detail="Reseller not found")
+    return db_reseller
 
 
 @router.get("/{reseller_id}", response_model=schemas.Reseller)

@@ -60,22 +60,36 @@ const AdminDashboard = () => {
         <div className="detail-row"><span className="label">Status</span><span className={`status-badge ${reseller.status}`}>{reseller.status}</span></div>  
         <div className="detail-row"><span className="label">Conversions</span><span>{reseller.conversions}</span></div>  
         <div className="detail-row"><span className="label">Commission</span><span className="value green">₨ {reseller.commission.toLocaleString()}</span></div>  
-        {reseller.status === 'active' && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+          {reseller.status === 'active' && (
+            <button
+              className="btn btn-secondary"
+              onClick={async () => {
+                try {
+                  await apiClient.post(`/resellers/${reseller.id}/resend-invite`);
+                  showToast(`Invite re-sent to ${reseller.email}`, 'success');
+                  setModalOpen(false);
+                } catch (error) {
+                  showToast(error.response?.data?.detail || 'Failed to resend invite', 'error');
+                }
+              }}
+            >
+              Resend set-password email
+            </button>
+          )}
+          {reseller.status !== 'pending' && (
+            <button className="btn btn-secondary" onClick={() => handleSetPending(reseller)}>
+              Set pending
+            </button>
+          )}
           <button
-            className="btn btn-secondary mt-16"
-            onClick={async () => {
-              try {
-                await apiClient.post(`/resellers/${reseller.id}/resend-invite`);
-                showToast(`Invite re-sent to ${reseller.email}`, 'success');
-                setModalOpen(false);
-              } catch (error) {
-                showToast(error.response?.data?.detail || 'Failed to resend invite', 'error');
-              }
-            }}
+            className="btn"
+            style={{ background: '#fde8e8', color: '#9b1c1c', border: '1px solid #f5c2c2' }}
+            onClick={() => handleDelete(reseller)}
           >
-            Resend set-password email
+            Delete reseller
           </button>
-        )}
+        </div>
       </div>  
     );  
     showModal(`Reseller: ${reseller.name}`, content);  
@@ -89,6 +103,34 @@ const AdminDashboard = () => {
     } catch (error) {  
       showToast(error.response?.data?.detail || 'Failed to approve', 'error');  
     }  
+  };
+
+  const handleSetPending = async (reseller) => {
+    if (!window.confirm(`Set ${reseller.name} back to pending? They will not be able to log in until re-approved.`)) {
+      return;
+    }
+    try {
+      await apiClient.post(`/resellers/${reseller.id}/pending`);
+      showToast(`${reseller.name} set to pending`, 'success');
+      setModalOpen(false);
+      fetchData();
+    } catch (error) {
+      showToast(error.response?.data?.detail || 'Failed to set pending', 'error');
+    }
+  };
+
+  const handleDelete = async (reseller) => {
+    if (!window.confirm(`Permanently delete ${reseller.name}? This removes them and related data from the database.`)) {
+      return;
+    }
+    try {
+      await apiClient.delete(`/resellers/${reseller.id}`);
+      showToast(`${reseller.name} deleted`, 'success');
+      setModalOpen(false);
+      fetchData();
+    } catch (error) {
+      showToast(error.response?.data?.detail || 'Failed to delete reseller', 'error');
+    }
   };  
   
   if (loading) return <div className="container">Loading...</div>;  
@@ -155,11 +197,38 @@ const AdminDashboard = () => {
                 <td><span className={`status-badge ${r.status}`}>{r.status}</span></td>  
                 <td>{r.conversions}</td>  
                 <td>₨ {r.commission.toLocaleString()}</td>  
-                <td>  
-                  <button className="btn btn-xs btn-secondary" onClick={() => handleViewReseller(r)}><i className="fas fa-eye"></i></button>  
-                  {r.status === 'pending' && (  
-                    <button className="btn btn-xs" style={{ background: '#d4edda', color: '#0a613a', border: 'none' }} onClick={() => handleApprove(r.id)}><i className="fas fa-check"></i></button>  
-                  )}  
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <button className="btn btn-xs btn-secondary" title="View" onClick={() => handleViewReseller(r)}>
+                    <i className="fas fa-eye"></i>
+                  </button>
+                  {r.status === 'pending' && (
+                    <button
+                      className="btn btn-xs"
+                      style={{ background: '#d4edda', color: '#0a613a', border: 'none', marginLeft: 4 }}
+                      title="Approve"
+                      onClick={() => handleApprove(r.id)}
+                    >
+                      <i className="fas fa-check"></i>
+                    </button>
+                  )}
+                  {r.status !== 'pending' && (
+                    <button
+                      className="btn btn-xs"
+                      style={{ background: '#fff3cd', color: '#856404', border: 'none', marginLeft: 4 }}
+                      title="Set pending"
+                      onClick={() => handleSetPending(r)}
+                    >
+                      <i className="fas fa-pause"></i>
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-xs"
+                    style={{ background: '#fde8e8', color: '#9b1c1c', border: 'none', marginLeft: 4 }}
+                    title="Delete"
+                    onClick={() => handleDelete(r)}
+                  >
+                    <i className="fas fa-trash"></i>
+                  </button>
                 </td>  
               </tr>  
             ))}  

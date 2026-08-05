@@ -40,6 +40,14 @@ def login_for_access_token(login_req: LoginRequest, db: Session = Depends(get_db
             detail="Please set your password using the invite link emailed to you.",
         )
 
+    if user.role == "reseller" and user.reseller_id:
+        reseller = crud.get_reseller(db, user.reseller_id)
+        if not reseller or reseller.status != models.ResellerStatus.ACTIVE:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Reseller account is not active. Contact the platform admin.",
+            )
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     token_data = {"sub": user.email, "role": user.role}
     access_token = create_access_token(data=token_data, expires_delta=access_token_expires)

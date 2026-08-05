@@ -41,13 +41,33 @@ def update_reseller(db: Session, reseller_id: int, reseller_update: schemas.Rese
     db.refresh(db_reseller)  
     return db_reseller  
   
-def delete_reseller(db: Session, reseller_id: int):  
-    db_reseller = get_reseller(db, reseller_id)  
-    if db_reseller:  
-        db.delete(db_reseller)  
-        db.commit()  
-        return True  
-    return False  
+def delete_reseller(db: Session, reseller_id: int):
+    db_reseller = get_reseller(db, reseller_id)
+    if not db_reseller:
+        return False
+    # Remove login accounts first (FK has no cascade on users.reseller_id)
+    db.query(models.User).filter(models.User.reseller_id == reseller_id).delete(
+        synchronize_session=False
+    )
+    db.delete(db_reseller)
+    db.commit()
+    return True
+
+
+def set_reseller_pending(db: Session, reseller_id: int):
+    db_reseller = get_reseller(db, reseller_id)
+    if not db_reseller:
+        return None
+    db_reseller.status = models.ResellerStatus.PENDING
+    # Revoke login until re-approved (Option A invite flow)
+    user = get_user_by_reseller_id(db, reseller_id)
+    if user:
+        user.invite_token = None
+        user.invite_expires_at = None
+        user.must_set_password = True
+    db.commit()
+    db.refresh(db_reseller)
+    return db_reseller  
   
 # ---------- Customer ----------  
 def get_customers_by_reseller(db: Session, reseller_id: int, skip: int = 0, limit: int = 100):  
