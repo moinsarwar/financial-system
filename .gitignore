@@ -15,9 +15,7 @@ node_modules/
 dist/
 .DS_Store
 
-# Local dumps / transfer files
-*.xlsx
-products_transfer.csv
-all_products.csv
-hbl_products.csv
-state_life_products.csv
+# Local dumps / transfer files (repo root)
+/*.csv
+/*.xlsx
+/index.html
