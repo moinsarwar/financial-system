@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';  
-import { useAuth } from '../../context/AuthContext';  
 import apiClient from '../../api/client';  
 import Modal from '../Common/Modal';  
 import Toast from '../Common/Toast';  
 import { getResellerSiteUrl } from '../../utils/resellerSiteUrl';  
   
 const AdminDashboard = () => {  
-  const { loginAsReseller, logout } = useAuth();  
   const [stats, setStats] = useState({  
     total_resellers: 0,  
     active_resellers: 0,  
@@ -18,7 +16,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);  
   const [modalOpen, setModalOpen] = useState(false);  
   const [modalTitle, setModalTitle] = useState('');  
-  const [modalContent, setModalContent] = useState('');  
+  const [modalContent, setModalContent] = useState(null);  
   const [toast, setToast] = useState({ message: '', type: '' });  
   
   const fetchData = async () => {  
@@ -62,10 +60,22 @@ const AdminDashboard = () => {
         <div className="detail-row"><span className="label">Status</span><span className={`status-badge ${reseller.status}`}>{reseller.status}</span></div>  
         <div className="detail-row"><span className="label">Conversions</span><span>{reseller.conversions}</span></div>  
         <div className="detail-row"><span className="label">Commission</span><span className="value green">₨ {reseller.commission.toLocaleString()}</span></div>  
-        <button className="btn btn-primary mt-16" onClick={() => {  
-          loginAsReseller(reseller);  
-          window.location.href = `/owner/${reseller.id}`;  
-        }}>Impersonate</button>  
+        {reseller.status === 'active' && (
+          <button
+            className="btn btn-secondary mt-16"
+            onClick={async () => {
+              try {
+                await apiClient.post(`/resellers/${reseller.id}/resend-invite`);
+                showToast(`Invite re-sent to ${reseller.email}`, 'success');
+                setModalOpen(false);
+              } catch (error) {
+                showToast(error.response?.data?.detail || 'Failed to resend invite', 'error');
+              }
+            }}
+          >
+            Resend set-password email
+          </button>
+        )}
       </div>  
     );  
     showModal(`Reseller: ${reseller.name}`, content);  
@@ -73,11 +83,11 @@ const AdminDashboard = () => {
   
   const handleApprove = async (id) => {  
     try {  
-      await apiClient.put(`/resellers/${id}`, { status: 'active' });  
-      showToast('Reseller approved!', 'success');  
+      await apiClient.post(`/resellers/${id}/approve`);  
+      showToast('Approved — set-password email sent', 'success');  
       fetchData();  
     } catch (error) {  
-      showToast('Failed to approve', 'error');  
+      showToast(error.response?.data?.detail || 'Failed to approve', 'error');  
     }  
   };  
   
@@ -127,7 +137,7 @@ const AdminDashboard = () => {
   
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', margin: '12px 0 8px' }}>  
         <h3 style={{ fontWeight: '700', fontSize: '1.1rem' }}>All Resellers</h3>  
-        <button className="btn btn-success btn-sm" onClick={() => showToast('New reseller invitation sent (simulated)', 'success')}>  
+        <button className="btn btn-success btn-sm" onClick={() => showToast('Use the public signup form — then approve pending resellers here.', 'info')}>  
           <i className="fas fa-user-plus"></i> Invite  
         </button>  
       </div>  
@@ -164,7 +174,11 @@ const AdminDashboard = () => {
       </div>  
   
       <Modal isOpen={modalOpen} title={modalTitle} onClose={() => setModalOpen(false)}>  
-        <div dangerouslySetInnerHTML={{ __html: modalContent }} />  
+        {typeof modalContent === 'string' ? (
+          <div dangerouslySetInnerHTML={{ __html: modalContent }} />
+        ) : (
+          modalContent
+        )}
       </Modal>  
   
       {toast.message && <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />}  

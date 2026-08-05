@@ -5,6 +5,7 @@ import Public from './components/Public/Public';
 import AdminDashboard from './components/Admin/AdminDashboard';  
 import OwnerDashboard from './components/Owner/OwnerDashboard';  
 import Login from './components/Auth/Login';
+import SetPassword from './components/Auth/SetPassword';
 import { useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -28,6 +29,7 @@ function App() {
         <Route path="/" element={<Layout />}>  
           <Route index element={<Public />} />  
           <Route path="login" element={<Login />} />
+          <Route path="set-password" element={<SetPassword />} />
           
           <Route path="admin" element={
             <ProtectedRoute allowedRoles={['admin']}>

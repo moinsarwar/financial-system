@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/client';
-import { useAuth } from '../../context/AuthContext';
 import Toast from '../Common/Toast';
 import { getResellerSiteUrl } from '../../utils/resellerSiteUrl';
 import {
@@ -10,7 +9,6 @@ import {
 } from '../../utils/categories';
 
 const SignupForm = () => {
-  const { loginAsReseller } = useAuth();
   const [categories, setCategories] = useState(FINOS_CATEGORIES);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -23,6 +21,7 @@ const SignupForm = () => {
     termsCheck: false,
   });
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState({ message: '', type: '' });
 
   const previewSubdomain = (formData.subdomain || 'yourbrand').toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -102,17 +101,31 @@ const SignupForm = () => {
       const response = await apiClient.post('/resellers/', payload);
       const newReseller = response.data;
 
-      showToast(`✅ Application submitted! Welcome, ${newReseller.name}.`, 'success');
-
-      setTimeout(() => {
-        loginAsReseller(newReseller);
-        window.location.href = `/owner/${newReseller.id}`;
-      }, 1500);
+      setSubmitted(true);
+      showToast(
+        `Application received. After admin approval we will email ${newReseller.email} a link to set your password.`,
+        'success',
+      );
+      setLoading(false);
     } catch (error) {
       showToast(error.response?.data?.detail || 'Failed to create account.', 'error');
       setLoading(false);
     }
   };
+
+  if (submitted) {
+    return (
+      <div className="signup-section" id="signupForm">
+        <h2>Application submitted</h2>
+        <p className="sub">
+          Thanks — your reseller request is <strong>pending approval</strong>.
+          Once an admin approves you, check your email for a secure <strong>Set password</strong> link,
+          then sign in at <a href="/login">Login</a>.
+        </p>
+        {toast.message && <Toast message={toast.message} type={toast.type} onClose={() => setToast({ message: '', type: '' })} />}
+      </div>
+    );
+  }
 
   return (
     <div className="signup-section" id="signupForm">

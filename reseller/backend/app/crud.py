@@ -96,3 +96,17 @@ def get_reseller_stats(db: Session) -> schemas.ResellerStats:
         total_conversions=total_conv,  
         total_commission=total_comm  
     )
+
+
+# ---------- User / invite ----------
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
+
+
+def get_user_by_invite_token(db: Session, token: str):
+    return db.query(models.User).filter(models.User.invite_token == token).first()
+
+
+def get_user_by_reseller_id(db: Session, reseller_id: int):
+    return db.query(models.User).filter(models.User.reseller_id == reseller_id).first()
+

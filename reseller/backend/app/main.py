@@ -4,9 +4,11 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
   
 from .database import engine, Base  
 from .routers import resellers, customers, activities, testimonials, products, auth, webhooks
+from .schema_migrate import ensure_schema
 
 # Create tables (in production, use Alembic migrations)  
-Base.metadata.create_all(bind=engine)  
+Base.metadata.create_all(bind=engine)
+ensure_schema(engine)  
   
 app = FastAPI(  
     title="The Comparison Engine API",  

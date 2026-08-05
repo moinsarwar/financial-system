@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum  
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean  
 from sqlalchemy.orm import relationship  
 from datetime import datetime  
 import enum  
@@ -75,7 +75,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    role = Column(String, nullable=False, default="reseller") # "admin" or "reseller"
+    role = Column(String, nullable=False, default="reseller")  # "admin" or "reseller"
     reseller_id = Column(Integer, ForeignKey("resellers.id"), nullable=True)
+    invite_token = Column(String, unique=True, nullable=True, index=True)
+    invite_expires_at = Column(DateTime, nullable=True)
+    must_set_password = Column(Boolean, default=False, nullable=False)
 
     reseller = relationship("Reseller")

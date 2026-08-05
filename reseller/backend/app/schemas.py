@@ -117,3 +117,14 @@ class UserResponse(UserBase):
 
     class Config:
         from_attributes = True
+
+
+class SetPasswordRequest(BaseModel):
+    token: str
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+class InvitePreviewResponse(BaseModel):
+    email: str
+    name: str
+    valid: bool
