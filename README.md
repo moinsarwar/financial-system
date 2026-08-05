@@ -13,13 +13,11 @@ Live site: [thecomparisonengine.com](https://thecomparisonengine.com) · Reselle
 | [qwenChat](./qwenChat/) | Read-only chatbot over finOS + reseller data | Frontend `9010`, API `9011` |
 | [adminPortal](./adminPortal/) | Central admin dashboard | See `adminPortal/README.md` |
 
-Helper scripts live under [`scripts/`](./scripts/) (AI Explain verify, Ollama systemd override, server sync helpers).
-
 ### Removed from this repo
 
-These projects were deleted from the monorepo (not part of the live stack):
+These were deleted from the monorepo (not part of the live stack):
 
-- `finCompare`, `tezQarza-Gateway`, `finVault`, `gateway`
+- `finCompare`, `tezQarza-Gateway`, `finVault`, `gateway`, `scripts/`
 - Root dump files (`*.csv`, `*.xlsx`, static `index.html`)
 
 Do not re-add bytecode (`__pycache__`), `node_modules/`, or `dist/` — they are gitignored.
@@ -67,7 +65,8 @@ Both **finOS AI Explain** and **qwenChat** expect Ollama on the host:
 
 ```bash
 ollama pull qwen2.5:1.5b
-# systemd: see scripts/ollama-override.conf (OLLAMA_HOST, parallel=1, keep_alive)
+# Recommended systemd env: OLLAMA_HOST=0.0.0.0:11434, OLLAMA_NUM_PARALLEL=1,
+# OLLAMA_MAX_LOADED_MODELS=1, OLLAMA_KEEP_ALIVE=-1
 ```
 
 Env knobs (finOS / qwenChat):
@@ -76,7 +75,7 @@ Env knobs (finOS / qwenChat):
 - `OLLAMA_MODEL` — default `qwen2.5:1.5b`
 - `OLLAMA_TIMEOUT` — finOS default `300` (SSE can run long on CPU)
 
-Quick check: `scripts/verify-ai-explain.sh`
+Health check: `GET /api/ai/health` on finOS (e.g. via `:3000`).
 
 ---
 
