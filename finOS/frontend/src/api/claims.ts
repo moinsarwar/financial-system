@@ -60,7 +60,7 @@ export async function getClaims(params?: {
   open_only?: boolean;
 }): Promise<Claim[]> {
   const { data } = await api.get<Claim[]>(
-    '/claims',
+    '/claims/',
     { params },
   );
 
@@ -81,7 +81,7 @@ export async function createClaim(
   claim: ClaimCreate,
 ): Promise<Claim> {
   const { data } = await api.post<Claim>(
-    '/claims',
+    '/claims/',
     claim,
   );
 

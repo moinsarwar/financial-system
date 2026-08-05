@@ -18,7 +18,7 @@ export async function getClients(params?: {
   search?: string;  
   department?: string;  
 }): Promise<Client[]> {  
-  const { data } = await api.get<Client[]>('/clients', { params });  
+  const { data } = await api.get<Client[]>('/clients/', { params });  
   return data;  
 }  
   
@@ -28,6 +28,6 @@ export async function getClient(id: string): Promise<Client> {
 }  
   
 export async function createClient(client: Omit<Client, 'id' | 'created_at' | 'last_activity' | 'engagement_score' | 'lifecycle_stage' | 'has_open_claim'>): Promise<Client> {  
-  const { data } = await api.post<Client>('/clients', client);  
+  const { data } = await api.post<Client>('/clients/', client);  
   return data;  
 }

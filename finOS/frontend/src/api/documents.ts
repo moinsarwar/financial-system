@@ -35,7 +35,7 @@ export async function getDocuments(params?: {
   department?: string;  
   ref_id?: string;
 }): Promise<Document[]> {  
-  const { data } = await api.get<Document[]>('/documents', { params });  
+  const { data } = await api.get<Document[]>('/documents/', { params });  
   return data;  
 }  
   

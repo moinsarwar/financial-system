@@ -20,6 +20,6 @@ export async function getActivity(params?: {
   event_type?: string;  
   limit?: number;  
 }): Promise<Activity[]> {  
-  const { data } = await api.get<Activity[]>('/activity', { params });  
+  const { data } = await api.get<Activity[]>('/activity/', { params });  
   return data;  
 }

@@ -23,7 +23,7 @@ export async function getProducts(params?: {
   status?: string;  
   department?: string;  
 }): Promise<Product[]> {  
-  const { data } = await api.get<Product[]>('/products', { params });  
+  const { data } = await api.get<Product[]>('/products/', { params });  
   return data;  
 }  
   

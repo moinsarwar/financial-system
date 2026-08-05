@@ -48,7 +48,7 @@ export async function getApplications(params?: {
   department?: string;
 }): Promise<Application[]> {
   const { data } = await api.get<Application[]>(
-    '/applications',
+    '/applications/',
     { params },
   );
 
@@ -69,7 +69,7 @@ export async function createApplication(
   application: ApplicationCreate,
 ): Promise<Application> {
   const { data } = await api.post<Application>(
-    '/applications',
+    '/applications/',
     application,
   );
 

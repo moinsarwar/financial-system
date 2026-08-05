@@ -1,5 +1,6 @@
 from fastapi import FastAPI  
 from fastapi.middleware.cors import CORSMiddleware  
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.api.routes import auth, clients, applications, claims, products, documents, activity, dashboard, admin_portal, ai  
 from app.core.database import get_db  
 from app.core.config import settings  
@@ -8,6 +9,9 @@ from fastapi import Depends
 from sqlalchemy import text  
   
 app = FastAPI(title="FinOS API", version="9.0")  
+
+# Trust X-Forwarded-Proto/Host from reverse proxies (host nginx / Caddy)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
   
 # CORS – configured from settings  
 app.add_middleware(  
