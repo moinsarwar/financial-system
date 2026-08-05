@@ -56,11 +56,11 @@ class OllamaService:
 
     def _options(self) -> dict[str, Any]:
         return {
-            "temperature": 0.15,
+            "temperature": 0.2,
             "top_p": 0.8,
-            "repeat_penalty": 1.15,
-            # Keep free-form chat short — CPU 3b is slow on this VPS
-            "num_predict": 280,
+            "repeat_penalty": 1.1,
+            "num_ctx": 2048,
+            "num_predict": 120,
         }
 
     async def chat(
@@ -73,6 +73,8 @@ class OllamaService:
             "model": self.model,
             "messages": self._messages(user_message, history, context),
             "stream": False,
+            "think": False,
+            "keep_alive": -1,
             "options": self._options(),
         }
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -91,6 +93,8 @@ class OllamaService:
             "model": self.model,
             "messages": self._messages(user_message, history, context),
             "stream": True,
+            "think": False,
+            "keep_alive": -1,
             "options": self._options(),
         }
         async with httpx.AsyncClient(timeout=self.timeout) as client:

@@ -18,7 +18,11 @@ class Settings(BaseSettings):
         "http://localhost:3000",  
         "http://localhost",
         "file://"
-    ]  
+    ]
+
+    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
+    OLLAMA_MODEL: str = "qwen2.5:1.5b"
+    OLLAMA_TIMEOUT: float = 300.0
   
     model_config = SettingsConfigDict(  
         env_file=".env",  

@@ -1746,7 +1746,14 @@
             rules: [],
             decisionEngineMode: 'Balanced',
             fraudResults: null,
-            editingProductId: null
+            editingProductId: null,
+            aiExplain: {
+                key: null,
+                status: 'idle',
+                html: '',
+                text: '',
+                abort: null
+            }
         };
 
         // ============================================================
@@ -1888,7 +1895,7 @@
                 if (pass) eligible.push(p);
                 else excluded.push({ product: p, reasons });
             });
-            state.filteredProducts = eligible;
+            state.filteredProducts = rankEligibleProducts(eligible, state.intent);
             state.excludedProducts = excluded;
             logAudit(`Eligibility executed: ${eligible.length} eligible, ${excluded.length} excluded (mode: ${mode})`);
         }
@@ -1922,7 +1929,7 @@
             renderDecisionTrace();
             renderLenderCompare();
             renderCatalogueTable();
-            renderAIExplanation(eligible, excluded);
+            ensureAIExplanation();
             renderFraudChecks();
             renderAdminContent();
         }
@@ -2026,17 +2033,81 @@
         function renderMatrix(eligible) {
             const container = document.getElementById('matrixContainer');
             if (eligible.length === 0) { container.innerHTML = '<p>No products to compare.</p>'; return; }
-            const allFeatures = new Set();
-            eligible.forEach(p => p.features.forEach(f => allFeatures.add(f)));
-            const list = Array.from(allFeatures);
-            let html = `<div class="enterprise-table-wrap"><table class="enterprise-table"><thead><tr><th>Feature</th>${eligible.map(p => `<th>${p.provider}<br><span style="font-weight:400;font-size:11px;">${p.name}</span></th>`).join('')}</tr></thead><tbody>`;
-            html += `<tr><td><strong>Cost</strong></td>${eligible.map(p => `<td>${p.annualCost || p.monthlyCost} ${p.pricing.currency}</td>`).join('')}</tr>`;
-            list.forEach(f => { html += `<tr><td>${f}</td>${eligible.map(p => `<td>${p.features.includes(f) ? '✅' : '❌'}</td>`).join('')}</tr>`; });
-            html += `<tr><td><strong>Sharia</strong></td>${eligible.map(p => `<td>${p.compliance.sharia ? '✅' : '❌'}</td>`).join('')}</tr>`;
-            html += `<tr><td><strong>Rating</strong></td>${eligible.map(p => `<td>${'★'.repeat(p.rating || 4)}</td>`).join('')}</tr>`;
-            html += `<tr><td><strong>Version</strong></td>${eligible.map(p => `<td style="font-size:11px;">v${p.catalogueVersion}</td>`).join('')}</tr>`;
+            const ranked = rankEligibleProducts(eligible, state.intent);
+            const cols = ranked.slice(0, 10);
+            const featureNames = collectMatrixFeatureNames(cols);
+            let html = `<div class="enterprise-table-wrap"><table class="enterprise-table"><thead><tr><th>Feature</th>${cols.map(p => `<th>${p.provider}<br><span style="font-weight:400;font-size:11px;">${escapeHtml(p.name)}</span></th>`).join('')}</tr></thead><tbody>`;
+            html += `<tr><td><strong>Cost</strong></td>${cols.map(p => `<td style="font-size:11px;line-height:1.35;">${escapeHtml(costSummaryForProduct(p))}</td>`).join('')}</tr>`;
+            featureNames.forEach(f => {
+                html += `<tr><td>${escapeHtml(f)}</td>${cols.map(p => `<td>${productHasMatrixFeature(p, f) ? '✅' : '❌'}</td>`).join('')}</tr>`;
+            });
+            html += `<tr><td><strong>Sharia</strong></td>${cols.map(p => `<td>${p.compliance && p.compliance.sharia ? '✅' : '❌'}</td>`).join('')}</tr>`;
+            html += `<tr><td><strong>Rating</strong></td>${cols.map(p => `<td>${'★'.repeat(p.rating || 4)}</td>`).join('')}</tr>`;
+            html += `<tr><td><strong>Version</strong></td>${cols.map(p => `<td style="font-size:11px;">v${p.catalogueVersion}</td>`).join('')}</tr>`;
             html += `</tbody></table></div>`;
             container.innerHTML = html;
+        }
+
+        function normalizeMatrixFeatureLabel(raw) {
+            if (!raw) return '';
+            const s = String(raw).trim();
+            // "Free Chequebook: First chequebook free" -> "Free Chequebook"
+            const idx = s.indexOf(':');
+            if (idx > 0 && idx < 60) return s.slice(0, idx).trim();
+            return s;
+        }
+
+        function isNoiseMatrixFeature(label) {
+            const l = String(label || '').toLowerCase();
+            return !l || l === 'product name' || l.startsWith('product name');
+        }
+
+        function productMatrixFeatureLabels(p) {
+            const out = [];
+            (p.matrixFeatures || p.features || []).forEach(f => {
+                const label = normalizeMatrixFeatureLabel(f);
+                if (!isNoiseMatrixFeature(label)) out.push(label);
+            });
+            return out;
+        }
+
+        function collectMatrixFeatureNames(products) {
+            const set = new Set();
+            (products || []).forEach(p => productMatrixFeatureLabels(p).forEach(f => set.add(f)));
+            return Array.from(set);
+        }
+
+        function productHasMatrixFeature(p, featureName) {
+            const target = String(featureName || '').toLowerCase();
+            return productMatrixFeatureLabels(p).some(f => f.toLowerCase() === target);
+        }
+
+        /** Matrix-tab style comparison payload for AI (category-specific features + cost). */
+        function buildMatrixComparisonForAI(eligible) {
+            const ranked = rankEligibleProducts(eligible || [], state.intent).slice(0, 8);
+            const featureNames = collectMatrixFeatureNames(ranked);
+            return {
+                category: state.intent,
+                note: 'This is the Matrix tab comparison. Features differ by category. Use Cost row plus feature checkmarks to compare.',
+                products: ranked.map((p, i) => ({
+                    rank: i + 1,
+                    id: p.id,
+                    name: p.name,
+                    provider: p.provider,
+                    cost: costSummaryForProduct(p),
+                    sharia: !!(p.compliance && p.compliance.sharia),
+                    features_yes: featureNames.filter(f => productHasMatrixFeature(p, f)),
+                    features_no: featureNames.filter(f => !productHasMatrixFeature(p, f))
+                })),
+                feature_matrix: featureNames.map(f => ({
+                    feature: f,
+                    presence: ranked.map(p => ({
+                        product: p.name,
+                        provider: p.provider,
+                        has: productHasMatrixFeature(p, f)
+                    }))
+                }))
+            };
         }
 
         function renderOverview(eligible, excluded) {
@@ -2116,27 +2187,394 @@
         }
 
         // ============================================================
-        // 9. AI EXPLANATION
+        // 9. AI EXPLANATION (prefetch on eligibility, cache until refresh)
         // ============================================================
-        function renderAIExplanation(eligible, excluded) {
-            const container = document.getElementById('aiExplanation');
-            if (eligible.length === 0 && excluded.length === 0) {
-                container.innerHTML = '<p>Run eligibility to see AI explanations.</p>';
-                return;
+        function currencyForJurisdiction(jurisdiction) {
+            const map = { PK: 'PKR', UAE: 'AED', AE: 'AED', KSA: 'SAR', SA: 'SAR', US: 'USD', UK: 'GBP', GB: 'GBP' };
+            return map[(jurisdiction || 'PK').toUpperCase()] || 'PKR';
+        }
+
+        function formatIncomeBandLabel(band, currency) {
+            const labels = {
+                '<50k': `under ${currency} 50,000`,
+                '50k-100k': `${currency} 50,000 – 100,000`,
+                '100k-250k': `${currency} 100,000 – 250,000`,
+                '>250k': `over ${currency} 250,000`
+            };
+            return labels[band] || `${currency} (${band || 'n/a'})`;
+        }
+
+        function parseRatePercent(val) {
+            if (val == null || val === '') return null;
+            const s = String(val).toLowerCase();
+            if (s.includes('n/a') || s.includes('varies') || s.includes('not available')) return null;
+            const m = s.replace(/,/g, '').match(/-?\d+(\.\d+)?/);
+            return m ? parseFloat(m[0]) : null;
+        }
+
+        function parseMoneyAmount(val) {
+            if (val == null || val === '') return null;
+            const s = String(val).toLowerCase();
+            if (s.includes('n/a') || s.includes('varies') || s.includes('not ')) return null;
+            const m = s.replace(/,/g, '').match(/(\d+(\.\d+)?)/);
+            return m ? parseFloat(m[1]) : null;
+        }
+
+        function rankingRuleForIntent(intent) {
+            switch (intent) {
+                case 'savings':
+                    return 'Savings Cost column: highest Profit Rate wins; if tied, lowest Maintenance Fee wins. Skip products without numeric Profit Rate when better numeric options exist.';
+                case 'credit_card':
+                    return 'Credit card Cost column: lowest APR wins; if tied, lowest Annual Fee wins. Never prefer missing/N/A APR over a real APR.';
+                case 'personal_loan':
+                    return 'Personal loan Cost column: lowest APR wins; if tied, lowest Processing Fee wins. Prefer products with numeric APR.';
+                case 'health_insurance':
+                    return 'Health insurance Cost column: highest Coverage Limit wins (Annual Premium often varies by age). Prefer clear numeric Coverage Limit.';
+                case 'motor_insurance':
+                    return 'Motor insurance Cost column: lowest Premium Rate (% of vehicle value) wins.';
+                case 'life_insurance':
+                    return 'Life insurance Cost column: highest Death Benefit wins (Annual Premium often varies by age). Prefer clear numeric Death Benefit.';
+                default:
+                    return 'Use this category Cost column metrics and recommend the commercially strongest eligible product.';
             }
+        }
+
+        function costSummaryForProduct(p) {
+            const pr = p.pricing || {};
+            const type = p.type;
+            if (type === 'savings') {
+                return `Profit Rate: ${p.profitRate || pr.profit_rate || 'n/a'}; Maintenance Fee: ${p.maintenanceFee || pr.maintenance_fee || 'n/a'}`;
+            }
+            if (type === 'credit_card') {
+                return `APR: ${p.apr || pr.apr || 'n/a'}; Annual Fee: ${p.annualFee || pr.annual_fee || 'n/a'}`;
+            }
+            if (type === 'personal_loan') {
+                return `APR: ${p.apr || pr.apr || 'n/a'}; Processing Fee: ${p.processingFee || pr.processing_fee || 'n/a'}`;
+            }
+            if (type === 'health_insurance') {
+                return `Annual Premium: ${p.annualPremium || pr.annual_premium || 'n/a'}; Coverage Limit: ${p.coverageLimit || pr.coverage_limit || 'n/a'}`;
+            }
+            if (type === 'motor_insurance') {
+                return `Premium Rate: ${p.premiumRate || pr.premium_rate || 'n/a'}`;
+            }
+            if (type === 'life_insurance') {
+                return `Death Benefit: ${p.deathBenefit || pr.death_benefit || 'n/a'}; Annual Premium: ${p.annualPremium || pr.annual_premium || 'n/a'}`;
+            }
+            return Object.entries(pr).map(([k, v]) => `${k}: ${v}`).join('; ') || 'n/a';
+        }
+
+        /** Higher score = better commercial fit using category Cost-column rules. */
+        function scoreProductForIntent(p, intent) {
+            const type = intent || p.type;
+            const MISSING = -1e15;
+            const pr = p.pricing || {};
+
+            if (type === 'savings') {
+                const profit = parseRatePercent(p.profitRate ?? pr.profit_rate);
+                if (profit == null) return MISSING;
+                const fee = parseMoneyAmount(p.maintenanceFee ?? pr.maintenance_fee) ?? 0;
+                return profit * 1e6 - fee;
+            }
+            if (type === 'credit_card') {
+                const apr = parseRatePercent(p.apr ?? pr.apr);
+                if (apr == null) return MISSING;
+                const fee = parseMoneyAmount(p.annualFee ?? pr.annual_fee) ?? 0;
+                return -apr * 1e6 - fee;
+            }
+            if (type === 'personal_loan') {
+                const apr = parseRatePercent(p.apr ?? pr.apr);
+                if (apr == null) return MISSING;
+                const fee = parseMoneyAmount(p.processingFee ?? pr.processing_fee) ?? 0;
+                return -apr * 1e6 - fee;
+            }
+            if (type === 'health_insurance') {
+                const coverage = parseMoneyAmount(p.coverageLimit ?? pr.coverage_limit);
+                if (coverage == null) return MISSING;
+                return coverage;
+            }
+            if (type === 'motor_insurance') {
+                const rate = parseRatePercent(p.premiumRate ?? pr.premium_rate);
+                if (rate == null) return MISSING;
+                return -rate * 1e6;
+            }
+            if (type === 'life_insurance') {
+                const benefit = parseMoneyAmount(p.deathBenefit ?? pr.death_benefit);
+                if (benefit == null) return MISSING;
+                return benefit;
+            }
+            return MISSING / 2;
+        }
+
+        function rankEligibleProducts(eligible, intent) {
+            return [...(eligible || [])].sort(
+                (a, b) => scoreProductForIntent(b, intent) - scoreProductForIntent(a, intent)
+            );
+        }
+
+        function productDetailForAI(p, rank) {
+            const pr = p.pricing || {};
+            return {
+                rank,
+                id: p.id,
+                name: p.name,
+                provider: p.provider,
+                type: p.type,
+                completeness: p.completeness,
+                cost_summary: costSummaryForProduct(p),
+                profitRate: p.profitRate || pr.profit_rate || null,
+                maintenanceFee: p.maintenanceFee || pr.maintenance_fee || null,
+                apr: p.apr || pr.apr || null,
+                annualFee: p.annualFee || pr.annual_fee || null,
+                processingFee: p.processingFee || pr.processing_fee || null,
+                coverageLimit: p.coverageLimit || pr.coverage_limit || null,
+                annualPremium: p.annualPremium || pr.annual_premium || null,
+                premiumRate: p.premiumRate || pr.premium_rate || null,
+                deathBenefit: p.deathBenefit || pr.death_benefit || null,
+                markup: p.markup || null,
+                fee: p.fee || null,
+                monthlyCost: p.monthlyCost,
+                annualCost: p.annualCost,
+                sharia: !!(p.compliance && p.compliance.sharia),
+                features: (p.features || []).slice(0, 6),
+                eligibility: p.eligibility || null,
+                pricing: pr,
+                status: p.status || null,
+                dataFreshness: p.dataFreshness || null
+            };
+        }
+
+        function buildTemplateAIExplanation(eligible, excluded) {
+            const currency = currencyForJurisdiction(state.jurisdiction);
+            const incomeLabel = formatIncomeBandLabel(state.incomeBand, currency);
+            const ranked = rankEligibleProducts(eligible, state.intent);
             let html = '<div style="font-size:14px;line-height:1.6;">';
-            if (eligible.length > 0) {
-                const top = eligible[0];
-                html += `<p><strong>✅ Recommendation:</strong> We recommend <strong>${top.name}</strong> from ${top.provider} because your age (${state.age}) and income (${state.incomeBand}) match the eligibility criteria. The product has an evidence confidence of ${top.completeness}% and offers ${top.profitRate || top.apr || 'competitive'} pricing.</p>`;
-                if (eligible.length > 1) {
-                    html += `<p><strong>Alternative:</strong> ${eligible[1].name} from ${eligible[1].provider} is also suitable.</p>`;
+            if (ranked.length > 0) {
+                const top = ranked[0];
+                const cost = costSummaryForProduct(top);
+                html += `<p><strong>✅ Recommendation:</strong> We recommend <strong>${top.name}</strong> from ${top.provider} as the best eligible option using this category Cost metrics (${cost}). Your age (${state.age}) and income (${incomeLabel}) meet eligibility (${currency}).</p>`;
+                if (ranked.length > 1) {
+                    const alt = ranked[1];
+                    html += `<p><strong>Alternative:</strong> ${alt.name} from ${alt.provider} (${costSummaryForProduct(alt)}).</p>`;
                 }
             }
             if (excluded.length > 0) {
-                html += `<p><strong>❌ Exclusions:</strong> ${excluded.length} products were filtered out. The main reasons are: ${excluded.slice(0, 3).map(e => e.reasons.join(', ')).join('; ')}.</p>`;
+                html += `<p><strong>❌ Exclusions:</strong> ${excluded.length} products were filtered out. The main reasons are: ${excluded.slice(0, 3).map(e => (e.reasons || []).join(', ')).join('; ')}.</p>`;
             }
             html += '</div>';
-            container.innerHTML = html;
+            return html;
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function formatExplanationText(text) {
+            const paras = String(text).trim().split(/\n{2,}/).filter(Boolean);
+            if (paras.length === 0) return '';
+            return '<div style="font-size:14px;line-height:1.6;">' +
+                paras.map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('') +
+                '</div>';
+        }
+
+        function normalizeExcludedForAI(excluded) {
+            return (excluded || []).map(e => {
+                if (e && e.product) return { ...e.product, reasons: e.reasons || [] };
+                return e;
+            });
+        }
+
+        function aiExplainCacheKey(eligible, excluded) {
+            const eids = (eligible || []).slice(0, 5).map(p => p.id).join(',');
+            const xids = normalizeExcludedForAI(excluded).slice(0, 5).map(p => p.id).join(',');
+            return [
+                state.intent,
+                state.age,
+                state.incomeBand,
+                state.jurisdiction,
+                state.decisionEngineMode,
+                eids,
+                xids
+            ].join('|');
+        }
+
+        function showAIExplanationInUi() {
+            const container = document.getElementById('aiExplanation');
+            if (!container) return;
+            if (state.aiExplain.status === 'loading') {
+                container.innerHTML = state.aiExplain.html ||
+                    '<p style="color:var(--gray-600);">Generating explanation…</p>';
+                return;
+            }
+            if (state.aiExplain.status === 'ready' && state.aiExplain.html) {
+                container.innerHTML = state.aiExplain.html;
+                return;
+            }
+            container.innerHTML = '<p>Run eligibility to see AI explanations.</p>';
+        }
+
+        function clearAIExplanationCache() {
+            if (state.aiExplain.abort) {
+                try { state.aiExplain.abort.abort(); } catch (_) { /* ignore */ }
+            }
+            state.aiExplain = { key: null, status: 'idle', html: '', text: '', abort: null };
+            showAIExplanationInUi();
+        }
+
+        /** Prefetch after eligibility; reuse cache when revisiting the tab. */
+        async function ensureAIExplanation() {
+            const eligible = state.filteredProducts || [];
+            const excludedRaw = state.excludedProducts || [];
+            const excluded = normalizeExcludedForAI(excludedRaw);
+
+            if (eligible.length === 0 && excluded.length === 0) {
+                clearAIExplanationCache();
+                return;
+            }
+
+            const key = aiExplainCacheKey(eligible, excludedRaw);
+            if (
+                state.aiExplain.key === key &&
+                (state.aiExplain.status === 'ready' || state.aiExplain.status === 'loading')
+            ) {
+                showAIExplanationInUi();
+                return;
+            }
+
+            if (state.aiExplain.abort) {
+                try { state.aiExplain.abort.abort(); } catch (_) { /* ignore */ }
+            }
+
+            const controller = new AbortController();
+            const loadingHtml = '<p style="color:var(--gray-600);">Generating explanation…</p>';
+            state.aiExplain = {
+                key,
+                status: 'loading',
+                html: loadingHtml,
+                text: '',
+                abort: controller
+            };
+            showAIExplanationInUi();
+
+            const fallbackHtml = buildTemplateAIExplanation(eligible, excluded);
+            const applyResult = (html, text, status) => {
+                if (state.aiExplain.key !== key) return;
+                state.aiExplain.status = status;
+                state.aiExplain.html = html;
+                state.aiExplain.text = text || '';
+                state.aiExplain.abort = null;
+                showAIExplanationInUi();
+            };
+
+            const ranked = rankEligibleProducts(eligible, state.intent);
+            const detailedEligible = ranked.slice(0, 8).map((p, i) => productDetailForAI(p, i + 1));
+            const best = detailedEligible[0] || null;
+            const rankingRule = rankingRuleForIntent(state.intent);
+            const matrixComparison = buildMatrixComparisonForAI(eligible);
+
+            const payload = {
+                intent: state.intent,
+                age: state.age,
+                income_band: state.incomeBand,
+                jurisdiction: state.jurisdiction || 'PK',
+                currency: currencyForJurisdiction(state.jurisdiction || 'PK'),
+                ranking_rule: rankingRule,
+                recommended_product_id: best ? best.id : null,
+                recommended_product_name: best ? best.name : null,
+                recommended_provider: best ? best.provider : null,
+                recommended_reason: best
+                    ? `Rank #1 by Cost-column rules. ${rankingRule} Cost: ${best.cost_summary}`
+                    : null,
+                top_eligible: detailedEligible,
+                matrix_comparison: matrixComparison,
+                excluded_sample: excluded.slice(0, 5).map((p, i) => ({
+                    rank: i + 1,
+                    id: p.id,
+                    name: p.name,
+                    provider: p.provider,
+                    type: p.type,
+                    cost_summary: costSummaryForProduct(p),
+                    profitRate: p.profitRate || null,
+                    apr: p.apr || null,
+                    reasons: p.reasons || []
+                })),
+                stream: true
+            };
+
+            try {
+                const timeoutId = setTimeout(() => controller.abort(), 300000);
+                const res = await fetch('/api/ai/explain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                const reader = res.body?.getReader();
+                if (!reader) throw new Error('No response body');
+
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let text = '';
+                let gotToken = false;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    if (state.aiExplain.key !== key) return;
+                    buffer += decoder.decode(value, { stream: true });
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop() || '';
+                    for (const part of parts) {
+                        const lines = part.split('\n');
+                        for (const line of lines) {
+                            if (!line.startsWith('data: ')) continue;
+                            const data = line.slice(6).trim();
+                            if (data === '[DONE]') continue;
+                            try {
+                                const obj = JSON.parse(data);
+                                if (obj.error) throw new Error(obj.error);
+                                if (obj.token) {
+                                    gotToken = true;
+                                    text += obj.token;
+                                    const html = formatExplanationText(text) ||
+                                        `<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;">${escapeHtml(text)}</div>`;
+                                    state.aiExplain.html = html;
+                                    state.aiExplain.text = text;
+                                    showAIExplanationInUi();
+                                }
+                            } catch (parseErr) {
+                                if (parseErr.message && !parseErr.message.includes('JSON')) throw parseErr;
+                            }
+                        }
+                    }
+                }
+
+                if (!gotToken || !text.trim()) {
+                    applyResult(fallbackHtml, '', 'ready');
+                } else {
+                    applyResult(
+                        formatExplanationText(text) ||
+                        `<div style="font-size:14px;line-height:1.6;white-space:pre-wrap;">${escapeHtml(text)}</div>`,
+                        text,
+                        'ready'
+                    );
+                }
+            } catch (err) {
+                if (err && err.name === 'AbortError') return;
+                console.warn('AI explain failed, using template fallback:', err);
+                applyResult(fallbackHtml, '', 'ready');
+            }
+        }
+
+        function renderAIExplanation() {
+            showAIExplanationInUi();
         }
 
         // ============================================================
@@ -2617,7 +3055,7 @@
             if (tab === 'lender_compare') renderLenderCompare();
             if (tab === 'products' || tab === 'matrix' || tab === 'overview') renderWorkspace();
             if (tab === 'catalogue') renderCatalogueTable();
-            if (tab === 'ai_explain') renderAIExplanation(state.filteredProducts, state.excludedProducts);
+            if (tab === 'ai_explain') showAIExplanationInUi();
             if (tab === 'fraud') renderFraudChecks();
             if (tab === 'admin') renderAdminContent();
             if (tab === 'rules_builder') { /* already rendered */ }
@@ -2872,6 +3310,7 @@
             state.consentTimestamp = null;
             state.fraudResults = null;
             state.rules = [];
+            clearAIExplanationCache();
             state.kyc = { cnicFront: null, cnicBack: null, drivingLicence: null, utilityBill: null };
             state.fraudStatus = 'pending';
             state.riskAssessment = 'pending';
@@ -2927,6 +3366,11 @@
                             PRODUCTS = prodData.products.map(p => {
                                 const pr = p.pricing || {};
                                 const el = p.eligibility_rules || {};
+                                const feats = Array.isArray(p.features) ? p.features : [];
+                                const named = feats.find(f => String(f.name || '').toLowerCase() === 'product name');
+                                const displayName = (named && named.details)
+                                    ? String(named.details)
+                                    : ((p.provider_id || 'Product') + ' ' + String(p.product_type || 'Product').replace(/_/g, ' '));
 
                                 let uiType = 'unknown';
                                 let pt = (p.product_type || '').toLowerCase();
@@ -2937,14 +3381,34 @@
                                 else if (pt.includes('motor')) uiType = 'motor_insurance';
                                 else if (pt.includes('life')) uiType = 'life_insurance';
 
+                                const profitRate = pr.profit_rate || pr.profitRate || pr.rate || null;
+                                const apr = pr.apr || pr.interest_rate || pr.interestRate || null;
+                                const markup = pr.markup || null;
+                                const maintenanceFee = pr.maintenance_fee || pr.maintenanceFee || null;
+                                const annualFee = pr.annual_fee || pr.annualFee || null;
+                                const processingFee = pr.processing_fee || pr.processingFee || null;
+                                const coverageLimit = pr.coverage_limit || pr.coverageLimit || null;
+                                const annualPremium = pr.annual_premium || pr.annualPremium || null;
+                                const premiumRate = pr.premium_rate || pr.premiumRate || null;
+                                const deathBenefit = pr.death_benefit || pr.deathBenefit || null;
+                                const fee = pr.fee || maintenanceFee || annualFee || processingFee || null;
+
+                                const rawFeats = feats.filter(f => String(f.name || '').toLowerCase() !== 'product name');
+                                const matrixFeatures = rawFeats.map(f => (f.name || '').trim()).filter(Boolean);
+                                const featureLabels = rawFeats.map(f => {
+                                    if (!f.name) return JSON.stringify(f);
+                                    return f.details ? `${f.name}: ${f.details}` : f.name;
+                                });
+
                                 return {
                                     id: p.product_id,
                                     provider: p.provider_id || 'System Provider',
-                                    name: p.provider_id + ' ' + (p.product_type || 'Product').replace('_', ' ').toUpperCase(),
+                                    name: displayName,
                                     type: uiType,
                                     jurisdiction: p.jurisdiction || ['PK'],
                                     pricing: pr,
-                                    features: p.features ? p.features.map(f => f.name || JSON.stringify(f)) : [],
+                                    features: featureLabels,
+                                    matrixFeatures: matrixFeatures,
                                     compliance: { sharia: p.compliance ? (p.compliance.sharia === true || p.compliance.sharia_certified === true) : false },
                                     eligibility: {
                                         minAge: p.eligibility_rules ? (p.eligibility_rules.min_age || p.eligibility_rules.minAge || 18) : 18,
@@ -2953,6 +3417,17 @@
                                     },
                                     monthlyCost: pr.max_amount ? Math.round(pr.max_amount / 100) : 0,
                                     annualCost: pr.max_amount ? Math.round(pr.max_amount / 10) : 0,
+                                    profitRate: profitRate,
+                                    apr: apr,
+                                    markup: markup,
+                                    fee: fee,
+                                    maintenanceFee: maintenanceFee,
+                                    annualFee: annualFee,
+                                    processingFee: processingFee,
+                                    coverageLimit: coverageLimit,
+                                    annualPremium: annualPremium,
+                                    premiumRate: premiumRate,
+                                    deathBenefit: deathBenefit,
                                     trustBadges: ['Live DB Product'],
                                     rating: 4,
                                     completeness: 90,

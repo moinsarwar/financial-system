@@ -27,6 +27,11 @@ services:
       - SEED_DEMO_DATA=false  
       - CORS_ORIGINS=${CORS_ORIGINS}  
       - UPLOAD_ROOT=/app/uploads  
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:1.5b}
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     expose:  
       - "8000"  
     healthcheck:  

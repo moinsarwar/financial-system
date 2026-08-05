@@ -1,0 +1,1 @@
+{"model":"qwen3:4b-instruct","messages":[{"role":"user","content":"Say hello in one word"}],"stream":false,"think":false,"keep_alive":-1,"options":{"num_predict":30}}
