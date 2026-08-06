@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>FinOS v7.1 – Board-Ready Decision OS</title>
+    <title>FinOS v7.2 – Board-Ready Decision OS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1975,7 +1975,7 @@
                 <div>
                     <div class="name">The Comparison Engine</div>
                     <div class="meta">
-                        <span class="version">v7.1</span>
+                        <span class="version">v7.2</span>
                         <span class="tagline">– Enterprise OS</span>
                     </div>
                 </div>
@@ -2888,7 +2888,7 @@
 
         const CONFIG = {
             WHITE_LABEL_PROVIDER: 'HBL',
-            ENGINE_VERSION: '7.1-Enterprise',
+            ENGINE_VERSION: '7.2-Enterprise',
             SESSION_ID: sessionStorage.getItem('finos_session') || 'sess_' + Math.random().toString(36).substring(2, 10),
             CORRELATION_ID: 'corr_' + Math.random().toString(36).substring(2, 10),
             OPERATOR: 'admin@finos',
@@ -4792,7 +4792,7 @@
                             const totalCount = prodData.total || prodData.products.length;
                             const countElem = document.getElementById('totalProductsCount');
                             if (countElem) {
-                                countElem.innerHTML = `· v7.1 · Board‑Ready · ${totalCount} Products`;
+                                countElem.innerHTML = `· v7.2 · Board‑Ready · ${totalCount} Products`;
                             }
                             PRODUCTS = prodData.products.map(p => {
                                 const pr = p.pricing || {};
@@ -4892,7 +4892,7 @@
             logAudit('System initialised (Pakistan Enterprise)');
             transitionTo('requirements');
             renderTceComparisonDashboard();
-            console.log('🚀 FinOS v7.1 – Board-Ready Decision OS (API integrated)');
+            console.log('🚀 FinOS v7.2 – Board-Ready Decision OS (API integrated)');
             console.log(`   Session: ${CONFIG.SESSION_ID}`);
             console.log(`   Engine: ${CONFIG.ENGINE_VERSION}`);
             console.log(`   KIBOR: ${CONFIG.KIBOR_6M}%`);
