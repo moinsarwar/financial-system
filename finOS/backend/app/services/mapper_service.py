@@ -21,7 +21,8 @@ def map_claim_response(
         "client_name": client.name if client else "",
         "product_type": claim.product_type,
         "product_label": claim.product_label,
-        "policy_id": claim.policy_id,
+        # Frontend uses a single policy_id field for either policy or holding coverage
+        "policy_id": claim.policy_id or claim.holding_id or "",
         "type": claim.type,
         "amount": claim.amount,
         "currency": claim.currency,

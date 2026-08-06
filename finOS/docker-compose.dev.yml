@@ -24,12 +24,23 @@ services:
     volumes:  
       - ./backend:/app  
       - document_uploads:/app/uploads  
+    env_file:  
+      - .env  
     environment:  
       - DATABASE_URL=postgresql://${POSTGRES_USER:-finos}:${POSTGRES_PASSWORD:-finos123}@db:5432/${POSTGRES_DB:-finos}  
       - SECRET_KEY=${SECRET_KEY:-dev_secret_key_change_me_123456789}  
       - ENVIRONMENT=development  
       - SEED_DEMO_DATA=true  
       - UPLOAD_ROOT=/app/uploads  
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}  
+      - MAIL_HOST=${MAIL_HOST:-}  
+      - MAIL_PORT=${MAIL_PORT:-587}  
+      - MAIL_USERNAME=${MAIL_USERNAME:-}  
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}  
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-tls}  
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@thecomparisonengine.com}  
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-The Comparison Engine}  
+      - INVITE_TOKEN_HOURS=${INVITE_TOKEN_HOURS:-72}  
     ports:  
       - "8000:8000"  
     depends_on:  

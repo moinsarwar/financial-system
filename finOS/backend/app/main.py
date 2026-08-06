@@ -2,12 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware  
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.api.routes import auth, clients, applications, claims, products, documents, activity, dashboard, admin_portal, ai  
-from app.core.database import get_db  
+from app.core.database import get_db, engine  
 from app.core.config import settings  
+from app.schema_migrate import ensure_schema
 from sqlalchemy.orm import Session  
 from fastapi import Depends  
 from sqlalchemy import text  
   
+ensure_schema(engine)
+
 app = FastAPI(title="FinOS API", version="9.0")  
 
 # Trust X-Forwarded-Proto/Host from reverse proxies (host nginx / Caddy)

@@ -2723,6 +2723,14 @@
 
                 <!-- Original Application fields -->
                 <div style="background:var(--gray-50);padding:20px;border-radius:var(--radius-md);">
+                    <div class="form-group"><label>First name</label><input type="text" id="applicantFirstName"
+                            placeholder="e.g. Ali"></div>
+                    <div class="form-group"><label>Last name</label><input type="text" id="applicantLastName"
+                            placeholder="e.g. Khan"></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="applicantEmail"
+                            placeholder="e.g. ali@example.com"></div>
+                    <div class="form-group"><label>Phone</label><input type="tel" id="applicantPhone"
+                            placeholder="e.g. +92 300 1234567"></div>
                     <div class="form-group"><label>CNIC / National ID</label><input type="text" id="nationalId"
                             placeholder="e.g. 12345-6789012-3"></div>
                     <div class="form-group"><label>IBAN</label><input type="text" id="ibanInput"
@@ -4609,9 +4617,15 @@
         }
 
         async function submitApplication() {
+            const firstName = document.getElementById('applicantFirstName').value.trim();
+            const lastName = document.getElementById('applicantLastName').value.trim();
+            const email = document.getElementById('applicantEmail').value.trim();
+            const phone = document.getElementById('applicantPhone').value.trim();
             const id = document.getElementById('nationalId').value.trim();
             const iban = document.getElementById('ibanInput').value.trim();
-            if (!id || !iban) return showToast('Please fill in all fields.', 'error');
+            if (!firstName || !lastName || !email || !id || !iban) {
+                return showToast('Please fill in name, email, CNIC and IBAN.', 'error');
+            }
             // Check KYC uploads
             const uploaded = Object.values(state.kyc).filter(v => v !== null).length;
             if (uploaded < 4) {
@@ -4638,6 +4652,10 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        first_name: firstName,
+                        last_name: lastName,
+                        email: email,
+                        phone: phone || null,
                         nationalId: id,
                         iban: iban,
                         products: productsPayload,
@@ -4646,18 +4664,31 @@
                     })
                 });
                 const data = await res.json();
+                if (!res.ok) {
+                    const detail = data.detail;
+                    const msg = Array.isArray(detail)
+                        ? detail.map(d => d.msg || d.type).join(', ')
+                        : (detail || 'Submit failed');
+                    showToast(msg, 'error');
+                    return;
+                }
                 if (data.application_id) {
                     state.applicationId = data.application_id;
                 }
+                let inviteNote = '';
+                if (data.user_created && data.invite_email_sent) {
+                    inviteNote = ' Check your email to set your password.';
+                } else if (data.user_created && !data.invite_email_sent) {
+                    inviteNote = ' Account created (invite email skipped — SMTP not configured).';
+                }
+                logAudit('Application submitted with KYC docs');
+                document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution (${data.application_id}). KYC complete. Fraud: ${state.fraudStatus}, Risk: ${state.riskAssessment}${inviteNote}</div>`;
+                showToast('Application submitted!' + inviteNote, 'success');
+                setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1500);
             } catch (e) {
                 console.error(e);
+                showToast('Submit failed. Please try again.', 'error');
             }
-
-            logAudit('Application submitted with KYC docs');
-            document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution. KYC complete. Fraud: ${state.fraudStatus}, Risk: ${state.riskAssessment}</div>`;
-            showToast('Application submitted!', 'success');
-            // Redirect to tracking after delay
-            setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1500);
         }
 
         function renderTracking() {
@@ -4723,6 +4754,10 @@
             document.getElementById('jurisdictionSelect').value = 'PK';
             document.getElementById('nationalId').value = '';
             document.getElementById('ibanInput').value = '';
+            if (document.getElementById('applicantFirstName')) document.getElementById('applicantFirstName').value = '';
+            if (document.getElementById('applicantLastName')) document.getElementById('applicantLastName').value = '';
+            if (document.getElementById('applicantEmail')) document.getElementById('applicantEmail').value = '';
+            if (document.getElementById('applicantPhone')) document.getElementById('applicantPhone').value = '';
             document.getElementById('consentCheck').checked = false;
             document.getElementById('consentTimestamp').textContent = '—';
             document.getElementById('executionResult').innerHTML = '';

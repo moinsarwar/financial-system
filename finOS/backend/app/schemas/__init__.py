@@ -15,6 +15,16 @@ class TokenResponse(BaseModel):
     full_name: str  
     role: str  
     client_id: Optional[str] = None  
+
+class SetPasswordRequest(BaseModel):
+    token: str
+    password: str = Field(..., min_length=8, max_length=128)
+
+class InvitePreviewResponse(BaseModel):
+    email: str
+    name: str
+    valid: bool
+
   
 # ---------- Client ----------  
 class ClientBase(BaseModel):  

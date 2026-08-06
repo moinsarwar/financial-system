@@ -19,6 +19,7 @@ import { Documents } from './pages/Documents';
 import { DocumentDetail } from './pages/DocumentDetail';  
 import { Activity } from './pages/Activity';  
 import { UnifiedApplication } from './pages/UnifiedApplication';
+import { SetPassword } from './pages/SetPassword';
   
 const queryClient = new QueryClient({  
   defaultOptions: {  
@@ -45,6 +46,7 @@ export const App: React.FC = () => (
         <BrowserRouter>  
           <Routes>  
             <Route path="/login" element={<Login />} />  
+            <Route path="/set-password" element={<SetPassword />} />
             <Route  
               path="/dashboard"  
               element={  

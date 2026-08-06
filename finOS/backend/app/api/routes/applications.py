@@ -14,17 +14,25 @@ from app.api.dependencies import (
 )
 from app.core.database import get_db
 from app.models.user import User, UserRole
-from app.models.client import Client
+from app.models.client import Client, LifecycleStage
 from app.models.application import Application
 from app.models.document import Document
 from app.services.audit_service import log_audit
 import uuid
 import httpx
 import threading
-from datetime import datetime, timezone
-from pydantic import BaseModel
+import logging
+import secrets
+from datetime import datetime, timezone, timedelta
+
+from pydantic import BaseModel, EmailStr, Field
+from app.core.config import settings
+from app.core.security import get_password_hash
+from app.services.mail import send_set_password_invite
 from app.services.product_service import create_product_from_application
 from app.services.workflow_service import get_workflow
+
+logger = logging.getLogger(__name__)
 
 def _send_to_finvault_async(payload: dict):
     try:
@@ -435,20 +443,107 @@ class PublicProduct(BaseModel):
     provider: str
 
 class PublicSubmissionRequest(BaseModel):
+    first_name: str = Field(..., min_length=1)
+    last_name: str = Field(..., min_length=1)
+    email: EmailStr
+    phone: str | None = None
     nationalId: str
     iban: str
     products: list[PublicProduct]
     kyc_documents: dict[str, str | None] = None
     reseller_subdomain: str | None = None
 
+
+def _resolve_or_create_client_user(
+    db: Session,
+    *,
+    first_name: str,
+    last_name: str,
+    email: str,
+    phone: str | None,
+) -> tuple[Client, User, bool, bool]:
+    """Return (client, user, user_created, invite_email_sent)."""
+    email_norm = email.strip().lower()
+    full_name = f"{first_name.strip()} {last_name.strip()}".strip()
+    user = db.query(User).filter(User.email == email_norm).first()
+    client = db.query(Client).filter(Client.email == email_norm).first()
+    user_created = False
+    invite_email_sent = False
+
+    if not client:
+        client = Client(
+            id=f"CLI-{uuid.uuid4().hex[:8].upper()}",
+            name=full_name,
+            email=email_norm,
+            phone=phone,
+            lifecycle_stage=LifecycleStage.APPLICANT,
+            assigned_department=None,
+            engagement_score=50,
+        )
+        db.add(client)
+        db.flush()
+    else:
+        if full_name and client.name != full_name:
+            client.name = full_name
+        if phone and not client.phone:
+            client.phone = phone
+        if client.lifecycle_stage == LifecycleStage.LEAD:
+            client.lifecycle_stage = LifecycleStage.APPLICANT
+
+    if not user:
+        token = secrets.token_urlsafe(32)
+        expires = datetime.now(timezone.utc) + timedelta(hours=settings.INVITE_TOKEN_HOURS)
+        placeholder = get_password_hash(secrets.token_urlsafe(48))
+        user = User(
+            id=f"USR-{uuid.uuid4().hex[:8].upper()}",
+            email=email_norm,
+            hashed_password=placeholder,
+            full_name=full_name,
+            role=UserRole.CLIENT,
+            client_id=client.id,
+            is_active=True,
+            invite_token=token,
+            invite_expires_at=expires,
+            must_set_password=True,
+        )
+        db.add(user)
+        db.flush()
+        user_created = True
+
+        base = settings.FRONTEND_URL.rstrip("/")
+        set_url = f"{base}/set-password?token={token}"
+        try:
+            send_set_password_invite(
+                to_email=email_norm,
+                name=full_name or "Applicant",
+                set_password_url=set_url,
+            )
+            invite_email_sent = True
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Invite email not sent to %s (account created anyway): %s",
+                email_norm,
+                exc,
+            )
+    else:
+        if not user.client_id:
+            user.client_id = client.id
+        if full_name and user.full_name != full_name:
+            user.full_name = full_name
+
+    return client, user, user_created, invite_email_sent
+
+
 @router.post("/public/submit")
 def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db)):
-    # Find client@finos.com
-    demo_user = db.query(User).filter(User.email == "client@finos.com").first()
-    if not demo_user or not demo_user.client_id:
-        raise HTTPException(status_code=400, detail="Demo client user not found in DB")
-    
-    # We take the first product just for simplicity
+    client, _user, user_created, invite_email_sent = _resolve_or_create_client_user(
+        db,
+        first_name=request.first_name,
+        last_name=request.last_name,
+        email=str(request.email),
+        phone=request.phone,
+    )
+
     if request.products:
         prod = request.products[0]
         product_type = prod.type
@@ -460,36 +555,43 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         department = "System Provider"
 
     steps = get_workflow(product_type, "application")
-    
+
     app_id = f"APP-{uuid.uuid4().hex[:8].upper()}"
     app = Application(
         id=app_id,
-        client_id=demo_user.client_id,
+        client_id=client.id,
         product_type=product_type,
         product_label=product_label,
         department=department,
         steps=steps,
         step_index=0,
         current_step=steps[0],
-        amount=500000.0, # dummy amount
+        amount=500000.0,
         currency="PKR",
         status="in-progress",
-        unified_data={"nationalId": request.nationalId, "iban": request.iban, "reseller_subdomain": request.reseller_subdomain}
+        unified_data={
+            "first_name": request.first_name,
+            "last_name": request.last_name,
+            "email": str(request.email).strip().lower(),
+            "phone": request.phone,
+            "nationalId": request.nationalId,
+            "iban": request.iban,
+            "reseller_subdomain": request.reseller_subdomain,
+        },
     )
     db.add(app)
     db.commit()
     db.refresh(app)
-    
+
     if request.kyc_documents:
         import base64
         import os
-        from app.core.config import settings
-        
+
         os.makedirs(settings.UPLOAD_ROOT, exist_ok=True)
         for doc_key, b64_data in request.kyc_documents.items():
             if not b64_data:
                 continue
-                
+
             try:
                 header, encoded = b64_data.split(",", 1)
                 mime_type = header.split(";")[0].split(":")[1]
@@ -502,14 +604,14 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
             file_data = base64.b64decode(encoded)
             file_name = f"{doc_key}_{uuid.uuid4().hex[:8]}.{ext}"
             file_path = os.path.join(settings.UPLOAD_ROOT, file_name)
-            
+
             with open(file_path, "wb") as f:
                 f.write(file_data)
-                
+
             doc_id = f"DOC-{uuid.uuid4().hex[:8].upper()}"
             doc = Document(
                 id=doc_id,
-                client_id=demo_user.client_id,
+                client_id=client.id,
                 type=doc_key,
                 name=f"KYC - {doc_key}",
                 original_filename=file_name,
@@ -519,19 +621,22 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
                 file_url=f"/uploads/{file_name}",
                 mime_type=mime_type,
                 size_bytes=len(file_data),
-                status="uploaded"
+                status="uploaded",
             )
             db.add(doc)
-            
-        db.commit()
-    
-    client_obj = db.query(Client).filter(Client.id == demo_user.client_id).first()
-    if client_obj:
-        notify_finvault(app, client_obj)
-        if request.reseller_subdomain:
-            notify_reseller_status(app, client_obj, request.reseller_subdomain, status="pending")
 
-    return {"application_id": app.id}
+        db.commit()
+
+    notify_finvault(app, client)
+    if request.reseller_subdomain:
+        notify_reseller_status(app, client, request.reseller_subdomain, status="pending")
+
+    return {
+        "application_id": app.id,
+        "client_id": client.id,
+        "user_created": user_created,
+        "invite_email_sent": invite_email_sent,
+    }
 
 @router.post("/public/{app_id}/simulate-issue-policy")
 def public_simulate_issue_policy(app_id: str, db: Session = Depends(get_db)):

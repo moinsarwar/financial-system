@@ -23,6 +23,19 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
     OLLAMA_MODEL: str = "qwen2.5:1.5b"
     OLLAMA_TIMEOUT: float = 300.0
+
+    # Public URLs / invites (override in prod .env)
+    FRONTEND_URL: str = "http://localhost:5173"
+    INVITE_TOKEN_HOURS: int = 72
+
+    # SMTP (Brevo-compatible)
+    MAIL_HOST: str = "smtp-relay.brevo.com"
+    MAIL_PORT: int = 587
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    MAIL_ENCRYPTION: str = "tls"
+    MAIL_FROM_ADDRESS: str = "noreply@thecomparisonengine.com"
+    MAIL_FROM_NAME: str = "The Comparison Engine"
   
     model_config = SettingsConfigDict(  
         env_file=".env",  
