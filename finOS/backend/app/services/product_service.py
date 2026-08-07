@@ -15,22 +15,33 @@ def create_product_from_application(db: Session, app: Application):
     existing_holding = db.query(Holding).filter(Holding.application_id == app.id).first()  
     if existing_policy or existing_holding: return  
   
-    if app.product_type in ["motor", "health", "life", "travel", "business"]:  
-        premium = (app.amount * Decimal("0.05")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)  
-        policy = Policy(  
-            id=f"POL-{uuid.uuid4().hex[:8].upper()}",  
-            client_id=client.id,  
-            product_type=app.product_type,  
-            product_label=app.product_label,  
-            application_id=app.id,  
-            policy_number=f"POL-{uuid.uuid4().hex[:6].upper()}",  
-            start_date=datetime.now(timezone.utc),  
-            end_date=datetime.now(timezone.utc)+timedelta(days=365),  
-            premium=premium,  
-            sum_assured=app.amount * Decimal("10"),  
-            status="active",  
-        )  
-        db.add(policy)  
+    if app.product_type in ["motor", "health", "life", "travel", "business"]:
+        ud = app.unified_data or {}
+        premium_raw = ud.get("premium")
+        coverage_raw = ud.get("coverage") or ud.get("sum_assured")
+        if premium_raw is not None:
+            premium = Decimal(str(premium_raw)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        else:
+            # Application.amount is the charged premium for paid products
+            premium = Decimal(str(app.amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if coverage_raw is not None:
+            sum_assured = Decimal(str(coverage_raw)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        else:
+            sum_assured = (premium * Decimal("10")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        policy = Policy(
+            id=f"POL-{uuid.uuid4().hex[:8].upper()}",
+            client_id=client.id,
+            product_type=app.product_type,
+            product_label=app.product_label,
+            application_id=app.id,
+            policy_number=f"POL-{uuid.uuid4().hex[:6].upper()}",
+            start_date=datetime.now(timezone.utc),
+            end_date=datetime.now(timezone.utc)+timedelta(days=365),
+            premium=premium,
+            sum_assured=sum_assured,
+            status="active",
+        )
+        db.add(policy)
     else:  
         holding = Holding(  
             id=f"HLD-{uuid.uuid4().hex[:8].upper()}",  

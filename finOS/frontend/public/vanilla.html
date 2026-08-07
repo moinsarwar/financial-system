@@ -4563,10 +4563,16 @@
                 drivingLicence: state.kyc.drivingLicence || 'submitted-with-application',
                 utilityBill: state.kyc.utilityBill || 'submitted-with-application',
             };
+            const premiumLabel = opts.premium != null
+                ? (`PKR ${Number(opts.premium).toLocaleString()}`)
+                : (opts.afterPayment ? 'Paid (product premium)' : 'Simulation');
+            const coverageLabel = opts.coverage != null
+                ? (`PKR ${Number(opts.coverage).toLocaleString()}`)
+                : 'PKR 500,000';
             state.policyDetails = {
                 policyNumber: 'POL-SIM-' + Date.now().toString(36).toUpperCase(),
-                coverage: 'PKR 500,000',
-                premium: opts.afterPayment ? 'Paid (sandbox simulation)' : 'Simulation',
+                coverage: coverageLabel,
+                premium: premiumLabel,
                 effectiveDate: new Date().toISOString().slice(0, 10),
                 expiryDate: new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10),
             };
@@ -4581,6 +4587,8 @@
                     policyDetails: state.policyDetails,
                     policyIssued: true,
                     policyAccepted: true,
+                    premium: opts.premium,
+                    coverage: opts.coverage,
                 }));
             } catch (_) { /* ignore */ }
             logAudit(`HTML journey simulation complete for ${appId} (client-only, no dashboard change)`);
@@ -4681,11 +4689,53 @@
             try {
                 const productsPayload = state.selectedForApply.map(id => {
                     const p = PRODUCTS.find(prod => prod.id === id);
+                    const pr = (p && p.pricing) || {};
+                    const parseMoney = (v) => {
+                        if (v == null || v === '') return null;
+                        const s = String(v);
+                        if (/varies|n\/a|no upper|unlimited|of vehicle|of sum/i.test(s) && !/rs\.?\s*[\d,]/i.test(s)) return null;
+                        const m = s.replace(/,/g, '').match(/(\d+(?:\.\d+)?)/);
+                        if (!m) return null;
+                        const n = Number(m[1]);
+                        return Number.isFinite(n) && n > 0 ? n : null;
+                    };
+                    const premiumRaw = p.annualPremium || p.annualCost
+                        || pr.annual_premium || pr.annualPremium
+                        || pr.minimum_single_premium || pr.minimumSinglePremium
+                        || pr.min_premium || pr.single_premium
+                        || pr.fee || p.fee || null;
+                    const coverageRaw = p.coverageLimit || p.sumAssured || p.sumInsured || p.vehicleValue
+                        || pr.coverage_limit || pr.max_amount || null;
+                    let premium = parseMoney(premiumRaw);
+                    const freq = String(pr.frequency || pr.premium_mode || p.frequency || 'annual').toLowerCase();
+                    if (premium == null && p.monthlyCost) {
+                        const m = parseMoney(p.monthlyCost);
+                        if (m) premium = m * 12;
+                    } else if (premium != null && freq.includes('month') && !freq.includes('single')
+                        && !p.annualPremium && !p.annualCost && !pr.annual_premium && !pr.minimum_single_premium) {
+                        if (pr.fee != null && parseMoney(pr.fee) === premium) premium = premium * 12;
+                    }
+                    if (premium == null && (pr.premium_rate || p.premiumRate)) {
+                        const rm = String(pr.premium_rate || p.premiumRate).match(/(\d+(?:\.\d+)?)\s*%/);
+                        if (rm) {
+                            const cov = parseMoney(coverageRaw) || 1000000;
+                            premium = Math.round((cov * Number(rm[1])) / 100);
+                        }
+                    }
                     return {
                         id: p.id,
                         name: p.name,
                         type: p.type,
-                        provider: p.provider
+                        provider: p.provider,
+                        premium: premium,
+                        annual_cost: premium,
+                        annualCost: premium,
+                        monthly_cost: parseMoney(p.monthlyCost),
+                        coverage: parseMoney(coverageRaw),
+                        sumAssured: parseMoney(coverageRaw),
+                        fee: parseMoney(p.fee || pr.fee),
+                        pricing: pr,
+                        frequency: pr.frequency || pr.premium_mode || null,
                     };
                 });
 
@@ -4730,9 +4780,11 @@
                         sessionStorage.setItem('finos_pending_sim', JSON.stringify({
                             appId: data.application_id,
                             afterPayment: true,
+                            premium: data.premium != null ? data.premium : data.amount,
+                            coverage: data.coverage,
                         }));
                     } catch (_) { /* ignore */ }
-                    document.getElementById('executionResult').innerHTML = `<div style="background:#dbeafe;padding:12px;border-radius:var(--radius-sm);color:#1e40af;">💳 Redirecting to Secure Payment (SafePay) for application ${data.application_id}…${inviteNote}</div>`;
+                    document.getElementById('executionResult').innerHTML = `<div style="background:#dbeafe;padding:12px;border-radius:var(--radius-sm);color:#1e40af;">💳 Redirecting to Secure Payment (SafePay) for application ${data.application_id}… Premium PKR ${(data.premium ?? data.amount)?.toLocaleString?.() ?? data.premium}${inviteNote}</div>`;
                     showToast('Redirecting to payment…' + inviteNote, 'success');
                     setTimeout(() => { window.location.href = data.payment_url; }, 600);
                     return;
@@ -4740,7 +4792,11 @@
 
                 document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution (${data.application_id}). Completing journey simulation…${inviteNote}</div>`;
                 showToast('Application submitted!' + inviteNote, 'success');
-                completeJourneySimulation(data.application_id, { afterPayment: false });
+                completeJourneySimulation(data.application_id, {
+                    afterPayment: false,
+                    premium: data.premium != null ? data.premium : data.amount,
+                    coverage: data.coverage,
+                });
                 setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 800);
             } catch (e) {
                 console.error(e);
@@ -4880,6 +4936,35 @@
                                 const premiumRate = pr.premium_rate || pr.premiumRate || null;
                                 const deathBenefit = pr.death_benefit || pr.deathBenefit || null;
                                 const fee = pr.fee || maintenanceFee || annualFee || processingFee || null;
+                                const freq = String(pr.frequency || pr.premium_mode || 'annual').toLowerCase();
+                                const parseMoneyJs = (v) => {
+                                    if (v == null || v === '') return null;
+                                    const s = String(v);
+                                    if (/varies|n\/a|no upper|unlimited|of vehicle|of sum|%/i.test(s) && !/rs\.?\s*[\d,]/i.test(s)) return null;
+                                    const m = s.replace(/,/g, '').match(/(\d+(?:\.\d+)?)/);
+                                    if (!m) return null;
+                                    const n = Number(m[1]);
+                                    return Number.isFinite(n) && n > 0 ? n : null;
+                                };
+                                const minSingle = parseMoneyJs(pr.minimum_single_premium || pr.minimumSinglePremium || pr.min_premium || pr.single_premium);
+                                const feeNum = parseMoneyJs(fee);
+                                const annualPremNum = parseMoneyJs(annualPremium);
+                                let ratePct = null;
+                                if (premiumRate) {
+                                    const rm = String(premiumRate).match(/(\d+(?:\.\d+)?)\s*%/);
+                                    if (rm) ratePct = Number(rm[1]);
+                                }
+                                const coverageNum = parseMoneyJs(coverageLimit || pr.max_amount);
+                                let resolvedAnnualCost = null;
+                                if (Number.isFinite(annualPremNum) && annualPremNum > 0) resolvedAnnualCost = annualPremNum;
+                                else if (minSingle) resolvedAnnualCost = minSingle;
+                                else if (Number.isFinite(feeNum) && feeNum > 0) resolvedAnnualCost = freq.includes('month') ? feeNum * 12 : feeNum;
+                                else if (ratePct != null) resolvedAnnualCost = Math.round(((coverageNum || 1000000) * ratePct) / 100);
+                                else if (pr.max_amount) resolvedAnnualCost = Math.round(Number(pr.max_amount) / 10);
+                                else resolvedAnnualCost = 0;
+                                let resolvedMonthlyCost = freq.includes('month') && Number.isFinite(feeNum)
+                                    ? feeNum
+                                    : (resolvedAnnualCost ? Math.round(resolvedAnnualCost / 12) : 0);
 
                                 const rawFeats = feats.filter(f => String(f.name || '').toLowerCase() !== 'product name');
                                 const matrixFeatures = rawFeats.map(f => (f.name || '').trim()).filter(Boolean);
@@ -4903,8 +4988,8 @@
                                         maxAge: p.eligibility_rules ? (p.eligibility_rules.max_age || p.eligibility_rules.maxAge || 65) : 65,
                                         minIncome: p.eligibility_rules ? (p.eligibility_rules.min_income || p.eligibility_rules.minIncome || '<50k') : '<50k'
                                     },
-                                    monthlyCost: pr.max_amount ? Math.round(pr.max_amount / 100) : 0,
-                                    annualCost: pr.max_amount ? Math.round(pr.max_amount / 10) : 0,
+                                    monthlyCost: resolvedMonthlyCost,
+                                    annualCost: resolvedAnnualCost,
                                     profitRate: profitRate,
                                     apr: apr,
                                     markup: markup,
@@ -4912,8 +4997,8 @@
                                     maintenanceFee: maintenanceFee,
                                     annualFee: annualFee,
                                     processingFee: processingFee,
-                                    coverageLimit: coverageLimit,
-                                    annualPremium: annualPremium,
+                                    coverageLimit: coverageLimit || pr.max_amount || null,
+                                    annualPremium: Number.isFinite(annualPremNum) && annualPremNum > 0 ? annualPremNum : resolvedAnnualCost,
                                     premiumRate: premiumRate,
                                     deathBenefit: deathBenefit,
                                     trustBadges: ['Live DB Product'],
@@ -4966,8 +5051,16 @@
                         transitionTo('tracking');
                         openedTracking = true;
                         window.history.replaceState({}, document.title, '/');
-                        try { sessionStorage.removeItem('finos_pending_sim'); } catch (_) { /* ignore */ }
-                        completeJourneySimulation(appId, { afterPayment: true });
+                        let simOpts = { afterPayment: true };
+                        try {
+                            const pending = JSON.parse(sessionStorage.getItem('finos_pending_sim') || 'null');
+                            if (pending && pending.appId === appId) {
+                                simOpts.premium = pending.premium;
+                                simOpts.coverage = pending.coverage;
+                            }
+                            sessionStorage.removeItem('finos_pending_sim');
+                        } catch (_) { /* ignore */ }
+                        completeJourneySimulation(appId, simOpts);
                         renderTracking();
                     } else if (pay === 'cancel') {
                         showToast('Payment cancelled. You can resubmit or contact support.', 'error');

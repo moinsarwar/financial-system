@@ -5,6 +5,7 @@ import base64
 import hashlib
 import hmac
 import logging
+import re
 from decimal import Decimal
 from typing import Any
 from urllib.parse import urlencode
@@ -90,7 +91,279 @@ def requires_payment(product_type: str | None) -> bool:
 
 
 def sandbox_amount() -> Decimal:
+    """Last-resort fallback when catalogue has no parseable premium."""
     return Decimal(str(settings.SAFEPAY_AMOUNT_PKR)).quantize(Decimal("0.01"))
+
+
+# Indicative simulation premiums when catalogue says "varies" / rate-only
+_TYPE_DEFAULT_PREMIUM = {
+    "motor": Decimal("16000.00"),
+    "health": Decimal("25000.00"),
+    "life": Decimal("50000.00"),
+    "travel": Decimal("8000.00"),
+    "business": Decimal("35000.00"),
+}
+
+_PREMIUM_KEYS = (
+    "premium",
+    "annual_premium",
+    "annualPremium",
+    "annual_cost",
+    "annualCost",
+    "fee",
+    "annual_fee",
+    "annualFee",
+    "minimum_single_premium",
+    "minimumSinglePremium",
+    "min_single_premium",
+    "starting_premium",
+    "startingPremium",
+    "base_premium",
+    "basePremium",
+    "indicative_premium",
+    "indicativePremium",
+    "min_premium",
+    "minimum_premium",
+    "minimumPremium",
+    "single_premium",
+    "singlePremium",
+    "monthly_premium",
+    "monthlyPremium",
+    "monthly_cost",
+    "monthlyCost",
+)
+
+
+def parse_money(value: Any) -> Decimal | None:
+    """Parse catalogue money fields ('PKR 25,000', 'Rs. 50,000', 25000) → Decimal."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal("0.01")) if value > 0 else None
+    if isinstance(value, (int, float)):
+        d = Decimal(str(value))
+        return d.quantize(Decimal("0.01")) if d > 0 else None
+    text = str(value).strip()
+    if not text:
+        return None
+    lower = text.lower()
+    if any(
+        token in lower
+        for token in (
+            "varies",
+            "n/a",
+            "na",
+            "not applicable",
+            "no upper",
+            "unlimited",
+            "of vehicle",
+            "of sum",
+            "%",
+        )
+    ):
+        # Percent / varies strings are handled separately
+        if "%" not in text and "varies" in lower:
+            return None
+        if "%" in text or "of vehicle" in lower or "of sum" in lower:
+            return None
+        if any(t in lower for t in ("varies", "n/a", "no upper", "unlimited", "not applicable")):
+            return None
+    cleaned = (
+        text.upper()
+        .replace("PKR", "")
+        .replace("RS.", "")
+        .replace("RS", "")
+        .replace(",", "")
+        .replace(" ", "")
+        .replace("/YEAR", "")
+        .replace("/YR", "")
+        .replace("/ANNUM", "")
+        .replace("/MONTH", "")
+        .replace("/MO", "")
+    )
+    # Keep leading digits / decimal only
+    m = re.search(r"(\d+(?:\.\d+)?)", cleaned)
+    if not m:
+        return None
+    try:
+        d = Decimal(m.group(1))
+    except Exception:
+        return None
+    return d.quantize(Decimal("0.01")) if d > 0 else None
+
+
+def parse_percent(value: Any) -> Decimal | None:
+    if value is None:
+        return None
+    text = str(value)
+    m = re.search(r"(\d+(?:\.\d+)?)\s*%", text)
+    if not m:
+        return None
+    try:
+        return Decimal(m.group(1))
+    except Exception:
+        return None
+
+
+def _pricing_dict(product: Any) -> dict:
+    if product is None:
+        return {}
+    if isinstance(product, dict):
+        pricing = product.get("pricing") or {}
+        return pricing if isinstance(pricing, dict) else {}
+    pricing = getattr(product, "pricing", None) or {}
+    return pricing if isinstance(pricing, dict) else {}
+
+
+def _product_type_hint(product: Any) -> str:
+    raw = None
+    if isinstance(product, dict):
+        raw = product.get("type") or product.get("product_type")
+    else:
+        raw = getattr(product, "product_type", None) or getattr(product, "type", None)
+    return normalize_product_type(raw)
+
+
+def _scan_money_values(obj: Any, *, depth: int = 0) -> list[Decimal]:
+    """Collect parseable money amounts from nested pricing / feature blobs."""
+    found: list[Decimal] = []
+    if depth > 4:
+        return found
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            key = str(k).lower()
+            if any(x in key for x in ("coverage", "sum_assured", "sumassured", "max_amount", "limit", "benefit", "death")):
+                # coverage-ish — skip for premium scan
+                continue
+            found.extend(_scan_money_values(v, depth=depth + 1))
+    elif isinstance(obj, (list, tuple)):
+        for item in obj:
+            found.extend(_scan_money_values(item, depth=depth + 1))
+    else:
+        parsed = parse_money(obj)
+        if parsed is not None and parsed >= Decimal("500"):  # ignore tiny noise
+            found.append(parsed)
+    return found
+
+
+def resolve_premium_pkr(product: Any, *, fallback: Decimal | None = None) -> Decimal:
+    """
+    Resolve chargeable premium (PKR) from submit payload / front_products pricing.
+    Handles annual/monthly fees, minimum_single_premium, rate×vehicle, and type defaults.
+    """
+    pricing = _pricing_dict(product)
+    ptype = _product_type_hint(product)
+    freq = str(
+        pricing.get("frequency")
+        or (product.get("frequency") if isinstance(product, dict) else "")
+        or pricing.get("premium_mode")
+        or ""
+    ).lower()
+
+    monthly_keys = {
+        "monthly_premium",
+        "monthlyPremium",
+        "monthly_cost",
+        "monthlyCost",
+    }
+
+    ordered_sources: list[tuple[str, Any]] = []
+    if isinstance(product, dict):
+        for key in _PREMIUM_KEYS:
+            if product.get(key) is not None:
+                ordered_sources.append((key, product.get(key)))
+    for key in _PREMIUM_KEYS:
+        if pricing.get(key) is not None:
+            ordered_sources.append((key, pricing.get(key)))
+
+    for key, raw in ordered_sources:
+        parsed = parse_money(raw)
+        if parsed is None:
+            continue
+        hint = key.lower()
+        if hint in monthly_keys or (
+            "month" in freq
+            and "single" not in freq
+            and hint in {"fee", "premium"}
+        ):
+            return (parsed * Decimal("12")).quantize(Decimal("0.01"))
+        return parsed
+
+    # Rate-based motor (e.g. "2.3% of vehicle value")
+    rate = parse_percent(
+        pricing.get("premium_rate")
+        or pricing.get("premiumRate")
+        or (product.get("premiumRate") if isinstance(product, dict) else None)
+        or (product.get("premium_rate") if isinstance(product, dict) else None)
+    )
+    if rate is not None:
+        coverage = resolve_coverage_pkr(product, premium=None, _skip_premium_fallback=True)
+        base = coverage if coverage and coverage > 0 else Decimal("1000000.00")
+        return (base * rate / Decimal("100")).quantize(Decimal("0.01"))
+
+    # Deep scan pricing blob for Rs. amounts (e.g. minimum_single_premium)
+    scanned = _scan_money_values(pricing)
+    if scanned:
+        return min(scanned)
+
+    # Features sometimes embed "minimum Rs. 36,000 per annum"
+    features = []
+    if isinstance(product, dict):
+        features = product.get("features") or []
+    scanned_feat = _scan_money_values(features)
+    if scanned_feat:
+        return min(scanned_feat)
+
+    type_default = _TYPE_DEFAULT_PREMIUM.get(ptype)
+    if type_default is not None:
+        return type_default
+
+    return (fallback if fallback is not None else sandbox_amount()).quantize(Decimal("0.01"))
+
+
+def resolve_coverage_pkr(
+    product: Any,
+    *,
+    premium: Decimal | None = None,
+    _skip_premium_fallback: bool = False,
+) -> Decimal:
+    """Coverage / sum assured for policy issuance."""
+    pricing = _pricing_dict(product)
+    candidates: list[Any] = []
+    if isinstance(product, dict):
+        candidates.extend(
+            [
+                product.get("coverage"),
+                product.get("sum_assured"),
+                product.get("sumAssured"),
+                product.get("sumInsured"),
+                product.get("coverageLimit"),
+                product.get("coverage_limit"),
+                product.get("vehicleValue"),
+            ]
+        )
+    candidates.extend(
+        [
+            pricing.get("coverage_limit"),
+            pricing.get("coverageLimit"),
+            pricing.get("sum_assured"),
+            pricing.get("sumAssured"),
+            pricing.get("max_amount"),
+            pricing.get("maxAmount"),
+            pricing.get("vehicle_value"),
+            pricing.get("vehicleValue"),
+        ]
+    )
+    for raw in candidates:
+        parsed = parse_money(raw)
+        if parsed is not None:
+            return parsed
+
+    if _skip_premium_fallback:
+        return Decimal("0")
+
+    base = premium if premium is not None else sandbox_amount()
+    return (base * Decimal("10")).quantize(Decimal("0.01"))
 
 
 def _api_base() -> str:

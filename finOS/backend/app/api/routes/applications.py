@@ -29,12 +29,14 @@ from datetime import datetime, timezone, timedelta
 from urllib.parse import urlencode
 
 from pydantic import BaseModel, EmailStr, Field
+from decimal import Decimal
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.services.mail import send_set_password_invite
 from app.services.product_service import create_product_from_application
 from app.services.workflow_service import get_workflow
 from app.services import safepay_service
+from app.models.front_product import FrontProduct
 
 logger = logging.getLogger(__name__)
 
@@ -445,6 +447,19 @@ class PublicProduct(BaseModel):
     name: str
     type: str
     provider: str
+    premium: float | Decimal | str | None = None
+    annual_cost: float | Decimal | str | None = None
+    annualCost: float | Decimal | str | None = None
+    monthly_cost: float | Decimal | str | None = None
+    monthlyCost: float | Decimal | str | None = None
+    coverage: float | Decimal | str | None = None
+    sum_assured: float | Decimal | str | None = None
+    sumAssured: float | Decimal | str | None = None
+    sumInsured: float | Decimal | str | None = None
+    coverageLimit: float | Decimal | str | None = None
+    fee: float | Decimal | str | None = None
+    pricing: dict | None = None
+    frequency: str | None = None
 
 class PublicSubmissionRequest(BaseModel):
     first_name: str = Field(..., min_length=1)
@@ -553,13 +568,38 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         product_type = safepay_service.normalize_product_type(prod.type)
         product_label = prod.name
         department = prod.provider
+        prod_payload = prod.model_dump()
+        # Always enrich from catalogue so SafePay uses real premium fields
+        db_prod = (
+            db.query(FrontProduct)
+            .filter(FrontProduct.product_id == prod.id)
+            .first()
+        )
+        if db_prod:
+            merged_pricing = dict(db_prod.pricing or {})
+            if prod_payload.get("pricing"):
+                merged_pricing.update(prod_payload["pricing"])
+            prod_payload["pricing"] = merged_pricing
+            if not prod_payload.get("frequency"):
+                prod_payload["frequency"] = merged_pricing.get("frequency") or merged_pricing.get("premium_mode")
+            if not prod_payload.get("features") and db_prod.features:
+                prod_payload["features"] = db_prod.features
+            if not prod_payload.get("type"):
+                prod_payload["type"] = db_prod.product_type
+            prod_payload["product_type"] = db_prod.product_type or prod_payload.get("type")
     else:
         product_type = "motor"
         product_label = "Motor Insurance"
         department = "System Provider"
+        prod_payload = {"type": product_type, "name": product_label}
 
     steps = get_workflow(product_type, "application")
     needs_payment = safepay_service.requires_payment(product_type)
+
+    premium = safepay_service.resolve_premium_pkr(prod_payload)
+    coverage = safepay_service.resolve_coverage_pkr(prod_payload, premium=premium)
+    # Dashboard amount = premium for paid products; coverage (loan/etc.) otherwise
+    app_amount = premium if needs_payment else coverage
 
     step_index = 0
     current_step = steps[0]
@@ -582,7 +622,7 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         steps=steps,
         step_index=step_index,
         current_step=current_step,
-        amount=500000.0,
+        amount=app_amount,
         currency="PKR",
         status=app_status,
         unified_data={
@@ -594,6 +634,10 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
             "iban": request.iban,
             "reseller_subdomain": request.reseller_subdomain,
             "payment_required": needs_payment,
+            "product_id": prod_payload.get("id"),
+            "premium": float(premium),
+            "coverage": float(coverage),
+            "sum_assured": float(coverage),
         },
         timeline=[
             {
@@ -609,7 +653,7 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
     payment_url = None
     payment_id = None
     if needs_payment:
-        pay_amount = safepay_service.sandbox_amount()
+        pay_amount = premium
         payment = Payment(
             id=f"PAY-{uuid.uuid4().hex[:8].upper()}",
             application_id=app.id,
@@ -722,6 +766,10 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         "payment_url": payment_url,
         "payment_id": payment_id,
         "status": app.status,
+        "amount": float(app.amount),
+        "premium": float(premium),
+        "coverage": float(coverage),
+        "currency": app.currency or "PKR",
     }
 
 @router.post("/public/{app_id}/simulate-issue-policy")
