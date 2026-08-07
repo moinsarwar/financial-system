@@ -6,6 +6,7 @@ from fastapi import (
     Request,
     status,
 )
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import (
@@ -17,6 +18,7 @@ from app.models.user import User, UserRole
 from app.models.client import Client, LifecycleStage
 from app.models.application import Application
 from app.models.document import Document
+from app.models.payment import Payment
 from app.services.audit_service import log_audit
 import uuid
 import httpx
@@ -24,6 +26,7 @@ import threading
 import logging
 import secrets
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlencode
 
 from pydantic import BaseModel, EmailStr, Field
 from app.core.config import settings
@@ -31,6 +34,7 @@ from app.core.security import get_password_hash
 from app.services.mail import send_set_password_invite
 from app.services.product_service import create_product_from_application
 from app.services.workflow_service import get_workflow
+from app.services import safepay_service
 
 logger = logging.getLogger(__name__)
 
@@ -546,7 +550,7 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
 
     if request.products:
         prod = request.products[0]
-        product_type = prod.type
+        product_type = safepay_service.normalize_product_type(prod.type)
         product_label = prod.name
         department = prod.provider
     else:
@@ -555,6 +559,18 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         department = "System Provider"
 
     steps = get_workflow(product_type, "application")
+    needs_payment = safepay_service.requires_payment(product_type)
+
+    step_index = 0
+    current_step = steps[0]
+    app_status = "in-progress"
+    if needs_payment and "Payment" in steps:
+        step_index = steps.index("Payment")
+        current_step = "Payment"
+        app_status = "awaiting_payment"
+    elif needs_payment:
+        app_status = "awaiting_payment"
+        current_step = "Payment"
 
     app_id = f"APP-{uuid.uuid4().hex[:8].upper()}"
     app = Application(
@@ -564,11 +580,11 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
         product_label=product_label,
         department=department,
         steps=steps,
-        step_index=0,
-        current_step=steps[0],
+        step_index=step_index,
+        current_step=current_step,
         amount=500000.0,
         currency="PKR",
-        status="in-progress",
+        status=app_status,
         unified_data={
             "first_name": request.first_name,
             "last_name": request.last_name,
@@ -577,9 +593,71 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
             "nationalId": request.nationalId,
             "iban": request.iban,
             "reseller_subdomain": request.reseller_subdomain,
+            "payment_required": needs_payment,
         },
+        timeline=[
+            {
+                "time": datetime.now(timezone.utc).isoformat(),
+                "event": "Application created",
+                "user": "public",
+            }
+        ],
     )
     db.add(app)
+    db.flush()
+
+    payment_url = None
+    payment_id = None
+    if needs_payment:
+        pay_amount = safepay_service.sandbox_amount()
+        payment = Payment(
+            id=f"PAY-{uuid.uuid4().hex[:8].upper()}",
+            application_id=app.id,
+            client_id=client.id,
+            amount=pay_amount,
+            currency=settings.SAFEPAY_CURRENCY or "PKR",
+            status="pending",
+            provider="safepay",
+            raw_events=[],
+        )
+        db.add(payment)
+        db.flush()
+        payment_id = payment.id
+
+        front = settings.FRONTEND_URL.rstrip("/")
+        api_success = (
+            f"{front}/api/applications/public/payment/return"
+            f"?app={app.id}&result=success"
+        )
+        api_cancel = (
+            f"{front}/api/applications/public/payment/return"
+            f"?app={app.id}&result=cancel"
+        )
+        try:
+            checkout = safepay_service.create_checkout(
+                order_id=payment.id,
+                amount=pay_amount,
+                success_url=api_success,
+                cancel_url=api_cancel,
+            )
+            payment.tracker = checkout["tracker"]
+            payment.checkout_url = checkout["redirect_url"]
+            payment_url = checkout["redirect_url"]
+            app.timeline = list(app.timeline or []) + [
+                {
+                    "time": datetime.now(timezone.utc).isoformat(),
+                    "event": f"SafePay checkout created (PKR {pay_amount})",
+                    "user": "system",
+                }
+            ]
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("SafePay checkout failed for %s", app.id)
+            db.rollback()
+            raise HTTPException(
+                status_code=502,
+                detail=f"Payment checkout failed: {exc}",
+            ) from exc
+
     db.commit()
     db.refresh(app)
 
@@ -627,15 +705,23 @@ def public_submit(request: PublicSubmissionRequest, db: Session = Depends(get_db
 
         db.commit()
 
-    notify_finvault(app, client)
-    if request.reseller_subdomain:
-        notify_reseller_status(app, client, request.reseller_subdomain, status="pending")
+    # Free products notify immediately; paid products wait for webhook
+    if not needs_payment:
+        notify_finvault(app, client)
+        if request.reseller_subdomain:
+            notify_reseller_status(
+                app, client, request.reseller_subdomain, status="pending"
+            )
 
     return {
         "application_id": app.id,
         "client_id": client.id,
         "user_created": user_created,
         "invite_email_sent": invite_email_sent,
+        "payment_required": needs_payment,
+        "payment_url": payment_url,
+        "payment_id": payment_id,
+        "status": app.status,
     }
 
 @router.post("/public/{app_id}/simulate-issue-policy")
@@ -643,6 +729,12 @@ def public_simulate_issue_policy(app_id: str, db: Session = Depends(get_db)):
     app = db.query(Application).filter(Application.id == app_id).first()
     if not app:
         raise HTTPException(404, "Application not found")
+
+    if app.status == "awaiting_payment":
+        raise HTTPException(
+            status_code=402,
+            detail="Payment required before policy can be issued",
+        )
         
     app.status = "approved"
     app.current_step = "Approved"
@@ -673,6 +765,193 @@ def public_simulate_issue_policy(app_id: str, db: Session = Depends(get_db)):
         }
     
     return {"status": "approved"}
+
+
+def _mark_payment_paid_and_advance(db: Session, payment: Payment, app: Application, event: dict) -> None:
+    """Idempotent: mark paid, advance past Payment, notify FinVault."""
+    if payment.status != "paid":
+        payment.status = "paid"
+        payment.paid_at = datetime.now(timezone.utc)
+        events = list(payment.raw_events or [])
+        events.append({"at": datetime.now(timezone.utc).isoformat(), "event": event})
+        payment.raw_events = events
+
+    if app.status == "awaiting_payment" or app.current_step == "Payment":
+        steps = list(app.steps or [])
+        if "Payment" in steps:
+            idx = steps.index("Payment")
+            next_idx = min(idx + 1, len(steps) - 1)
+            app.step_index = next_idx
+            app.current_step = steps[next_idx]
+        app.status = "in-progress"
+        app.updated_at = datetime.now(timezone.utc)
+        app.timeline = list(app.timeline or []) + [
+            {
+                "time": datetime.now(timezone.utc).isoformat(),
+                "event": "Payment confirmed via SafePay",
+                "user": "safepay",
+            }
+        ]
+
+    client = db.query(Client).filter(Client.id == app.client_id).first()
+    if client and not (app.unified_data or {}).get("finvault_notified_after_payment"):
+        notify_finvault(app, client)
+        reseller = (app.unified_data or {}).get("reseller_subdomain")
+        if reseller:
+            notify_reseller_status(app, client, reseller, status="pending")
+        data = dict(app.unified_data or {})
+        data["finvault_notified_after_payment"] = True
+        app.unified_data = data
+
+
+@router.api_route("/public/payment/return", methods=["GET", "POST"])
+async def safepay_payment_return(request: Request, db: Session = Depends(get_db)):
+    """Accept SafePay browser redirect (GET/POST form) and bounce to the UI."""
+    form = {}
+    if request.method == "POST":
+        try:
+            form = dict(await request.form())
+        except Exception:  # noqa: BLE001
+            form = {}
+    q = request.query_params
+
+    app_id = q.get("app") or form.get("order_id") or form.get("Order ID") or form.get("app")
+    result = (q.get("result") or "success").lower()
+    tracker = q.get("tracker") or form.get("tracker") or form.get("Tracker")
+    sig = q.get("sig") or form.get("sig") or form.get("signature") or form.get("Signature")
+
+    if tracker and sig and not safepay_service.verify_redirect_sig(str(tracker), str(sig)):
+        result = "invalid"
+    elif result == "success":
+        payment = None
+        if tracker:
+            payment = db.query(Payment).filter(Payment.tracker == str(tracker)).first()
+        if not payment and app_id:
+            payment = (
+                db.query(Payment)
+                .filter(Payment.application_id == str(app_id))
+                .order_by(Payment.created_at.desc())
+                .first()
+            )
+            if payment and payment.tracker:
+                tracker = payment.tracker
+
+        if payment and payment.status == "pending":
+            # Local/dev: webhook often cannot reach localhost — confirm via Safepay reporter
+            state = safepay_service.fetch_payment_state(str(tracker)) if tracker else None
+            app = db.query(Application).filter(Application.id == payment.application_id).first()
+            if safepay_service.is_tracker_paid(state) and app:
+                _mark_payment_paid_and_advance(
+                    db,
+                    payment,
+                    app,
+                    {
+                        "type": "browser_return_confirmed",
+                        "tracker": tracker,
+                        "state": state,
+                    },
+                )
+                db.commit()
+            else:
+                payment.raw_events = list(payment.raw_events or []) + [
+                    {
+                        "at": datetime.now(timezone.utc).isoformat(),
+                        "event": {
+                            "type": "browser_return",
+                            "tracker": tracker,
+                            "state": state,
+                        },
+                    }
+                ]
+                db.commit()
+
+    # Prefer site root (/) — local Vite + prod nginx both serve vanilla there
+    front = settings.FRONTEND_URL.rstrip("/")
+    params = {"payment": result if result in ("success", "cancel", "invalid") else "success"}
+    if app_id:
+        params["app"] = str(app_id)
+    if tracker:
+        params["tracker"] = str(tracker)
+    return RedirectResponse(
+        url=f"{front}/?{urlencode(params)}",
+        status_code=303,
+    )
+
+
+@router.post("/public/webhook/safepay")
+async def safepay_webhook(request: Request, db: Session = Depends(get_db)):
+    raw = await request.body()
+    signature = request.headers.get("X-SFPY-SIGNATURE") or request.headers.get(
+        "x-sfpy-signature"
+    )
+    timestamp = request.headers.get("X-SFPY-TIMESTAMP") or request.headers.get(
+        "x-sfpy-timestamp"
+    )
+
+    if not safepay_service.verify_webhook(raw, signature, timestamp):
+        raise HTTPException(status_code=400, detail="Invalid SafePay webhook signature")
+
+    import json
+
+    try:
+        payload = json.loads(raw.decode("utf-8") or "{}")
+    except Exception:  # noqa: BLE001
+        payload = {}
+
+    parsed = safepay_service.parse_webhook_event(payload if isinstance(payload, dict) else {})
+    tracker = parsed.get("tracker")
+    if not tracker:
+        logger.warning("SafePay webhook missing tracker: %s", payload)
+        return {"status": "ignored", "reason": "no_tracker"}
+
+    payment = db.query(Payment).filter(Payment.tracker == tracker).first()
+    if not payment:
+        # Also allow order_id / payment id in metadata
+        order_id = None
+        if isinstance(payload, dict):
+            order_id = (
+                (payload.get("notification") or {}).get("reference")
+                or payload.get("order_id")
+            )
+        if order_id:
+            payment = db.query(Payment).filter(Payment.id == str(order_id)).first()
+    if not payment:
+        logger.warning("SafePay webhook payment not found for tracker=%s", tracker)
+        return {"status": "ignored", "reason": "payment_not_found"}
+
+    app = db.query(Application).filter(Application.id == payment.application_id).first()
+    if not app:
+        return {"status": "ignored", "reason": "application_not_found"}
+
+    if payment.status == "paid":
+        return {"status": "ok", "idempotent": True}
+
+    if parsed.get("paid"):
+        _mark_payment_paid_and_advance(db, payment, app, parsed)
+        db.commit()
+        return {"status": "ok", "payment": "paid"}
+
+    if parsed.get("failed"):
+        payment.status = "failed"
+        payment.raw_events = list(payment.raw_events or []) + [
+            {"at": datetime.now(timezone.utc).isoformat(), "event": parsed}
+        ]
+        app.timeline = list(app.timeline or []) + [
+            {
+                "time": datetime.now(timezone.utc).isoformat(),
+                "event": "Payment failed via SafePay",
+                "user": "safepay",
+            }
+        ]
+        db.commit()
+        return {"status": "ok", "payment": "failed"}
+
+    payment.raw_events = list(payment.raw_events or []) + [
+        {"at": datetime.now(timezone.utc).isoformat(), "event": parsed}
+    ]
+    db.commit()
+    return {"status": "ok", "payment": payment.status}
+
 
 class FinVaultWebhookPayload(BaseModel):
     source_application_id: str

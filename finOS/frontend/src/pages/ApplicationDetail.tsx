@@ -112,6 +112,10 @@ export const ApplicationDetail: React.FC = () => {
   
   const isActive = data.status === 'in-progress' && data.step_index < data.steps.length - 1;  
   const infoRequests = (data as any).info_requests || [];
+  const workflowComplete = data.status === 'approved' || data.status === 'completed';
+  const displayStep = workflowComplete
+    ? (data.steps[data.steps.length - 1] || data.current_step)
+    : data.current_step;
   
   return (  
     <ErrorBoundary>
@@ -145,7 +149,7 @@ export const ApplicationDetail: React.FC = () => {
           <div><span className="font-semibold">Product:</span> {data.product_label}</div>  
           <div><span className="font-semibold">Amount:</span> {data.currency} {data.amount?.toLocaleString() || ''}</div>  
           <div><span className="font-semibold">Status:</span> <Badge type={data.status}>{data.status}</Badge></div>  
-          <div><span className="font-semibold">Current Step:</span> {data.current_step}</div>  
+          <div><span className="font-semibold">Current Step:</span> {displayStep}</div>  
           <div><span className="font-semibold">Created:</span> {new Date(data.created_at).toLocaleString()}</div>  
           <div><span className="font-semibold">Updated:</span> {new Date(data.updated_at).toLocaleString()}</div>  
         </div>  

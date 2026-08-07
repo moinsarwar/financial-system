@@ -9,6 +9,7 @@ from .audit_log import AuditLog
 from .front_product import FrontProduct
 from .communication import Communication, MessageReceipt
 from .information_request import InformationRequest
+from .payment import Payment
 
 __all__ = [
     "User",
@@ -22,5 +23,6 @@ __all__ = [
     "FrontProduct",
     "Communication",
     "MessageReceipt",
-    "InformationRequest"
+    "InformationRequest",
+    "Payment",
 ]

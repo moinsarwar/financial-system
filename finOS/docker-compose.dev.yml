@@ -41,6 +41,13 @@ services:
       - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@thecomparisonengine.com}  
       - MAIL_FROM_NAME=${MAIL_FROM_NAME:-The Comparison Engine}  
       - INVITE_TOKEN_HOURS=${INVITE_TOKEN_HOURS:-72}  
+      - SAFEPAY_ENV=${SAFEPAY_ENV:-sandbox}  
+      - SAFEPAY_API_BASE=${SAFEPAY_API_BASE:-https://sandbox.api.getsafepay.com}  
+      - SAFEPAY_API_KEY=${SAFEPAY_API_KEY:-}  
+      - SAFEPAY_SECRET_KEY=${SAFEPAY_SECRET_KEY:-}  
+      - SAFEPAY_WEBHOOK_SECRET=${SAFEPAY_WEBHOOK_SECRET:-}  
+      - SAFEPAY_AMOUNT_PKR=${SAFEPAY_AMOUNT_PKR:-100}  
+      - SAFEPAY_CURRENCY=${SAFEPAY_CURRENCY:-PKR}  
     ports:  
       - "8000:8000"  
     depends_on:  

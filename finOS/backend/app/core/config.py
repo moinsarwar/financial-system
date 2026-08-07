@@ -36,6 +36,25 @@ class Settings(BaseSettings):
     MAIL_ENCRYPTION: str = "tls"
     MAIL_FROM_ADDRESS: str = "noreply@thecomparisonengine.com"
     MAIL_FROM_NAME: str = "The Comparison Engine"
+
+    # SafePay hosted checkout (sandbox first)
+    SAFEPAY_ENV: str = "sandbox"
+    SAFEPAY_API_BASE: str = "https://sandbox.api.getsafepay.com"
+    SAFEPAY_API_KEY: str = ""
+    SAFEPAY_SECRET_KEY: str = ""
+    SAFEPAY_WEBHOOK_SECRET: str = ""
+    SAFEPAY_AMOUNT_PKR: float = 100.0
+    SAFEPAY_CURRENCY: str = "PKR"
+
+    # Aliases accepted from merchant dashboards / docs
+    SAFEPAY_ENVIRONMENT: str = ""
+    SAFEPAY_API_SECRET: str = ""
+
+    def model_post_init(self, __context) -> None:  # type: ignore[override]
+        if self.SAFEPAY_ENVIRONMENT:
+            object.__setattr__(self, "SAFEPAY_ENV", self.SAFEPAY_ENVIRONMENT)
+        if self.SAFEPAY_API_SECRET and not self.SAFEPAY_SECRET_KEY:
+            object.__setattr__(self, "SAFEPAY_SECRET_KEY", self.SAFEPAY_API_SECRET)
   
     model_config = SettingsConfigDict(  
         env_file=".env",  

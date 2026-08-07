@@ -52,3 +52,41 @@ def ensure_schema(engine: Engine) -> None:
                 text("CREATE INDEX IF NOT EXISTS ix_claims_holding_id ON claims (holding_id)")
             )
             logger.info("Added claims.holding_id")
+
+        payments_exists = conn.execute(
+            text(
+                """
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'payments'
+                """
+            )
+        ).scalar()
+        if not payments_exists:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE payments (
+                        id VARCHAR PRIMARY KEY,
+                        application_id VARCHAR NOT NULL
+                            REFERENCES applications(id) ON DELETE CASCADE,
+                        client_id VARCHAR NOT NULL
+                            REFERENCES clients(id) ON DELETE CASCADE,
+                        amount NUMERIC(18, 2) NOT NULL,
+                        currency VARCHAR NOT NULL DEFAULT 'PKR',
+                        status VARCHAR NOT NULL DEFAULT 'pending',
+                        provider VARCHAR NOT NULL DEFAULT 'safepay',
+                        tracker VARCHAR UNIQUE,
+                        checkout_url TEXT,
+                        raw_events JSONB DEFAULT '[]'::jsonb,
+                        paid_at TIMESTAMPTZ,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW()
+                    )
+                    """
+                )
+            )
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_payments_application_id ON payments (application_id)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_payments_client_id ON payments (client_id)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_payments_status ON payments (status)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_payments_tracker ON payments (tracker)"))
+            logger.info("Created payments table")

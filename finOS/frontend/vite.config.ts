@@ -8,10 +8,14 @@ export default defineConfig({
       name: 'vanilla-root',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
-          if (req.url === '/') {
-            req.url = '/vanilla.html';
-          } else if (req.url === '/dashboard/claim-vault' || req.url === '/dashboard/claim-vault/') {
-            req.url = '/claimvault.html';
+          const raw = req.url || '/';
+          const path = raw.split('?')[0];
+          const qs = raw.includes('?') ? raw.slice(raw.indexOf('?')) : '';
+          // Exact / OR /?payment=... must hit marketing form, not React SPA (/ → /login)
+          if (path === '/' || path === '') {
+            req.url = `/vanilla.html${qs}`;
+          } else if (path === '/dashboard/claim-vault' || path === '/dashboard/claim-vault/') {
+            req.url = `/claimvault.html${qs}`;
           }
           next();
         });

@@ -4547,52 +4547,92 @@
             showToast(`Risk ${status}`, status === 'approved' ? 'success' : 'error');
         }
 
-        // ----- Policy Issuance (institution) -----
+        /**
+         * Client-only demo: complete Live Status Tracking in HTML.
+         * Does NOT call the backend — dashboard workflow stays at post-payment state.
+         */
+        function completeJourneySimulation(appId, opts) {
+            opts = opts || {};
+            if (!appId) return false;
+            state.applicationId = appId;
+            state.fraudStatus = 'cleared';
+            state.riskAssessment = 'approved';
+            state.kyc = {
+                cnicFront: state.kyc.cnicFront || 'submitted-with-application',
+                cnicBack: state.kyc.cnicBack || 'submitted-with-application',
+                drivingLicence: state.kyc.drivingLicence || 'submitted-with-application',
+                utilityBill: state.kyc.utilityBill || 'submitted-with-application',
+            };
+            state.policyDetails = {
+                policyNumber: 'POL-SIM-' + Date.now().toString(36).toUpperCase(),
+                coverage: 'PKR 500,000',
+                premium: opts.afterPayment ? 'Paid (sandbox simulation)' : 'Simulation',
+                effectiveDate: new Date().toISOString().slice(0, 10),
+                expiryDate: new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10),
+            };
+            state.policyIssued = true;
+            state.policyAccepted = true;
+            try {
+                sessionStorage.setItem('finos_tracking_sim', JSON.stringify({
+                    appId,
+                    fraudStatus: state.fraudStatus,
+                    riskAssessment: state.riskAssessment,
+                    kyc: state.kyc,
+                    policyDetails: state.policyDetails,
+                    policyIssued: true,
+                    policyAccepted: true,
+                }));
+            } catch (_) { /* ignore */ }
+            logAudit(`HTML journey simulation complete for ${appId} (client-only, no dashboard change)`);
+            return true;
+        }
+
+        function restoreTrackingSimulation(appId) {
+            try {
+                const raw = sessionStorage.getItem('finos_tracking_sim');
+                if (!raw) return false;
+                const saved = JSON.parse(raw);
+                if (!saved || saved.appId !== appId) return false;
+                state.applicationId = appId;
+                state.fraudStatus = saved.fraudStatus || 'cleared';
+                state.riskAssessment = saved.riskAssessment || 'approved';
+                state.kyc = saved.kyc || state.kyc;
+                state.policyDetails = saved.policyDetails || null;
+                state.policyIssued = !!saved.policyIssued;
+                state.policyAccepted = !!saved.policyAccepted;
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        // ----- Policy Issuance (HTML demo only — does not change dashboard) -----
         async function issuePolicy() {
             if (state.fraudStatus !== 'cleared' || state.riskAssessment !== 'approved') {
                 showToast('Cannot issue policy: fraud or risk not cleared.', 'error');
                 return;
             }
 
-            // Simulate API call to backend
-            if (state.applicationId) {
-                try {
-                    const response = await fetch(`/api/applications/public/${state.applicationId}/simulate-issue-policy`, { method: 'POST' });
-                    const data = await response.json();
-                    state.policyDetails = {
-                        policyNumber: data.policyNumber || 'POL-' + Date.now().toString().slice(-8),
-                        coverage: data.coverage || 'PKR 1,000,000',
-                        premium: data.premium || 'PKR 25,000/year',
-                        effectiveDate: data.effectiveDate ? data.effectiveDate.slice(0, 10) : new Date().toISOString().slice(0, 10),
-                        expiryDate: data.expiryDate ? data.expiryDate.slice(0, 10) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-                    };
-                } catch (e) {
-                    console.error(e);
-                    // Fallback dummy
-                    state.policyDetails = {
-                        policyNumber: 'POL-' + Date.now().toString().slice(-8),
-                        coverage: 'PKR 1,000,000',
-                        premium: 'PKR 25,000/year',
-                        effectiveDate: new Date().toISOString().slice(0, 10),
-                        expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-                    };
-                }
-            } else {
-                state.policyDetails = {
-                    policyNumber: 'POL-' + Date.now().toString().slice(-8),
-                    coverage: 'PKR 1,000,000',
-                    premium: 'PKR 25,000/year',
-                    effectiveDate: new Date().toISOString().slice(0, 10),
-                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-                };
-            }
+            state.policyDetails = {
+                policyNumber: 'POL-' + Date.now().toString().slice(-8),
+                coverage: 'PKR 1,000,000',
+                premium: 'PKR 25,000/year',
+                effectiveDate: new Date().toISOString().slice(0, 10),
+                expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+            };
 
             state.policyIssued = true;
-            document.getElementById('policyBadge').textContent = 'Policy: Issued';
-            document.getElementById('policyBadge').style.background = 'var(--green)';
-            document.getElementById('policyBadge').style.color = 'white';
-            document.getElementById('policyDetailsSection').style.display = 'block';
-            document.getElementById('policyDetailsContent').innerHTML = `
+            const policyBadge = document.getElementById('policyBadge');
+            if (policyBadge) {
+                policyBadge.textContent = 'Policy: Issued';
+                policyBadge.style.background = 'var(--green)';
+                policyBadge.style.color = 'white';
+            }
+            const policySection = document.getElementById('policyDetailsSection');
+            if (policySection) policySection.style.display = 'block';
+            const policyContent = document.getElementById('policyDetailsContent');
+            if (policyContent) {
+                policyContent.innerHTML = `
     <div style="font-size:13px;line-height:1.6;">
       <div><strong>Policy #:</strong> ${state.policyDetails.policyNumber}</div>
       <div><strong>Coverage:</strong> ${state.policyDetails.coverage}</div>
@@ -4601,8 +4641,9 @@
       <div><strong>Expiry:</strong> ${state.policyDetails.expiryDate}</div>
     </div>
   `;
-            logAudit(`Policy issued: ${policyNumber}`);
-            showToast('Policy issued!', 'success');
+            }
+            logAudit(`Policy issued (HTML simulation only): ${state.policyDetails.policyNumber}`);
+            showToast('Policy issued! (demo — dashboard unchanged)', 'success');
         }
 
         function acceptPolicy() {
@@ -4682,9 +4723,25 @@
                     inviteNote = ' Account created (invite email skipped — SMTP not configured).';
                 }
                 logAudit('Application submitted with KYC docs');
-                document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution (${data.application_id}). KYC complete. Fraud: ${state.fraudStatus}, Risk: ${state.riskAssessment}${inviteNote}</div>`;
+
+                // Insurance / takaful: redirect to SafePay hosted checkout
+                if (data.payment_required && data.payment_url) {
+                    try {
+                        sessionStorage.setItem('finos_pending_sim', JSON.stringify({
+                            appId: data.application_id,
+                            afterPayment: true,
+                        }));
+                    } catch (_) { /* ignore */ }
+                    document.getElementById('executionResult').innerHTML = `<div style="background:#dbeafe;padding:12px;border-radius:var(--radius-sm);color:#1e40af;">💳 Redirecting to Secure Payment (SafePay) for application ${data.application_id}…${inviteNote}</div>`;
+                    showToast('Redirecting to payment…' + inviteNote, 'success');
+                    setTimeout(() => { window.location.href = data.payment_url; }, 600);
+                    return;
+                }
+
+                document.getElementById('executionResult').innerHTML = `<div style="background:#d1fae5;padding:12px;border-radius:var(--radius-sm);color:#065f46;">✅ Submitted to institution (${data.application_id}). Completing journey simulation…${inviteNote}</div>`;
                 showToast('Application submitted!' + inviteNote, 'success');
-                setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 1500);
+                completeJourneySimulation(data.application_id, { afterPayment: false });
+                setTimeout(() => { transitionTo('tracking'); renderTracking(); }, 800);
             } catch (e) {
                 console.error(e);
                 showToast('Submit failed. Please try again.', 'error');
@@ -4890,13 +4947,46 @@
             }
 
             logAudit('System initialised (Pakistan Enterprise)');
-            transitionTo('requirements');
-            renderTceComparisonDashboard();
             console.log('🚀 FinOS v7.2 – Board-Ready Decision OS (API integrated)');
             console.log(`   Session: ${CONFIG.SESSION_ID}`);
             console.log(`   Engine: ${CONFIG.ENGINE_VERSION}`);
             console.log(`   KIBOR: ${CONFIG.KIBOR_6M}%`);
             console.log(`   Products in catalogue: ${PRODUCTS.length}`);
+
+            // SafePay return: /?payment=success|cancel|invalid&app=APP-…
+            let openedTracking = false;
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const pay = params.get('payment');
+                const appId = params.get('app');
+                if (pay && appId) {
+                    state.applicationId = appId;
+                    if (pay === 'success') {
+                        showToast('Payment confirmed — completing journey…', 'success');
+                        transitionTo('tracking');
+                        openedTracking = true;
+                        window.history.replaceState({}, document.title, '/');
+                        try { sessionStorage.removeItem('finos_pending_sim'); } catch (_) { /* ignore */ }
+                        completeJourneySimulation(appId, { afterPayment: true });
+                        renderTracking();
+                    } else if (pay === 'cancel') {
+                        showToast('Payment cancelled. You can resubmit or contact support.', 'error');
+                        window.history.replaceState({}, document.title, '/');
+                    } else if (pay === 'invalid') {
+                        showToast('Payment signature could not be verified.', 'error');
+                        window.history.replaceState({}, document.title, '/');
+                    } else {
+                        window.history.replaceState({}, document.title, '/');
+                    }
+                }
+            } catch (e) {
+                console.warn('payment return parse failed', e);
+            }
+
+            if (!openedTracking) {
+                transitionTo('requirements');
+                renderTceComparisonDashboard();
+            }
         }
 
         initApp();
