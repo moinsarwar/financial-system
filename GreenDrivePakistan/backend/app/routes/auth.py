@@ -38,7 +38,8 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
     if user and auth.verify_password(form_data.password, user.password_hash):
-        token = auth.create_access_token(data={"sub": user.email, "role": "user"})
+        role = user.role.value if hasattr(user.role, "value") else str(user.role)
+        token = auth.create_access_token(data={"sub": user.email, "role": role})
         return {
             "access_token": token,
             "token_type": "bearer",
@@ -51,22 +52,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         payload = schemas.VendorResponse.model_validate(vendor).model_dump(mode="json")
         payload["role"] = "vendor"
         return {"access_token": token, "token_type": "bearer", "user": payload}
-
-    if form_data.username == "admin@demo.com" and form_data.password == "admin123":
-        token = auth.create_access_token(data={"sub": "admin@demo.com", "role": "admin"})
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "user": {
-                "id": 0,
-                "email": "admin@demo.com",
-                "name": "Super Admin",
-                "role": "admin",
-                "cnic": None,
-                "is_active": True,
-                "salary": 0,
-            },
-        }
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

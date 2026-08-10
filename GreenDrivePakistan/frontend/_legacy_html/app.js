@@ -91,6 +91,7 @@ function mapApp(a) {
     remainingAmount: a.remaining_amount,
     nextDueDate: a.next_due_date ? String(a.next_due_date).slice(0, 10) : 'N/A',
     repayments: (a.repayments || []).map(r => ({
+      id: r.id,
       dueDate: r.due_date ? String(r.due_date).slice(0, 10) : '',
       paidDate: r.paid_date ? String(r.paid_date).slice(0, 10) : null,
       amount: r.amount,
@@ -101,6 +102,38 @@ function mapApp(a) {
     vendor: a.vendor,
     user: a.user
   };
+}
+
+async function uploadDocuments(files, docType, applicationId = null) {
+  if (!files || !files.length) return [];
+  const results = [];
+  for (const file of Array.from(files)) {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('doc_type', docType);
+    if (applicationId != null) fd.append('application_id', String(applicationId));
+    results.push(await api('/documents/upload', { method: 'POST', body: fd }));
+  }
+  return results;
+}
+
+async function updateApplicationStatus(appId, status) {
+  try {
+    await api(`/applications/${appId}/status`, { method: 'PATCH', body: { status } });
+    await loadUserScopedData();
+    if (currentUser.role === 'admin') renderAdminDashboard();
+    if (currentUser.role === 'vendor') renderVendorDashboard();
+    if (currentUser.role === 'user') renderUserDashboard();
+  } catch (e) { alert(e.message); }
+}
+
+async function markRepaymentPaid(appId, repaymentId) {
+  try {
+    await api(`/applications/${appId}/repayments/${repaymentId}/pay`, { method: 'POST' });
+    await loadUserScopedData();
+    renderUserDashboard();
+    if (currentUser.role === 'admin') renderAdminDashboard();
+  } catch (e) { alert(e.message); }
 }
 
 async function loadPublicData() {
@@ -310,9 +343,10 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async functio
   const employment = document.getElementById('appEmployment').value.trim() || 'Not specified';
   const bills = document.getElementById('appExistingBills').value.trim() || 'Not specified';
   const notes = document.getElementById('appNotes').value.trim() || '';
+  const files = document.getElementById('appFileUploadInput')?.files;
   if (income <= 0) { alert('Please enter your monthly income.'); return; }
   try {
-    await api('/applications/', {
+    const created = await api('/applications/', {
       method: 'POST',
       body: {
         product_id: prod.id,
@@ -324,8 +358,13 @@ document.getElementById('submitAppBtn')?.addEventListener('click', async functio
         }
       }
     });
+    if (files && files.length) {
+      try { await uploadDocuments(files, 'application', created.id); } catch (ue) { console.warn(ue); }
+    }
     appModal.classList.remove('open');
     pendingProductForApplication = null;
+    const afi = document.getElementById('appFileUploadInput');
+    if (afi) afi.value = '';
     await loadUserScopedData();
     alert(`✅ Application submitted for "${prod.name}". Your journey has started!`);
     switchPage('user-dashboard');
@@ -431,8 +470,8 @@ function renderUserDashboard() {
         </div>
         <div class="mt-12"><button class="btn-secondary btn-sm" onclick="toggleRepayments(${app.id})"><i class="fas fa-chevron-down"></i> View Repayments</button></div>
         <div id="repayments-${app.id}" style="display:none;margin-top:8px;">
-          <div class="table-wrap"><table><thead><tr><th>Due Date</th><th>Amount</th><th>Paid Date</th><th>Status</th></tr></thead><tbody>
-          ${(app.repayments || []).map(r => `<tr><td>${r.dueDate}</td><td>${formatCurrency(r.amount)}</td><td>${r.paidDate || '—'}</td><td><span class="badge" style="background:${r.status === 'paid' ? '#d1fae5' : r.status === 'overdue' ? '#fee2e2' : '#fef3c7'};color:${r.status === 'paid' ? '#065f2e' : r.status === 'overdue' ? '#b91c1c' : '#92400e'};">${r.status}</span></td></tr>`).join('')}
+          <div class="table-wrap"><table><thead><tr><th>Due Date</th><th>Amount</th><th>Paid Date</th><th>Status</th><th>Action</th></tr></thead><tbody>
+          ${(app.repayments || []).map(r => `<tr><td>${r.dueDate}</td><td>${formatCurrency(r.amount)}</td><td>${r.paidDate || '—'}</td><td><span class="badge" style="background:${r.status === 'paid' ? '#d1fae5' : r.status === 'overdue' ? '#fee2e2' : '#fef3c7'};color:${r.status === 'paid' ? '#065f2e' : r.status === 'overdue' ? '#b91c1c' : '#92400e'};">${r.status}</span></td><td>${(r.status === 'pending' || r.status === 'overdue') ? `<button class="btn-primary btn-sm" onclick="markRepaymentPaid(${app.id},${r.id})">Mark paid</button>` : '—'}</td></tr>`).join('')}
           </tbody></table></div>
         </div>
       </div>`;
@@ -478,21 +517,38 @@ function renderVendorDashboard() {
     ...myApps.map(a => {
       const prod = getProduct(a.productId) || (a.product ? mapProduct(a.product) : null);
       const user = a.user || getUser(a.userId);
-      return { product: prod ? prod.name : 'N/A', buyer: user ? user.name : 'N/A', type: 'Financed', amount: a.totalDeferred, status: a.status };
+      const actions = a.status === 'pending_review'
+        ? `<button class="btn-primary btn-sm" onclick="updateApplicationStatus(${a.id},'approved')">Approve</button>
+           <button class="btn-danger btn-sm" onclick="updateApplicationStatus(${a.id},'rejected')">Reject</button>`
+        : '—';
+      return { product: prod ? prod.name : 'N/A', buyer: user ? user.name : 'N/A', type: 'Financed', amount: a.totalDeferred, status: a.status, actions };
     }),
     ...myCash.map(c => {
       const prod = getProduct(c.productId);
-      return { product: prod ? prod.name : 'N/A', buyer: c.buyerName, type: 'Cash', amount: c.amount, status: 'Completed' };
+      return { product: prod ? prod.name : 'N/A', buyer: c.buyerName, type: 'Cash', amount: c.amount, status: 'Completed', actions: '—' };
     })
   ];
   tbody.innerHTML = allOrders.length
-    ? allOrders.map(o => `<tr><td>${o.product}</td><td>${o.buyer}</td><td>${o.type}</td><td>${formatCurrency(o.amount)}</td><td><span class="badge">${o.status}</span></td></tr>`).join('')
-    : `<tr><td colspan="5" class="text-muted">No orders yet.</td></tr>`;
+    ? allOrders.map(o => `<tr><td>${o.product}</td><td>${o.buyer}</td><td>${o.type}</td><td>${formatCurrency(o.amount)}</td><td><span class="badge">${o.status}</span></td><td>${o.actions}</td></tr>`).join('')
+    : `<tr><td colspan="6" class="text-muted">No orders yet.</td></tr>`;
   const revFinanced = myApps.reduce((s, a) => s + a.totalDeferred, 0);
   const revCash = myCash.reduce((s, c) => s + c.amount, 0);
   document.getElementById('vendorRevenue').innerHTML = formatCurrency(revFinanced + revCash);
   document.getElementById('vendorRevFinanced').innerHTML = formatCurrency(revFinanced);
   document.getElementById('vendorRevCash').innerHTML = formatCurrency(revCash);
+
+  const ptbody = document.getElementById('vendorProductsTable');
+  if (ptbody) {
+    ptbody.innerHTML = myProducts.length
+      ? myProducts.map(p => `<tr>
+          <td>${p.name}</td><td>${formatCurrency(p.price)}</td><td>${p.category}</td><td>${p.type}</td>
+          <td>
+            <button class="btn-secondary btn-sm" onclick="editVendorProduct(${p.id})">Edit</button>
+            <button class="btn-danger btn-sm" onclick="deactivateVendorProduct(${p.id})">Deactivate</button>
+          </td>
+        </tr>`).join('')
+      : `<tr><td colspan="5" class="text-muted">No products yet.</td></tr>`;
+  }
 }
 
 async function renderAdminDashboard() {
@@ -515,7 +571,17 @@ async function renderAdminDashboard() {
     const user = a.user || getUser(a.userId);
     const vendor = getVendor(a.vendorId) || a.vendor;
     const prod = getProduct(a.productId) || (a.product ? mapProduct(a.product) : null);
-    return `<tr><td>${user ? user.name : 'N/A'}</td><td>${vendor ? vendor.name : 'N/A'}</td><td>${prod ? prod.name : 'N/A'}</td><td>${formatCurrency(a.totalDeferred)}</td><td><span class="badge">${getStatusLabel(a.status)}</span></td></tr>`;
+    let actions = '—';
+    if (a.status === 'pending_review') {
+      actions = `<button class="btn-primary btn-sm" onclick="updateApplicationStatus(${a.id},'approved')">Approve</button>
+         <button class="btn-danger btn-sm" onclick="updateApplicationStatus(${a.id},'rejected')">Reject</button>`;
+    } else {
+      const pending = (a.repayments || []).find(r => r.status === 'pending' || r.status === 'overdue');
+      if (pending) {
+        actions = `<button class="btn-primary btn-sm" onclick="markRepaymentPaid(${a.id},${pending.id})">Mark paid</button>`;
+      }
+    }
+    return `<tr><td>${user ? user.name : 'N/A'}</td><td>${vendor ? vendor.name : 'N/A'}</td><td>${prod ? prod.name : 'N/A'}</td><td>${formatCurrency(a.totalDeferred)}</td><td><span class="badge">${getStatusLabel(a.status)}</span></td><td>${actions}</td></tr>`;
   }).join('');
   renderLendersTable();
   const active = getLender(activeLenderId);
@@ -601,6 +667,91 @@ function applyLenderToAllProducts() {
   alert('All product profits updated based on active lender.');
 }
 
+document.getElementById('toggleAddProductBtn')?.addEventListener('click', () => {
+  const form = document.getElementById('addProductForm');
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('cancelProductBtn')?.addEventListener('click', () => {
+  const form = document.getElementById('addProductForm');
+  if (form) form.style.display = 'none';
+});
+document.getElementById('saveProductBtn')?.addEventListener('click', async function () {
+  if (!currentUser || currentUser.role !== 'vendor') return;
+  const name = document.getElementById('vpName').value.trim();
+  const price = parseFloat(document.getElementById('vpPrice').value);
+  const category = document.getElementById('vpCategory').value.trim();
+  const type = document.getElementById('vpType').value;
+  const description = document.getElementById('vpDescription').value.trim();
+  if (!name || !category || isNaN(price) || price <= 0) {
+    alert('Name, category, and a valid price are required.');
+    return;
+  }
+  try {
+    await api('/products/', {
+      method: 'POST',
+      body: {
+        name,
+        price,
+        category,
+        type,
+        description,
+        saving_factor_electric: parseFloat(document.getElementById('vpSaveElec').value) || 0,
+        saving_factor_fuel: parseFloat(document.getElementById('vpSaveFuel').value) || 0,
+        warranty: document.getElementById('vpWarranty').value.trim() || null,
+        installation: document.getElementById('vpInstallation').value.trim() || null,
+        monthly_saving: parseFloat(document.getElementById('vpMonthlySaving').value) || 0,
+        annual_saving: parseFloat(document.getElementById('vpAnnualSaving').value) || 0,
+        payback: document.getElementById('vpPayback').value.trim() || null,
+        rating: parseFloat(document.getElementById('vpRating').value) || 4.0
+      }
+    });
+    document.getElementById('addProductForm').style.display = 'none';
+    ['vpName', 'vpPrice', 'vpCategory', 'vpDescription', 'vpSaveElec', 'vpSaveFuel', 'vpWarranty', 'vpInstallation', 'vpMonthlySaving', 'vpAnnualSaving', 'vpPayback'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    await loadPublicData();
+    renderVendorDashboard();
+    renderProducts();
+    alert('Product created.');
+  } catch (e) { alert(e.message); }
+});
+
+async function editVendorProduct(productId) {
+  const p = getProduct(productId);
+  if (!p) return;
+  const name = prompt('Product name', p.name);
+  if (name == null) return;
+  const priceStr = prompt('Price (PKR)', String(p.price));
+  if (priceStr == null) return;
+  const price = parseFloat(priceStr);
+  if (!name.trim() || isNaN(price) || price <= 0) {
+    alert('Invalid name or price.');
+    return;
+  }
+  const description = prompt('Description', p.description || '') ?? p.description;
+  const category = prompt('Category', p.category) ?? p.category;
+  try {
+    await api(`/products/${productId}`, {
+      method: 'PUT',
+      body: { name: name.trim(), price, description, category }
+    });
+    await loadPublicData();
+    renderVendorDashboard();
+    renderProducts();
+  } catch (e) { alert(e.message); }
+}
+
+async function deactivateVendorProduct(productId) {
+  if (!confirm('Deactivate this product?')) return;
+  try {
+    await api(`/products/${productId}`, { method: 'DELETE' });
+    await loadPublicData();
+    renderVendorDashboard();
+    renderProducts();
+  } catch (e) { alert(e.message); }
+}
+
 document.getElementById('signupBtn')?.addEventListener('click', () => signupModal.classList.add('open'));
 document.getElementById('closeSignupModal')?.addEventListener('click', () => signupModal.classList.remove('open'));
 
@@ -612,6 +763,7 @@ document.getElementById('signupSubmitBtn')?.addEventListener('click', async func
   const phone = document.getElementById('signupPhone').value.trim();
   const address = document.getElementById('signupAddress').value.trim();
   const salary = parseFloat(document.getElementById('signupSalary').value) || 0;
+  const files = document.getElementById('fileUploadInput')?.files;
   if (!name || !email || !password || !cnic || !phone || !address || salary <= 0) {
     alert('Please fill all fields with valid values.');
     return;
@@ -621,14 +773,19 @@ document.getElementById('signupSubmitBtn')?.addEventListener('click', async func
       method: 'POST',
       body: { name, email, password, cnic, phone, address, salary }
     });
+    const loggedIn = await performLogin(email, password);
+    if (loggedIn && files && files.length) {
+      try { await uploadDocuments(files, 'signup'); } catch (ue) { console.warn(ue); }
+    }
     signupModal.classList.remove('open');
-    alert('Registration successful! Please login.');
+    alert('Registration successful!');
     ['signupName', 'signupEmail', 'signupPassword', 'signupCnic', 'signupPhone', 'signupAddress', 'signupSalary'].forEach(id => {
       document.getElementById(id).value = '';
     });
     const fl = document.getElementById('fileList');
     if (fl) fl.innerHTML = '';
-    loginModal.classList.add('open');
+    const fi = document.getElementById('fileUploadInput');
+    if (fi) fi.value = '';
   } catch (e) { alert(e.message); }
 });
 
@@ -815,3 +972,7 @@ window.applyLenderToAllProducts = applyLenderToAllProducts;
 window.filterProducts = filterProducts;
 window.openProductDetail = openProductDetail;
 window.toggleFaq = toggleFaq;
+window.updateApplicationStatus = updateApplicationStatus;
+window.markRepaymentPaid = markRepaymentPaid;
+window.editVendorProduct = editVendorProduct;
+window.deactivateVendorProduct = deactivateVendorProduct;

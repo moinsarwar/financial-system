@@ -9,8 +9,6 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.get("/me")
 def get_me(current_user=Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    if current_user["role"] == "admin":
-        return current_user
     if current_user["role"] == "vendor":
         vendor = db.query(models.Vendor).filter(models.Vendor.id == current_user["id"]).first()
         if not vendor:

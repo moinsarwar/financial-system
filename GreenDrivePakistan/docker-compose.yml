@@ -26,6 +26,9 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: "10080"
       LENDER_PROFIT_RATE: "0.13"
       MAX_TENURE_MONTHS: "24"
+      UPLOAD_ROOT: /app/uploads
+    volumes:
+      - gd_uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -46,3 +49,4 @@ services:
 
 volumes:
   postgres_data:
+  gd_uploads:

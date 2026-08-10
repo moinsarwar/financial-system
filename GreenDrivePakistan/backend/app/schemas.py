@@ -87,10 +87,29 @@ class ProductBase(BaseModel):
     annual_saving: float = 0
     payback: Optional[str] = None
     rating: float = 4.0
+    image_url: Optional[str] = None
 
 
 class ProductCreate(ProductBase):
-    vendor_id: int
+    vendor_id: Optional[int] = None
+
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    category: Optional[str] = None
+    type: Optional[ProductType] = None
+    saving_factor_electric: Optional[float] = None
+    saving_factor_fuel: Optional[float] = None
+    warranty: Optional[str] = None
+    installation: Optional[str] = None
+    monthly_saving: Optional[float] = None
+    annual_saving: Optional[float] = None
+    payback: Optional[str] = None
+    rating: Optional[float] = None
+    image_url: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 class ProductResponse(ProductBase):
@@ -156,6 +175,12 @@ class ApplicationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class CashSaleCreate(BaseModel):
+    product_id: int
+    buyer_name: str
+    amount: float
 
 
 class CashSaleResponse(BaseModel):
@@ -244,3 +269,19 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
     role: Optional[str] = None
+
+
+class DocumentResponse(BaseModel):
+    id: int
+    user_id: Optional[int] = None
+    application_id: Optional[int] = None
+    doc_type: str
+    filename: str
+    storage_path: str
+    original_name: str
+    mime_type: Optional[str] = None
+    size_bytes: Optional[int] = 0
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

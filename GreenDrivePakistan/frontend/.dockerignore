@@ -1,0 +1,7 @@
+node_modules
+dist
+_legacy_html
+.git
+*.md
+.env*
+.DS_Store

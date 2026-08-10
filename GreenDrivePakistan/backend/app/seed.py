@@ -10,8 +10,35 @@ def _dt(s: str):
     return datetime.strptime(s, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
 
+def ensure_admin_user(db: Session) -> None:
+    """Always ensure the seeded admin User exists (even if other seed data already present)."""
+    admin = db.query(models.User).filter(models.User.email == "admin@demo.com").first()
+    if admin:
+        if admin.role != models.UserRole.ADMIN:
+            admin.role = models.UserRole.ADMIN
+            db.flush()
+        return
+    db.add(
+        models.User(
+            name="Super Admin",
+            email="admin@demo.com",
+            password_hash=auth.get_password_hash("admin123"),
+            cnic="ADMIN-000",
+            phone=None,
+            address=None,
+            salary=0,
+            role=models.UserRole.ADMIN,
+            is_active=True,
+        )
+    )
+    db.flush()
+
+
 def seed_database(db: Session) -> None:
+    ensure_admin_user(db)
+
     if db.query(models.Vendor).count() > 0 and db.query(models.Product).count() > 0:
+        db.commit()
         return
 
     vendors_spec = [

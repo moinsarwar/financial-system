@@ -9,6 +9,7 @@ from ..services.finance import (
     calculate_down_payment,
     calculate_monthly_installment,
     calculate_product_profit,
+    calculate_repayment_schedule,
 )
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
@@ -34,8 +35,6 @@ def create_application(
 
     profit = calculate_product_profit(product.price, profit_rate)
     down_payment = calculate_down_payment(product.price)
-    financed = product.price + profit - down_payment
-    # Installments on full murabaha price (price+profit) over tenure; DP separate
     monthly = calculate_monthly_installment(product.price, profit, tenure)
     total_deferred = product.price + profit
 
@@ -77,6 +76,34 @@ def _app_query(db: Session):
         joinedload(models.Application.user),
         joinedload(models.Application.repayments),
     )
+
+
+def _ensure_repayment_schedule(db: Session, app_row: models.Application, start: datetime) -> None:
+    existing = (
+        db.query(models.Repayment)
+        .filter(models.Repayment.application_id == app_row.id)
+        .count()
+    )
+    if existing > 0:
+        return
+    schedule = calculate_repayment_schedule(app_row.total_deferred, app_row.tenure, start)
+    for item in schedule:
+        db.add(
+            models.Repayment(
+                application_id=app_row.id,
+                user_id=app_row.user_id,
+                due_date=item["due_date"],
+                amount=item["amount"],
+                status=models.RepaymentStatus.PENDING,
+            )
+        )
+    if schedule:
+        app_row.next_due_date = schedule[0]["due_date"]
+        app_row.paid_amount = app_row.paid_amount or 0
+        app_row.remaining_amount = round(sum(s["amount"] for s in schedule), 2)
+    else:
+        app_row.remaining_amount = app_row.total_deferred
+        app_row.paid_amount = 0
 
 
 @router.get("/", response_model=List[schemas.ApplicationResponse])
@@ -139,7 +166,61 @@ def update_status(
         app_row.reviewed_date = now
     if new_status in (models.ApplicationStatus.APPROVED, models.ApplicationStatus.ACTIVE):
         app_row.approved_date = now
-        app_row.next_due_date = now
+        _ensure_repayment_schedule(db, app_row, now)
     db.commit()
-    db.refresh(app_row)
+    return _app_query(db).filter(models.Application.id == application_id).first()
+
+
+@router.post("/{application_id}/repayments/{repayment_id}/pay", response_model=schemas.ApplicationResponse)
+def mark_repayment_paid(
+    application_id: int,
+    repayment_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(auth.get_current_active_user),
+):
+    app_row = db.query(models.Application).filter(models.Application.id == application_id).first()
+    if not app_row:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    role = current_user["role"]
+    if role == "user" and app_row.user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if role not in ("user", "admin"):
+        raise HTTPException(status_code=403, detail="Only user/admin can mark repayments paid")
+
+    repayment = (
+        db.query(models.Repayment)
+        .filter(
+            models.Repayment.id == repayment_id,
+            models.Repayment.application_id == application_id,
+        )
+        .first()
+    )
+    if not repayment:
+        raise HTTPException(status_code=404, detail="Repayment not found")
+    if repayment.status == models.RepaymentStatus.PAID:
+        raise HTTPException(status_code=400, detail="Repayment already paid")
+
+    now = datetime.utcnow()
+    repayment.status = models.RepaymentStatus.PAID
+    repayment.paid_date = now
+
+    app_row.paid_amount = round((app_row.paid_amount or 0) + repayment.amount, 2)
+    app_row.remaining_amount = round(max(0.0, (app_row.remaining_amount or 0) - repayment.amount), 2)
+
+    next_pending = (
+        db.query(models.Repayment)
+        .filter(
+            models.Repayment.application_id == application_id,
+            models.Repayment.status != models.RepaymentStatus.PAID,
+            models.Repayment.id != repayment_id,
+        )
+        .order_by(models.Repayment.due_date.asc())
+        .first()
+    )
+    app_row.next_due_date = next_pending.due_date if next_pending else None
+    if not next_pending and (app_row.remaining_amount or 0) <= 0:
+        app_row.status = models.ApplicationStatus.COMPLETED
+
+    db.commit()
     return _app_query(db).filter(models.Application.id == application_id).first()

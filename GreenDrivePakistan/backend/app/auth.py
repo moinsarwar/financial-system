@@ -50,9 +50,6 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    if token_data.role == "admin":
-        return {"role": "admin", "email": token_data.email, "id": 0, "name": "Super Admin"}
-
     user = db.query(models.User).filter(models.User.email == token_data.email).first()
     if user is not None:
         return {

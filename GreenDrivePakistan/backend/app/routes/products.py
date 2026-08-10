@@ -19,13 +19,13 @@ def get_products(
     search: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
+    include_inactive: bool = False,
+    vendor_id: Optional[int] = None,
     db: Session = Depends(get_db),
 ):
-    query = (
-        db.query(models.Product)
-        .options(joinedload(models.Product.vendor))
-        .filter(models.Product.is_active == True)  # noqa: E712
-    )
+    query = db.query(models.Product).options(joinedload(models.Product.vendor))
+    if not include_inactive:
+        query = query.filter(models.Product.is_active == True)  # noqa: E712
     if category:
         query = query.filter(models.Product.category == category)
     if search:
@@ -33,6 +33,8 @@ def get_products(
             models.Product.name.ilike(f"%{search}%")
             | models.Product.category.ilike(f"%{search}%")
         )
+    if vendor_id is not None:
+        query = query.filter(models.Product.vendor_id == vendor_id)
     products = query.offset(skip).limit(limit).all()
     rate = _active_rate(db)
     for product in products:
@@ -60,23 +62,78 @@ def create_product(
     db: Session = Depends(get_db),
     current_user=Depends(auth.get_current_active_user),
 ):
-    if current_user["role"] != "vendor":
-        raise HTTPException(status_code=403, detail="Only vendors can create products")
-    vendor = db.query(models.Vendor).filter(models.Vendor.id == product.vendor_id).first()
+    role = current_user["role"]
+    if role not in ("vendor", "admin"):
+        raise HTTPException(status_code=403, detail="Only vendors/admins can create products")
+
+    data = product.model_dump()
+    if role == "vendor":
+        data["vendor_id"] = current_user["id"]
+    elif not data.get("vendor_id"):
+        raise HTTPException(status_code=400, detail="vendor_id required for admin create")
+
+    vendor = db.query(models.Vendor).filter(models.Vendor.id == data["vendor_id"]).first()
     if not vendor:
         raise HTTPException(status_code=404, detail="Vendor not found")
-    if vendor.id != current_user["id"]:
-        raise HTTPException(status_code=403, detail="Cannot create for another vendor")
 
-    monthly_saving = product.monthly_saving or round(product.price * 0.02, 2)
-    annual_saving = product.annual_saving or monthly_saving * 12
+    monthly_saving = data.get("monthly_saving") or round(data["price"] * 0.02, 2)
+    annual_saving = data.get("annual_saving") or monthly_saving * 12
+    data["monthly_saving"] = monthly_saving
+    data["annual_saving"] = annual_saving
     db_product = models.Product(
-        **product.model_dump(),
-        profit=calculate_product_profit(product.price, _active_rate(db)),
-        monthly_saving=monthly_saving,
-        annual_saving=annual_saving,
+        **data,
+        profit=calculate_product_profit(data["price"], _active_rate(db)),
     )
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
     return db_product
+
+
+@router.put("/{product_id}", response_model=schemas.ProductResponse)
+def update_product(
+    product_id: int,
+    payload: schemas.ProductUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(auth.get_current_active_user),
+):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    role = current_user["role"]
+    if role == "vendor" and product.vendor_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Cannot edit another vendor's product")
+    if role not in ("vendor", "admin"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    data = payload.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        setattr(product, k, v)
+    if "price" in data:
+        product.profit = calculate_product_profit(product.price, _active_rate(db))
+    db.commit()
+    db.refresh(product)
+    product.profit = calculate_product_profit(product.price, _active_rate(db))
+    return product
+
+
+@router.delete("/{product_id}")
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(auth.get_current_active_user),
+):
+    product = db.query(models.Product).filter(models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    role = current_user["role"]
+    if role == "vendor" and product.vendor_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Cannot delete another vendor's product")
+    if role not in ("vendor", "admin"):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    product.is_active = False
+    db.commit()
+    return {"ok": True, "id": product_id, "is_active": False}

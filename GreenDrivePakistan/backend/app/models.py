@@ -50,6 +50,7 @@ class User(Base):
 
     applications = relationship("Application", back_populates="user")
     repayments = relationship("Repayment", back_populates="user")
+    documents = relationship("Document", back_populates="user")
 
 
 class Vendor(Base):
@@ -86,6 +87,7 @@ class Product(Base):
     annual_saving = Column(Float, default=0)
     payback = Column(String)
     rating = Column(Float, default=4.0)
+    image_url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -136,6 +138,7 @@ class Application(Base):
     vendor = relationship("Vendor", back_populates="applications")
     lender = relationship("Lender")
     repayments = relationship("Repayment", back_populates="application")
+    documents = relationship("Document", back_populates="application")
 
 
 class Repayment(Base):
@@ -168,3 +171,21 @@ class CashSale(Base):
 
     vendor = relationship("Vendor")
     product = relationship("Product")
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    application_id = Column(Integer, ForeignKey("applications.id"), nullable=True)
+    doc_type = Column(String, nullable=False)
+    filename = Column(String, nullable=False)
+    storage_path = Column(String, nullable=False)
+    original_name = Column(String, nullable=False)
+    mime_type = Column(String)
+    size_bytes = Column(Integer, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="documents")
+    application = relationship("Application", back_populates="documents")

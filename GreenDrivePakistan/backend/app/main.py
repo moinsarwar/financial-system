@@ -1,17 +1,29 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from . import models
+from .config import get_settings
 from .database import Base, SessionLocal, engine
-from .routes import admin, applications, auth, compare, products, users, vendors
+from .routes import admin, applications, auth, compare, documents, products, users, vendors
 from .seed import seed_database
+
+
+def _ensure_schema() -> None:
+    """Create tables and add columns that create_all won't alter on existing DBs."""
+    Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url VARCHAR"))
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    settings = get_settings()
+    os.makedirs(settings.UPLOAD_ROOT, exist_ok=True)
+    _ensure_schema()
     db = SessionLocal()
     try:
         seed_database(db)
@@ -33,6 +45,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(products.router)
 app.include_router(applications.router)
+app.include_router(documents.router)
 app.include_router(users.router)
 app.include_router(vendors.router)
 app.include_router(admin.router)

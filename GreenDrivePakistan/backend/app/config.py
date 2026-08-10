@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
     LENDER_PROFIT_RATE: float = 0.13
     MAX_TENURE_MONTHS: int = 24
+    UPLOAD_ROOT: str = "/app/uploads"
 
     class Config:
         env_file = ".env"
