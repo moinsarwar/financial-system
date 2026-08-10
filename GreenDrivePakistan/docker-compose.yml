@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: greendrive
+      POSTGRES_PASSWORD: greendrive
+      POSTGRES_DB: greendrive
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U greendrive -d greendrive"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    ports:
+      - "9012:8000"
+    environment:
+      DATABASE_URL: postgresql://greendrive:greendrive@db:5432/greendrive
+      SECRET_KEY: greendrive-dev-secret-change-me
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "10080"
+      LENDER_PROFIT_RATE: "0.13"
+      MAX_TENURE_MONTHS: "24"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "9013:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

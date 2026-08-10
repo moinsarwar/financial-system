@@ -1,0 +1,15 @@
+node_modules/
+__pycache__/
+*.py[cod]
+.env
+dist/
+.venv/
+venv/
+*.egg-info/
+.DS_Store
+.idea/
+.vscode/
+*.log
+postgres_data/
+_bootstrap_part*.py
+_source.html
