@@ -29,4 +29,9 @@ def list_users(
 ):
     if current_user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
-    return db.query(models.User).order_by(models.User.id).all()
+    return (
+        db.query(models.User)
+        .filter(models.User.role == models.UserRole.USER)
+        .order_by(models.User.id)
+        .all()
+    )

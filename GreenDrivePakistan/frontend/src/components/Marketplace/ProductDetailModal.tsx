@@ -11,6 +11,7 @@ interface Props {
   vendor?: Vendor;
   monthly: number;
   down: number;
+  tenure?: number;
   onBuy: () => void;
 }
 
@@ -21,6 +22,7 @@ export default function ProductDetailModal({
   vendor,
   monthly,
   down,
+  tenure = 24,
   onBuy,
 }: Props) {
   const [product, setProduct] = useState<Product | null>(initial);
@@ -62,8 +64,8 @@ export default function ProductDetailModal({
           <strong>Price:</strong> {formatCurrency(product.price)} <small>MRP</small>
         </div>
         <div>
-          <strong>Financing:</strong> {formatCurrency(down)} down + {formatCurrency(monthly)}/mo for 24
-          months
+          <strong>Financing:</strong> {formatCurrency(down)} down + {formatCurrency(monthly)}/mo for{' '}
+          {tenure} months
         </div>
         <div>
           <strong>Description:</strong> {product.description}

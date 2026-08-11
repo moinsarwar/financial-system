@@ -38,6 +38,22 @@ class UserCreate(UserBase):
     cnic: str
 
 
+class AdminUserCreate(UserCreate):
+    role: UserRole = UserRole.USER
+
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    salary: Optional[float] = None
+    cnic: Optional[str] = None
+    role: Optional[UserRole] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -62,6 +78,14 @@ class VendorBase(BaseModel):
 
 class VendorCreate(VendorBase):
     password: str
+
+
+class VendorUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    description: Optional[str] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 class VendorResponse(VendorBase):
@@ -225,27 +249,57 @@ class CompareInput(BaseModel):
     electricity_bill: float
     fuel_bill: float
     compare_type: str = "both"
+    # Optional overrides (defaults come from active lender + compare_settings)
+    tenure_months: Optional[int] = None
+    down_payment_rate: Optional[float] = Field(default=None, ge=0, le=1)
+    horizon_years: Optional[int] = Field(default=None, ge=1, le=30)
+    category: Optional[str] = None  # e.g. Solar / EV / all
+    product_ids: Optional[List[int]] = None
 
 
 class CompareResult(BaseModel):
     product_id: int
     product_name: str
     price: float
+    category: Optional[str] = None
     monthly_installment: float
     current_total_bill: float
     new_total_bill: float
     monthly_saving: float
     yearly_saving: float
-    five_year_net_saving: float
+    horizon_net_saving: float
+    five_year_net_saving: float  # alias of horizon_net_saving
     down_payment: float
     saving_factor_electric: float
     saving_factor_fuel: float
+    tenure_months: int = 24
+    horizon_years: int = 5
+    down_payment_rate: float = 0.2
 
 
 class CompareResponse(BaseModel):
     results: List[CompareResult]
     best_product: Optional[CompareResult] = None
     total_current_bill: float
+    tenure_months: int = 24
+    horizon_years: int = 5
+    down_payment_rate: float = 0.2
+    lender_name: Optional[str] = None
+    lender_max_tenure: Optional[int] = None
+    categories: Optional[List[str]] = None
+
+
+class CompareSettingsUpdate(BaseModel):
+    down_payment_rate: Optional[float] = Field(default=None, ge=0, le=1)
+    default_horizon_years: Optional[int] = Field(default=None, ge=1, le=30)
+
+
+class CompareSettingsResponse(BaseModel):
+    down_payment_rate: float
+    default_horizon_years: int
+
+    class Config:
+        from_attributes = True
 
 
 class AdminStats(BaseModel):

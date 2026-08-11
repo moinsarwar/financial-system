@@ -6,11 +6,11 @@ from .. import models, schemas, auth
 from ..database import get_db
 from ..config import get_settings
 from ..services.finance import (
-    calculate_down_payment,
-    calculate_monthly_installment,
+    calculate_financed_monthly,
     calculate_product_profit,
     calculate_repayment_schedule,
 )
+from ..routes.compare import get_or_create_compare_settings
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 settings = get_settings()
@@ -32,11 +32,14 @@ def create_application(
     lender = db.query(models.Lender).filter(models.Lender.is_active == True).first()  # noqa: E712
     profit_rate = lender.profit_rate if lender else settings.LENDER_PROFIT_RATE
     tenure = lender.max_tenure if lender else settings.MAX_TENURE_MONTHS
+    cfg = get_or_create_compare_settings(db)
+    down_rate = float(cfg.down_payment_rate or 0.2)
 
     profit = calculate_product_profit(product.price, profit_rate)
-    down_payment = calculate_down_payment(product.price)
-    monthly = calculate_monthly_installment(product.price, profit, tenure)
-    total_deferred = product.price + profit
+    down_payment, monthly, financed = calculate_financed_monthly(
+        product.price, profit, tenure, down_rate
+    )
+    total_deferred = financed if financed > 0 else 0.0
 
     app_row = models.Application(
         user_id=current_user["id"],
@@ -46,7 +49,7 @@ def create_application(
         status=models.ApplicationStatus.PENDING_REVIEW,
         down_payment=down_payment,
         monthly_installment=monthly,
-        tenure=tenure,
+        tenure=tenure if financed > 0 else 0,
         total_deferred=total_deferred,
         paid_amount=0,
         remaining_amount=total_deferred,

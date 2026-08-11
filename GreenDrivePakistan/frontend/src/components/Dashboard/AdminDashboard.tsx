@@ -26,6 +26,7 @@ export default function AdminDashboard() {
   } = useAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [showLenderForm, setShowLenderForm] = useState(false);
+  const [editingLenderId, setEditingLenderId] = useState<number | null>(null);
   const [lenderName, setLenderName] = useState('');
   const [lenderRate, setLenderRate] = useState('');
   const [lenderTenure, setLenderTenure] = useState('');
@@ -34,10 +35,58 @@ export default function AdminDashboard() {
   const [productForm, setProductForm] = useState<ProductFormData>(emptyProductForm);
   const [productVendorId, setProductVendorId] = useState('');
 
+  const emptyVendorForm = {
+    name: '',
+    email: '',
+    description: '',
+    password: '',
+    is_active: true,
+  };
+  const emptyUserForm = {
+    name: '',
+    email: '',
+    password: '',
+    cnic: '',
+    phone: '',
+    address: '',
+    salary: '',
+    role: 'user' as 'user' | 'admin',
+    is_active: true,
+  };
+  const [showVendorForm, setShowVendorForm] = useState(false);
+  const [editingVendorId, setEditingVendorId] = useState<number | null>(null);
+  const [vendorForm, setVendorForm] = useState(emptyVendorForm);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [userForm, setUserForm] = useState(emptyUserForm);
+  const [formulaDownPct, setFormulaDownPct] = useState('20');
+  const [formulaHorizon, setFormulaHorizon] = useState('5');
+
+  const fieldStyle = {
+    padding: 10,
+    borderRadius: 10,
+    border: '1px solid #d1d5db',
+    width: '100%',
+    marginBottom: 8,
+  } as const;
+  const labelStyle = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 600 as const,
+    color: '#334155',
+    marginBottom: 4,
+  };
+
   useEffect(() => {
     if (!user || user.role !== 'admin') return;
     api<AdminStats>('/admin/stats')
       .then(setStats)
+      .catch(console.warn);
+    api<{ down_payment_rate: number; default_horizon_years: number }>('/compare/settings')
+      .then((s) => {
+        setFormulaDownPct(String(Math.round((s.down_payment_rate || 0.2) * 100)));
+        setFormulaHorizon(String(s.default_horizon_years || 5));
+      })
       .catch(console.warn);
   }, [user, applications, cashSales]);
 
@@ -72,31 +121,30 @@ export default function AdminDashboard() {
     }
   };
 
-  const editLender = async (id: number) => {
+  const closeLenderForm = () => {
+    setShowLenderForm(false);
+    setEditingLenderId(null);
+    setLenderName('');
+    setLenderRate('');
+    setLenderTenure('');
+  };
+
+  const openAddLender = () => {
+    setEditingLenderId(null);
+    setLenderName('');
+    setLenderRate('');
+    setLenderTenure('');
+    setShowLenderForm(true);
+  };
+
+  const openEditLender = (id: number) => {
     const l = lenders.find((x) => x.id === id);
     if (!l) return;
-    const name = prompt('Lender name', l.name);
-    if (name == null) return;
-    const rateStr = prompt('Profit rate %', String(l.profitRate * 100));
-    if (rateStr == null) return;
-    const tenureStr = prompt('Max tenure (months)', String(l.maxTenure));
-    if (tenureStr == null) return;
-    const rate = parseFloat(rateStr) / 100;
-    const tenure = parseInt(tenureStr, 10);
-    if (!name.trim() || isNaN(rate) || isNaN(tenure) || rate <= 0 || tenure <= 0) {
-      alert('Invalid values.');
-      return;
-    }
-    try {
-      await api(`/admin/lenders/${id}`, {
-        method: 'PUT',
-        body: { name: name.trim(), profit_rate: rate, max_tenure: tenure },
-      });
-      await refreshScoped();
-      await refreshPublic();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed');
-    }
+    setEditingLenderId(id);
+    setLenderName(l.name);
+    setLenderRate(String(l.profitRate * 100));
+    setLenderTenure(String(l.maxTenure));
+    setShowLenderForm(true);
   };
 
   const deleteLender = async (id: number) => {
@@ -123,17 +171,22 @@ export default function AdminDashboard() {
       return;
     }
     try {
-      await api('/admin/lenders', {
-        method: 'POST',
-        body: { name, profit_rate: rate / 100, max_tenure: tenure },
-      });
-      setLenderName('');
-      setLenderRate('');
-      setLenderTenure('');
-      setShowLenderForm(false);
+      if (editingLenderId != null) {
+        await api(`/admin/lenders/${editingLenderId}`, {
+          method: 'PUT',
+          body: { name, profit_rate: rate / 100, max_tenure: tenure },
+        });
+        alert('Lender updated.');
+      } else {
+        await api('/admin/lenders', {
+          method: 'POST',
+          body: { name, profit_rate: rate / 100, max_tenure: tenure },
+        });
+        alert('Lender added.');
+      }
+      closeLenderForm();
       await refreshScoped();
       await refreshPublic();
-      alert('Lender added.');
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Failed');
     }
@@ -202,6 +255,174 @@ export default function AdminDashboard() {
     try {
       await api(`/products/${productId}`, { method: 'DELETE' });
       await refreshPublic();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed');
+    }
+  };
+
+  const closeVendorForm = () => {
+    setShowVendorForm(false);
+    setEditingVendorId(null);
+    setVendorForm(emptyVendorForm);
+  };
+
+  const openAddVendor = () => {
+    setEditingVendorId(null);
+    setVendorForm(emptyVendorForm);
+    setShowVendorForm(true);
+  };
+
+  const openEditVendor = (id: number) => {
+    const v = vendors.find((x) => x.id === id);
+    if (!v) return;
+    setEditingVendorId(id);
+    setVendorForm({
+      name: v.name,
+      email: v.email || '',
+      description: v.description || '',
+      password: '',
+      is_active: v.is_active !== false,
+    });
+    setShowVendorForm(true);
+  };
+
+  const saveVendor = async () => {
+    if (!vendorForm.name.trim() || !vendorForm.email.trim()) {
+      alert('Name and email are required.');
+      return;
+    }
+    if (editingVendorId == null && !vendorForm.password) {
+      alert('Password is required for new vendors.');
+      return;
+    }
+    try {
+      if (editingVendorId != null) {
+        const body: Record<string, unknown> = {
+          name: vendorForm.name.trim(),
+          email: vendorForm.email.trim(),
+          description: vendorForm.description.trim() || null,
+          is_active: vendorForm.is_active,
+        };
+        if (vendorForm.password) body.password = vendorForm.password;
+        await api(`/admin/vendors/${editingVendorId}`, { method: 'PUT', body });
+        alert('Vendor updated.');
+      } else {
+        await api('/admin/vendors', {
+          method: 'POST',
+          body: {
+            name: vendorForm.name.trim(),
+            email: vendorForm.email.trim(),
+            description: vendorForm.description.trim() || null,
+            password: vendorForm.password,
+          },
+        });
+        alert('Vendor created.');
+      }
+      closeVendorForm();
+      await refreshPublic();
+      await refreshScoped();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed');
+    }
+  };
+
+  const closeUserForm = () => {
+    setShowUserForm(false);
+    setEditingUserId(null);
+    setUserForm(emptyUserForm);
+  };
+
+  const openAddUser = () => {
+    setEditingUserId(null);
+    setUserForm(emptyUserForm);
+    setShowUserForm(true);
+  };
+
+  const openEditUser = (id: number) => {
+    const u = users.find((x) => x.id === id);
+    if (!u || u.role === 'admin') return;
+    setEditingUserId(id);
+    setUserForm({
+      name: u.name,
+      email: u.email,
+      password: '',
+      cnic: u.cnic || '',
+      phone: u.phone || '',
+      address: u.address || '',
+      salary: u.salary != null ? String(u.salary) : '',
+      role: 'user',
+      is_active: u.is_active !== false,
+    });
+    setShowUserForm(true);
+  };
+
+  const saveUser = async () => {
+    if (!userForm.name.trim() || !userForm.email.trim()) {
+      alert('Name and email are required.');
+      return;
+    }
+    if (editingUserId == null) {
+      if (!userForm.password || !userForm.cnic.trim()) {
+        alert('Password and CNIC are required for new users.');
+        return;
+      }
+    }
+    const salary = parseFloat(userForm.salary || '0');
+    try {
+      if (editingUserId != null) {
+        const body: Record<string, unknown> = {
+          name: userForm.name.trim(),
+          email: userForm.email.trim(),
+          phone: userForm.phone.trim() || null,
+          address: userForm.address.trim() || null,
+          salary: Number.isFinite(salary) ? salary : 0,
+          role: 'user',
+          is_active: userForm.is_active,
+        };
+        if (userForm.cnic.trim()) body.cnic = userForm.cnic.trim();
+        if (userForm.password) body.password = userForm.password;
+        await api(`/admin/users/${editingUserId}`, { method: 'PUT', body });
+        alert('User updated.');
+      } else {
+        await api('/admin/users', {
+          method: 'POST',
+          body: {
+            name: userForm.name.trim(),
+            email: userForm.email.trim(),
+            password: userForm.password,
+            cnic: userForm.cnic.trim(),
+            phone: userForm.phone.trim() || null,
+            address: userForm.address.trim() || null,
+            salary: Number.isFinite(salary) ? salary : 0,
+            role: 'user',
+          },
+        });
+        alert('User created.');
+      }
+      closeUserForm();
+      await refreshScoped();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed');
+    }
+  };
+
+  const saveFormulaSettings = async () => {
+    const down = parseFloat(formulaDownPct);
+    const horizon = parseInt(formulaHorizon, 10);
+    if (isNaN(down) || down < 0 || down > 100 || isNaN(horizon) || horizon < 1) {
+      alert('Enter valid down payment % (0–100) and horizon years (≥1).');
+      return;
+    }
+    try {
+      await api('/compare/settings', {
+        method: 'PUT',
+        body: {
+          down_payment_rate: down / 100,
+          default_horizon_years: horizon,
+        },
+      });
+      await refreshPublic();
+      alert('Compare formula defaults saved.');
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Failed');
     }
@@ -279,7 +500,7 @@ export default function AdminDashboard() {
                         Set Active
                       </Button>
                     )}{' '}
-                    <Button variant="secondary" size="sm" onClick={() => editLender(l.id)}>
+                    <Button variant="secondary" size="sm" onClick={() => openEditLender(l.id)}>
                       Edit
                     </Button>{' '}
                     <Button variant="danger" size="sm" onClick={() => deleteLender(l.id)}>
@@ -292,14 +513,36 @@ export default function AdminDashboard() {
           </table>
         </div>
         <div className="mt-12">
-          <Button variant="secondary" size="sm" onClick={() => setShowLenderForm(true)}>
-            <i className="fas fa-plus" /> Add Lender
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (showLenderForm && editingLenderId == null) closeLenderForm();
+              else openAddLender();
+            }}
+          >
+            <i className="fas fa-plus" />{' '}
+            {showLenderForm && editingLenderId == null ? 'Close form' : 'Add Lender'}
           </Button>
         </div>
         {showLenderForm && (
           <div style={{ marginTop: 12, background: '#f8fafc', padding: 16, borderRadius: 12 }}>
+            <h4 style={{ marginBottom: 12 }}>
+              {editingLenderId != null ? 'Edit Lender' : 'Add Lender'}
+            </h4>
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#334155',
+                marginBottom: 4,
+              }}
+            >
+              Lender name *
+            </label>
             <input
-              placeholder="Lender Name"
+              placeholder="e.g. LFE"
               value={lenderName}
               onChange={(e) => setLenderName(e.target.value)}
               style={{
@@ -310,9 +553,22 @@ export default function AdminDashboard() {
                 marginBottom: 8,
               }}
             />
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#334155',
+                marginBottom: 4,
+              }}
+            >
+              Profit rate (%) *
+            </label>
             <input
               type="number"
-              placeholder="Profit Rate %"
+              min={0.1}
+              step={0.1}
+              placeholder="e.g. 13"
               value={lenderRate}
               onChange={(e) => setLenderRate(e.target.value)}
               style={{
@@ -323,9 +579,22 @@ export default function AdminDashboard() {
                 marginBottom: 8,
               }}
             />
+            <label
+              style={{
+                display: 'block',
+                fontSize: 13,
+                fontWeight: 600,
+                color: '#334155',
+                marginBottom: 4,
+              }}
+            >
+              Max tenure (months) *
+            </label>
             <input
               type="number"
-              placeholder="Max Tenure (months)"
+              min={1}
+              step={1}
+              placeholder="e.g. 24 or 36"
               value={lenderTenure}
               onChange={(e) => setLenderTenure(e.target.value)}
               style={{
@@ -336,10 +605,14 @@ export default function AdminDashboard() {
                 marginBottom: 8,
               }}
             />
+            <p className="text-muted" style={{ fontSize: 12, marginBottom: 8 }}>
+              Active lender&apos;s tenure is used for Compare + marketplace installments.
+            </p>
             <Button size="sm" onClick={saveLender}>
-              <i className="fas fa-save" /> Save
+              <i className="fas fa-save" />{' '}
+              {editingLenderId != null ? 'Update Lender' : 'Save Lender'}
             </Button>{' '}
-            <Button variant="secondary" size="sm" onClick={() => setShowLenderForm(false)}>
+            <Button variant="secondary" size="sm" onClick={closeLenderForm}>
               Cancel
             </Button>
           </div>
@@ -357,6 +630,53 @@ export default function AdminDashboard() {
             <i className="fas fa-sync-alt" /> Apply Active Lender to All Products (recalculate profit)
           </Button>
         </div>
+      </div>
+
+      <div className="card mt-16">
+        <h4>
+          <i className="fas fa-sliders-h" /> Compare Formula Defaults
+        </h4>
+        <p className="text-muted">
+          Defaults used by Compare / Marketplace when the user does not override them. Tenure still
+          comes from the active lender (users can pick any tenure up to lender max on Compare).
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 12,
+            marginTop: 12,
+          }}
+        >
+          <div>
+            <label style={labelStyle}>Default down payment (%)</label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={formulaDownPct}
+              onChange={(e) => setFormulaDownPct(e.target.value)}
+              style={fieldStyle}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Default net-saving horizon (years)</label>
+            <select
+              value={formulaHorizon}
+              onChange={(e) => setFormulaHorizon(e.target.value)}
+              style={fieldStyle}
+            >
+              {[3, 5, 7, 10].map((y) => (
+                <option key={y} value={y}>
+                  {y} years
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <Button size="sm" onClick={saveFormulaSettings}>
+          <i className="fas fa-save" /> Save Formula Defaults
+        </Button>
       </div>
 
       <div className="card mt-16">
@@ -441,7 +761,9 @@ export default function AdminDashboard() {
                     }}
                   >
                     <option value="">Select vendor</option>
-                    {vendors.map((v) => (
+                    {vendors
+                      .filter((v) => v.is_active !== false)
+                      .map((v) => (
                       <option key={v.id} value={v.id}>
                         {v.name}
                       </option>
@@ -473,6 +795,8 @@ export default function AdminDashboard() {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Products</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -483,11 +807,19 @@ export default function AdminDashboard() {
                     <td>{v.name}</td>
                     <td>{v.email || '—'}</td>
                     <td>{products.filter((p) => p.vendorId === v.id).length}</td>
+                    <td>
+                      <span className="badge">{v.is_active === false ? 'Inactive' : 'Active'}</span>
+                    </td>
+                    <td>
+                      <Button variant="secondary" size="sm" onClick={() => openEditVendor(v.id)}>
+                        Edit
+                      </Button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="text-muted">
+                  <td colSpan={6} className="text-muted">
                     No vendors loaded.
                   </td>
                 </tr>
@@ -495,6 +827,77 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
+        <div className="mt-12">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (showVendorForm && editingVendorId == null) closeVendorForm();
+              else openAddVendor();
+            }}
+          >
+            <i className="fas fa-plus" />{' '}
+            {showVendorForm && editingVendorId == null ? 'Close form' : 'Add Vendor'}
+          </Button>
+        </div>
+        {showVendorForm && (
+          <div style={{ marginTop: 12, background: '#f8fafc', padding: 16, borderRadius: 12 }}>
+            <h4 style={{ marginBottom: 12 }}>
+              {editingVendorId != null ? 'Edit Vendor' : 'Add Vendor'}
+            </h4>
+            <label style={labelStyle}>Name *</label>
+            <input
+              style={fieldStyle}
+              value={vendorForm.name}
+              onChange={(e) => setVendorForm((f) => ({ ...f, name: e.target.value }))}
+              placeholder="Business name"
+            />
+            <label style={labelStyle}>Email *</label>
+            <input
+              type="email"
+              style={fieldStyle}
+              value={vendorForm.email}
+              onChange={(e) => setVendorForm((f) => ({ ...f, email: e.target.value }))}
+              placeholder="vendor@example.com"
+            />
+            <label style={labelStyle}>
+              Password {editingVendorId != null ? '(leave blank to keep)' : '*'}
+            </label>
+            <input
+              type="password"
+              style={fieldStyle}
+              value={vendorForm.password}
+              onChange={(e) => setVendorForm((f) => ({ ...f, password: e.target.value }))}
+              placeholder={editingVendorId != null ? '••••••••' : 'Set login password'}
+            />
+            <label style={labelStyle}>Description</label>
+            <textarea
+              style={{ ...fieldStyle, minHeight: 60 }}
+              value={vendorForm.description}
+              onChange={(e) => setVendorForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="Short about the vendor"
+            />
+            {editingVendorId != null && (
+              <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={vendorForm.is_active}
+                  onChange={(e) => setVendorForm((f) => ({ ...f, is_active: e.target.checked }))}
+                />
+                Active
+              </label>
+            )}
+            <div style={{ marginTop: 8 }}>
+              <Button size="sm" onClick={saveVendor}>
+                <i className="fas fa-save" />{' '}
+                {editingVendorId != null ? 'Update Vendor' : 'Save Vendor'}
+              </Button>{' '}
+              <Button variant="secondary" size="sm" onClick={closeVendorForm}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="card mt-16">
@@ -509,21 +912,33 @@ export default function AdminDashboard() {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Salary</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {users.length ? (
-                users.map((u) => (
+              {users.filter((u) => u.role === 'user' || !u.role).length ? (
+                users
+                  .filter((u) => u.role === 'user' || !u.role)
+                  .map((u) => (
                   <tr key={u.id}>
                     <td>{u.id}</td>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
                     <td>{u.salary != null ? formatCurrency(u.salary) : '—'}</td>
+                    <td>
+                      <span className="badge">{u.is_active === false ? 'Inactive' : 'Active'}</span>
+                    </td>
+                    <td>
+                      <Button variant="secondary" size="sm" onClick={() => openEditUser(u.id)}>
+                        Edit
+                      </Button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="text-muted">
+                  <td colSpan={6} className="text-muted">
                     No users loaded.
                   </td>
                 </tr>
@@ -531,6 +946,114 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
+        <div className="mt-12">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              if (showUserForm && editingUserId == null) closeUserForm();
+              else openAddUser();
+            }}
+          >
+            <i className="fas fa-plus" />{' '}
+            {showUserForm && editingUserId == null ? 'Close form' : 'Add User'}
+          </Button>
+        </div>
+        {showUserForm && (
+          <div style={{ marginTop: 12, background: '#f8fafc', padding: 16, borderRadius: 12 }}>
+            <h4 style={{ marginBottom: 12 }}>
+              {editingUserId != null ? 'Edit User' : 'Add User'}
+            </h4>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '0 16px',
+              }}
+            >
+              <div>
+                <label style={labelStyle}>Name *</label>
+                <input
+                  style={fieldStyle}
+                  value={userForm.name}
+                  onChange={(e) => setUserForm((f) => ({ ...f, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Email *</label>
+                <input
+                  type="email"
+                  style={fieldStyle}
+                  value={userForm.email}
+                  onChange={(e) => setUserForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>
+                  Password {editingUserId != null ? '(leave blank to keep)' : '*'}
+                </label>
+                <input
+                  type="password"
+                  style={fieldStyle}
+                  value={userForm.password}
+                  onChange={(e) => setUserForm((f) => ({ ...f, password: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>CNIC {editingUserId == null ? '*' : ''}</label>
+                <input
+                  style={fieldStyle}
+                  value={userForm.cnic}
+                  onChange={(e) => setUserForm((f) => ({ ...f, cnic: e.target.value }))}
+                  placeholder="42101-1234567-8"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Phone</label>
+                <input
+                  style={fieldStyle}
+                  value={userForm.phone}
+                  onChange={(e) => setUserForm((f) => ({ ...f, phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Address</label>
+                <input
+                  style={fieldStyle}
+                  value={userForm.address}
+                  onChange={(e) => setUserForm((f) => ({ ...f, address: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Salary (PKR)</label>
+                <input
+                  type="number"
+                  style={fieldStyle}
+                  value={userForm.salary}
+                  onChange={(e) => setUserForm((f) => ({ ...f, salary: e.target.value }))}
+                />
+              </div>
+            </div>
+            {editingUserId != null && (
+              <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={userForm.is_active}
+                  onChange={(e) => setUserForm((f) => ({ ...f, is_active: e.target.checked }))}
+                />
+                Active
+              </label>
+            )}
+            <div style={{ marginTop: 8 }}>
+              <Button size="sm" onClick={saveUser}>
+                <i className="fas fa-save" /> {editingUserId != null ? 'Update User' : 'Save User'}
+              </Button>{' '}
+              <Button variant="secondary" size="sm" onClick={closeUserForm}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="card mt-16">

@@ -7,11 +7,20 @@ interface Props {
   vendor?: Vendor;
   monthly: number;
   down: number;
+  tenure?: number;
   onOpen: () => void;
   onBuy: () => void;
 }
 
-export default function ProductCard({ product: p, vendor, monthly, down, onOpen, onBuy }: Props) {
+export default function ProductCard({
+  product: p,
+  vendor,
+  monthly,
+  down,
+  tenure = 24,
+  onOpen,
+  onBuy,
+}: Props) {
   return (
     <div className="card product-card" onClick={onOpen}>
       <div className="flex-between">
@@ -23,7 +32,8 @@ export default function ProductCard({ product: p, vendor, monthly, down, onOpen,
         {formatCurrency(p.price)} <small>MRP</small>
       </div>
       <div style={{ margin: '6px 0' }}>
-        <i className="fas fa-calendar-alt" /> <strong>{formatCurrency(monthly)}</strong> / mo × 24
+        <i className="fas fa-calendar-alt" /> <strong>{formatCurrency(monthly)}</strong> / mo ×{' '}
+        {tenure}
       </div>
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
         <span className="badge" style={{ background: '#e0f2fe' }}>

@@ -20,6 +20,30 @@ def calculate_down_payment(price: float, rate: float = 0.2) -> float:
     return round(price * rate)
 
 
+def calculate_financed_monthly(
+    price: float, profit: float, tenure: int, down_payment_rate: float = 0.2
+) -> tuple[float, float, float]:
+    """Return (down_payment, monthly_installment, financed_amount).
+
+    Down payment reduces principal; profit scales with remaining principal.
+    At 100% down payment, installment and financed amount are 0.
+    """
+    rate = 0.0 if down_payment_rate is None else float(down_payment_rate)
+    if rate < 0:
+        rate = 0.0
+    if rate > 1:
+        rate = 1.0
+    down_payment = round(price * rate)
+    principal = round(price - down_payment)
+    if principal <= 0 or tenure <= 0:
+        return float(down_payment), 0.0, 0.0
+    financed_profit = round(profit * (principal / price)) if price else 0
+    financed = principal + financed_profit
+    monthly = round(financed / tenure)
+    return float(down_payment), float(monthly), float(financed)
+
+
+
 def calculate_repayment_schedule(
     total_amount: float, tenure: int, start_date: datetime
 ) -> list:

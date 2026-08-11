@@ -10,7 +10,8 @@ import type { Product } from '../types';
 const CATEGORIES = ['all', 'Solar', 'EV', 'Appliances', 'Battery', 'Lighting'];
 
 export default function Marketplace() {
-  const { products, vendors, user, applications, computeProfit } = useAuth();
+  const { products, vendors, user, applications, computeProfit, financingTenure, financingDownRate } =
+    useAuth();
   const navigate = useNavigate();
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
@@ -32,11 +33,19 @@ export default function Marketplace() {
     });
   }, [products, vendors, category, search]);
 
+  const tenure = financingTenure > 0 ? financingTenure : 24;
+  const downRate = financingDownRate >= 0 ? financingDownRate : 0.2;
+
   const finance = (p: Product) => {
     const profit = p.profit ?? computeProfit(p.price);
+    const down = Math.round(p.price * downRate);
+    if (downRate >= 1) {
+      return { down, monthly: 0 };
+    }
+    const financed = Math.max(0, p.price + profit - down);
     return {
-      down: Math.round(p.price * 0.2),
-      monthly: Math.round((p.price + profit) / 24),
+      down,
+      monthly: tenure > 0 ? Math.round(financed / tenure) : 0,
     };
   };
 
@@ -109,6 +118,7 @@ export default function Marketplace() {
                 vendor={vendor}
                 down={down}
                 monthly={monthly}
+                tenure={tenure}
                 onOpen={() => setDetail(p)}
                 onBuy={() => initiatePurchase(p)}
               />
@@ -123,6 +133,7 @@ export default function Marketplace() {
         vendor={detail ? vendors.find((v) => v.id === detail.vendorId) || detail.vendor : undefined}
         down={detail ? finance(detail).down : 0}
         monthly={detail ? finance(detail).monthly : 0}
+        tenure={tenure}
         onBuy={() => detail && initiatePurchase(detail)}
       />
       <ApplicationModal

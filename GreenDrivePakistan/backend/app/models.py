@@ -106,6 +106,17 @@ class Lender(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class CompareSettings(Base):
+    """Singleton-style row (id=1) for compare / financing formula defaults."""
+
+    __tablename__ = "compare_settings"
+
+    id = Column(Integer, primary_key=True, default=1)
+    down_payment_rate = Column(Float, default=0.2, nullable=False)
+    default_horizon_years = Column(Integer, default=5, nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
 class Application(Base):
     __tablename__ = "applications"
 

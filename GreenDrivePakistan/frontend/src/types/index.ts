@@ -11,6 +11,20 @@ export interface Vendor {
   id: number;
   name: string;
   email?: string;
+  description?: string | null;
+  is_active?: boolean;
+}
+
+export interface PlatformUser {
+  id: number;
+  name: string;
+  email: string;
+  role?: UserRole;
+  phone?: string | null;
+  address?: string | null;
+  cnic?: string | null;
+  salary?: number;
+  is_active?: boolean;
 }
 
 export interface Product {
@@ -105,20 +119,32 @@ export interface CompareResult {
   product_id: number;
   product_name: string;
   price: number;
+  category?: string | null;
   monthly_installment: number;
   current_total_bill: number;
   new_total_bill: number;
   monthly_saving: number;
   yearly_saving: number;
+  horizon_net_saving?: number;
   five_year_net_saving: number;
+  down_payment?: number;
   saving_factor_electric: number;
   saving_factor_fuel: number;
+  tenure_months?: number;
+  horizon_years?: number;
+  down_payment_rate?: number;
 }
 
 export interface CompareResponse {
   results: CompareResult[];
   best_product: CompareResult | null;
   total_current_bill: number;
+  tenure_months?: number;
+  horizon_years?: number;
+  down_payment_rate?: number;
+  lender_name?: string | null;
+  lender_max_tenure?: number | null;
+  categories?: string[];
 }
 
 export interface AdminStats {

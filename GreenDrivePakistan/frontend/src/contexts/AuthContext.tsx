@@ -13,10 +13,35 @@ import type {
   AuthUser,
   CashSale,
   Lender,
+  PlatformUser,
   Product,
   UserRole,
   Vendor,
 } from '../types';
+
+function mapVendor(v: Record<string, unknown>): Vendor {
+  return {
+    id: v.id as number,
+    name: v.name as string,
+    email: v.email as string | undefined,
+    description: (v.description as string | null | undefined) ?? null,
+    is_active: v.is_active as boolean | undefined,
+  };
+}
+
+function mapPlatformUser(u: Record<string, unknown>): PlatformUser {
+  return {
+    id: u.id as number,
+    name: u.name as string,
+    email: u.email as string,
+    role: u.role as UserRole | undefined,
+    phone: (u.phone as string | null | undefined) ?? null,
+    address: (u.address as string | null | undefined) ?? null,
+    cnic: (u.cnic as string | null | undefined) ?? null,
+    salary: u.salary as number | undefined,
+    is_active: u.is_active as boolean | undefined,
+  };
+}
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -26,8 +51,10 @@ interface AuthContextValue {
   applications: Application[];
   cashSales: CashSale[];
   lenders: Lender[];
-  users: { id: number; name: string; email: string; salary?: number }[];
+  users: PlatformUser[];
   activeLenderId: number | null;
+  financingTenure: number;
+  financingDownRate: number;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -74,8 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [applications, setApplications] = useState<Application[]>([]);
   const [cashSales, setCashSales] = useState<CashSale[]>([]);
   const [lenders, setLenders] = useState<Lender[]>([]);
-  const [users, setUsers] = useState<{ id: number; name: string; email: string; salary?: number }[]>([]);
+  const [users, setUsers] = useState<PlatformUser[]>([]);
   const [activeLenderId, setActiveLenderId] = useState<number | null>(null);
+  const [financingTenure, setFinancingTenure] = useState(24);
+  const [financingDownRate, setFinancingDownRate] = useState(0.2);
   const [loading, setLoading] = useState(true);
 
   const computeProfit = useCallback(
@@ -91,17 +120,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshPublic = useCallback(async () => {
-    const [prods, vends] = await Promise.all([
+    const vendorPath = user?.role === 'admin' ? '/admin/vendors' : '/vendors/';
+    type FinancingInfo = {
+      max_tenure?: number;
+      profit_rate?: number;
+      lender_id?: number | null;
+      lender_name?: string | null;
+      down_payment_rate?: number;
+      default_horizon_years?: number;
+    };
+    const [prods, vends, financing] = await Promise.all([
       api<Parameters<typeof mapProduct>[0][]>('/products/'),
-      api<{ id: number; name: string; email?: string }[]>('/vendors/'),
+      api<Record<string, unknown>[]>(vendorPath),
+      api<FinancingInfo>('/compare/financing').catch(
+        (): FinancingInfo => ({ max_tenure: 24, profit_rate: 0.13, down_payment_rate: 0.2 }),
+      ),
     ]);
     const mapped = prods.map(mapProduct).map((p) => ({
       ...p,
-      profit: p.profit ?? Math.round(p.price * 0.13),
+      profit: p.profit ?? Math.round(p.price * (financing.profit_rate ?? 0.13)),
     }));
     setProducts(mapped);
-    setVendors(vends.map((v) => ({ id: v.id, name: v.name, email: v.email })));
-  }, []);
+    setVendors(vends.map(mapVendor));
+    if (financing.max_tenure && financing.max_tenure > 0) {
+      setFinancingTenure(financing.max_tenure);
+    }
+    if (financing.down_payment_rate != null && financing.down_payment_rate >= 0) {
+      setFinancingDownRate(financing.down_payment_rate);
+    }
+    if (financing.lender_id) {
+      setActiveLenderId(financing.lender_id);
+    }
+  }, [user?.role]);
 
   const refreshScoped = useCallback(async () => {
     const role = user?.role;
@@ -181,14 +231,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setActiveLenderId(active ? active.id : mappedLenders[0]?.id ?? null);
 
         const us = await api<Record<string, unknown>[]>('/users/');
-        setUsers(
-          us.map((u) => ({
-            id: u.id as number,
-            name: u.name as string,
-            email: u.email as string,
-            salary: u.salary as number | undefined,
-          })),
-        );
+        setUsers(us.map(mapPlatformUser));
+
+        const adminVendors = await api<Record<string, unknown>[]>('/admin/vendors');
+        setVendors(adminVendors.map(mapVendor));
 
         const cash = await api<Record<string, unknown>[]>('/admin/cash-sales');
         setCashSales(cash.map(mapCash));
@@ -284,6 +330,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lenders,
       users,
       activeLenderId,
+      financingTenure,
+      financingDownRate,
       loading,
       login,
       logout,
@@ -304,6 +352,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       lenders,
       users,
       activeLenderId,
+      financingTenure,
+      financingDownRate,
       loading,
       login,
       logout,

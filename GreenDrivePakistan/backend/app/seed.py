@@ -34,8 +34,17 @@ def ensure_admin_user(db: Session) -> None:
     db.flush()
 
 
+def ensure_compare_settings(db: Session) -> None:
+    row = db.query(models.CompareSettings).filter(models.CompareSettings.id == 1).first()
+    if row:
+        return
+    db.add(models.CompareSettings(id=1, down_payment_rate=0.2, default_horizon_years=5))
+    db.flush()
+
+
 def seed_database(db: Session) -> None:
     ensure_admin_user(db)
+    ensure_compare_settings(db)
 
     if db.query(models.Vendor).count() > 0 and db.query(models.Product).count() > 0:
         db.commit()
