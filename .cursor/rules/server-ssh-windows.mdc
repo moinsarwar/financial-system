@@ -1,0 +1,14 @@
+---
+description: Always use Windows OpenSSH for production server access
+alwaysApply: true
+---
+
+# Production server SSH
+
+- Server: `root@163.245.222.160` (thecomparisonengine.com / financial-system VPS)
+- **Always** connect from **Windows OpenSSH** (`ssh` / `scp` in PowerShell or cmd), never via WSL SSH for this host
+- Prefer: `ssh root@163.245.222.160 "..."` from the agent Shell tool on Windows
+- Deploy paths: `/root/financial-system` (Comparison Engine = `comparison-engine/finos` + `comparison-engine/reseller`)
+- finOS prod: `cd /root/financial-system/comparison-engine/finos && docker compose -f docker-compose.prod.yml -p finos up -d --build …`
+- Reseller: `cd /root/financial-system/comparison-engine/reseller && docker compose up -d --build …`
+- GreenDrive: `cd /root/financial-system/GreenDrivePakistan && docker compose up -d --build …`

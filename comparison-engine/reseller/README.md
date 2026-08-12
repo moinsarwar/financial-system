@@ -64,12 +64,12 @@ Useful frontend helpers: `frontend/src/utils/categories.js`, `resellerSiteUrl.js
 - Partner subdomain linking to comparisonengine.com hosts
 - **Option A auth:** signup → pending → admin `POST /api/resellers/{id}/approve` → Brevo SMTP set-password email → `/set-password?token=…` → login
 
-Copy `reseller/.env.example` → `reseller/.env` and fill SMTP (`MAIL_*`) + `FRONTEND_URL`.
+Copy `comparison-engine/reseller/.env.example` → `.env` and fill SMTP (`MAIL_*`) + `FRONTEND_URL`.
 
 ## Run
 
 ```bash
-cd reseller
+cd comparison-engine/reseller
 docker compose up -d --build
 ```
 

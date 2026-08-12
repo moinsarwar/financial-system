@@ -48,8 +48,9 @@
 
 | Project | What it does | Stack | Ports (host) |
 |---------|--------------|-------|--------------|
-| [finOS](./finOS/) | Core SoR + public comparison + staff portal + AI Explain | FastAPI, React/Vite, PostgreSQL, nginx, Ollama | FE `3000` (prod), API internal / `8000` (dev) |
-| [reseller](./reseller/) | Partner signup, dashboards, commissions | FastAPI, React (CRA), PostgreSQL | FE `9004`, API `9005`, DB `5433` |
+| **[Comparison Engine](./comparison-engine/)** | finos + reseller (see below) | — | — |
+| ↳ [finos](./comparison-engine/finos/) | Core SoR + public comparison + staff portal + AI Explain | FastAPI, React/Vite, PostgreSQL, nginx, Ollama | FE `3000` (prod), API internal / `8000` (dev) |
+| ↳ [reseller](./comparison-engine/reseller/) | Partner signup, dashboards, commissions | FastAPI, React (CRA), PostgreSQL | FE `9004`, API `9005`, DB `5433` |
 | [qwenChat](./qwenChat/) | Read-only chat over live finOS + reseller data | FastAPI, React/Vite, Ollama (no DB) | FE `9010`, API `9011` |
 | [adminPortal](./adminPortal/) | Ops console + Docker control + finOS admin screens | FastAPI, React/Vite, SQLite | BE `9000`, FE `9001` |
 | [GreenDrivePakistan](./GreenDrivePakistan/) | Sharia green marketplace + Murabaha BNPL + savings compare | FastAPI, static HTML, PostgreSQL, nginx | FE `9013`, API `9012`, DB `5434` |
@@ -85,8 +86,9 @@ Health: `GET http://localhost:3000/api/ai/health` (prod nginx).
 ## Setup (VPS sketch)
 
 1. Host Ollama with `qwen2.5:1.5b`
-2. `cd finOS && docker compose -f docker-compose.prod.yml -p finos up -d --build`
-3. Start reseller + qwenChat (+ adminPortal if needed) via their compose files
+2. `cd comparison-engine/finos && docker compose -f docker-compose.prod.yml -p finos up -d --build`
+3. `cd comparison-engine/reseller && docker compose up -d --build`
+4. Start qwenChat, GreenDrivePakistan, adminPortal via their compose files
 4. `git pull` on the VPS to sync; avoid committing secrets or bytecode
 
 Copy each project’s `.env.example` → `.env` where present.

@@ -1,0 +1,14 @@
+---
+description: Always run Docker via WSL2 Ubuntu, never Windows Docker CLI
+alwaysApply: true
+---
+
+# Docker via WSL2 only
+
+- **Always** run `docker` / `docker compose` inside **WSL2 Ubuntu** (`wsl -d Ubuntu …` or a shell whose cwd is the Linux filesystem).
+- **Never** use Windows-native Docker Desktop CLI from PowerShell/cmd for this repo’s builds, `compose up`, logs, or exec.
+- Prefer: `wsl -d Ubuntu -e bash -lc 'cd /home/moin/financial-system/<project> && docker compose …'`
+- Comparison Engine: `comparison-engine/finos`, `comparison-engine/reseller`
+- GreenDrive: `GreenDrivePakistan`
+- Repo paths for compose: `/home/moin/financial-system/...` (Linux), not `\\wsl.localhost\...` UNC from Windows docker.
+- SSH to production VPS remains **Windows OpenSSH** (`ssh root@163.245.222.160`) — that rule is unchanged; only Docker is WSL2-bound.

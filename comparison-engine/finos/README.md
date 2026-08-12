@@ -95,10 +95,10 @@ Nginx (prod): `/` → vanilla; `/api/` → backend; AI routes with buffering off
 
 ```bash
 # Dev
-cd finOS && docker compose -f docker-compose.dev.yml up -d --build
+cd comparison-engine/finos && docker compose -f docker-compose.dev.yml up -d --build
 
 # Prod (VPS)
-cd finOS && docker compose -f docker-compose.prod.yml -p finos up -d --build
+cd comparison-engine/finos && docker compose -f docker-compose.prod.yml -p finos up -d --build
 ```
 
 Copy `.env.example` → `.env`. Ensure Ollama has `qwen2.5:1.5b` before testing AI Explain. Demo users (when seed enabled): `client@finos.com`, `ops@finos.com`, `admin@finos.com`.

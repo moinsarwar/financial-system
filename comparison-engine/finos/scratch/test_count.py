@@ -1,6 +1,6 @@
 import json
 
-with open("finOS/scratch/test_products.json", "r") as f:
+with open("comparison-engine/finos/scratch/test_products.json", "r") as f:
     data = json.load(f)
 
 savings = [p for p in data["products"] if "saving" in p.get("product_type", "").lower()]
