@@ -38,7 +38,6 @@ export default function CompareEngine() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout>>();
-  const aiTimer = useRef<ReturnType<typeof setTimeout>>();
   const aiReqId = useRef(0);
 
   useEffect(() => {
@@ -171,16 +170,11 @@ export default function CompareEngine() {
     [buildCompareBody],
   );
 
-  // Form/compare updates → silent auto recommendation
-  useEffect(() => {
-    if (!data?.results?.length) return;
-    const q = buildAiQueryFromForm();
-    clearTimeout(aiTimer.current);
-    aiTimer.current = setTimeout(() => {
-      askAiWithQuery(q);
-    }, 900);
-    return () => clearTimeout(aiTimer.current);
-  }, [data, buildAiQueryFromForm, askAiWithQuery]);
+  // AI only when user clicks Calculate Savings (not on form debounce)
+  const calculateSavings = useCallback(async () => {
+    await run();
+    await askAiWithQuery(buildAiQueryFromForm());
+  }, [run, askAiWithQuery, buildAiQueryFromForm]);
 
   const best = data?.best_product;
   const totalBill = data?.total_current_bill || 0;
@@ -336,7 +330,7 @@ export default function CompareEngine() {
             </select>
           </div>
           <div>
-            <Button onClick={run}>
+            <Button onClick={calculateSavings}>
               <i className="fas fa-sync-alt" /> Calculate Savings
             </Button>
           </div>
