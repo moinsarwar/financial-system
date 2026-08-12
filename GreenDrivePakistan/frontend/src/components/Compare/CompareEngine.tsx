@@ -19,7 +19,6 @@ type FinancingDefaults = {
   down_payment_rate?: number;
   default_horizon_years?: number;
   horizon_options?: number[];
-  ollama_model?: string;
 };
 
 export default function CompareEngine() {
@@ -35,11 +34,9 @@ export default function CompareEngine() {
   const [defaults, setDefaults] = useState<FinancingDefaults | null>(null);
   const [data, setData] = useState<CompareResponse | null>(null);
   const [error, setError] = useState('');
-  const [aiQuery, setAiQuery] = useState('');
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
-  const [aiManual, setAiManual] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>();
   const aiTimer = useRef<ReturnType<typeof setTimeout>>();
   const aiReqId = useRef(0);
@@ -144,7 +141,6 @@ export default function CompareEngine() {
   const schedule = () => {
     clearTimeout(timer.current);
     timer.current = setTimeout(run, 400);
-    setAiManual(false);
   };
 
   const askAiWithQuery = useCallback(
@@ -155,7 +151,7 @@ export default function CompareEngine() {
       setAiLoading(true);
       setAiError('');
       try {
-        const res = await api<{ recommendation: string; model: string; formula_best?: string }>(
+        const res = await api<{ recommendation: string }>(
           '/compare/ai-recommend',
           {
             method: 'POST',
@@ -164,10 +160,10 @@ export default function CompareEngine() {
         );
         if (req !== aiReqId.current) return;
         setAiText(res.recommendation);
-      } catch (e) {
+      } catch {
         if (req !== aiReqId.current) return;
         setAiText('');
-        setAiError(e instanceof Error ? e.message : 'AI unavailable');
+        setAiError('Recommendation unavailable right now.');
       } finally {
         if (req === aiReqId.current) setAiLoading(false);
       }
@@ -175,23 +171,16 @@ export default function CompareEngine() {
     [buildCompareBody],
   );
 
-  // When form-driven compare data updates, regenerate query and auto-ask AI
+  // Form/compare updates → silent auto recommendation
   useEffect(() => {
     if (!data?.results?.length) return;
-    if (aiManual) return;
     const q = buildAiQueryFromForm();
-    setAiQuery(q);
     clearTimeout(aiTimer.current);
     aiTimer.current = setTimeout(() => {
       askAiWithQuery(q);
     }, 900);
     return () => clearTimeout(aiTimer.current);
-  }, [data, buildAiQueryFromForm, askAiWithQuery, aiManual]);
-
-  const askAi = () => {
-    setAiManual(true);
-    askAiWithQuery(aiQuery);
-  };
+  }, [data, buildAiQueryFromForm, askAiWithQuery]);
 
   const best = data?.best_product;
   const totalBill = data?.total_current_bill || 0;
@@ -433,37 +422,19 @@ export default function CompareEngine() {
               borderRadius: 10,
             }}
           >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
-              <input
-                type="text"
-                placeholder="Auto-generated from the form above — edit then Ask AI if you want"
-                value={aiQuery}
-                onChange={(e) => {
-                  setAiManual(true);
-                  setAiQuery(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') askAi();
-                }}
-                style={{ ...inputStyle, flex: 1, minWidth: 220 }}
-              />
-              <Button onClick={askAi} disabled={aiLoading}>
-                <i className="fas fa-robot" /> {aiLoading ? 'Thinking…' : 'Ask AI'}
-              </Button>
-            </div>
             <div style={{ fontSize: 14, lineHeight: 1.55 }}>
               {aiLoading ? (
                 <span className="text-muted">
-                  <i className="fas fa-spinner fa-spin" /> Asking{' '}
-                  {defaults?.ollama_model || 'qwen2.5:1.5b'} with form-based query…
+                  <i className="fas fa-spinner fa-spin" /> Updating recommendation…
                 </span>
               ) : aiError ? (
-                <span style={{ color: '#b91c1c' }}>
-                  <i className="fas fa-exclamation-triangle" /> {aiError}
+                <span className="text-muted">
+                  <i className="fas fa-star" /> 🏆 <strong>{best.product_name}</strong> —{' '}
+                  {formulaBanner?.replace(`${best.product_name} — `, '')}
                 </span>
               ) : aiText ? (
                 <>
-                  <i className="fas fa-star" /> 🤖 <strong>AI pick</strong> — {aiText}
+                  <i className="fas fa-star" /> {aiText}
                 </>
               ) : (
                 <>
@@ -472,11 +443,6 @@ export default function CompareEngine() {
                 </>
               )}
             </div>
-            <p className="text-muted" style={{ fontSize: 11, marginTop: 8, marginBottom: 0 }}>
-              Form change → query auto-builds from bills/tenure/down/horizon/category → Ollama{' '}
-              {defaults?.ollama_model || 'qwen2.5:1.5b'} recommends. You can edit the query and press
-              Ask AI.
-            </p>
           </div>
         </div>
       )}
