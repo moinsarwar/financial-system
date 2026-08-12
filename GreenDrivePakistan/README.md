@@ -76,6 +76,23 @@ Monthly / yearly / horizon savings update from the new installment.
 
 Public defaults: `GET /api/compare/financing` (lender + down % + horizon).
 
+### AI recommend (Ollama, finOS-style)
+
+Yellow banner on Compare can call host **Ollama** directly (`qwen2.5:1.5b`) — **not** qwenChat:
+
+- `GET /api/compare/ai/health` — Ollama reachability + model list
+- `POST /api/compare/ai-recommend` — body includes user `query` + same compare filters; server sends candidate product numbers to Ollama `/api/chat`
+
+Env (docker-compose / host):
+
+| Variable | Default |
+|----------|---------|
+| `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` |
+| `OLLAMA_MODEL` | `qwen2.5:1.5b` |
+| `OLLAMA_TIMEOUT` | `120` |
+
+Backend uses `extra_hosts: host.docker.internal:host-gateway` so the container can reach Ollama on the WSL/host machine (same as finOS prod).
+
 ## Other real operations
 
 - **Auth:** Admin is a seeded DB `User` with `role=admin` (JWT from `user.role`)

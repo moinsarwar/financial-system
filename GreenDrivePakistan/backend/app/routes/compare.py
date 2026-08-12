@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, auth
 from ..database import get_db
 from ..services.savings import compare_products
+from ..services.ollama_recommend import ollama_recommend_service
 from ..config import get_settings
 
 router = APIRouter(prefix="/api/compare", tags=["compare"])
@@ -25,6 +26,70 @@ def get_or_create_compare_settings(db: Session) -> models.CompareSettings:
     return row
 
 
+def _run_compare(
+    db: Session,
+    *,
+    electricity_bill: float,
+    fuel_bill: float,
+    compare_type: str,
+    tenure_months: int | None,
+    down_payment_rate: float | None,
+    horizon_years: int | None,
+    category: str | None,
+    product_ids: list[int] | None,
+) -> dict:
+    query = db.query(models.Product).filter(models.Product.is_active == True)  # noqa: E712
+    if category and category.lower() not in ("", "all"):
+        query = query.filter(models.Product.category == category)
+    if product_ids:
+        query = query.filter(models.Product.id.in_(product_ids))
+    products = query.all()
+
+    all_cats = (
+        db.query(models.Product.category)
+        .filter(models.Product.is_active == True)  # noqa: E712
+        .distinct()
+        .all()
+    )
+    categories = sorted({c[0] for c in all_cats if c[0]})
+
+    lender = _active_lender(db)
+    cfg = get_or_create_compare_settings(db)
+    profit_rate = lender.profit_rate if lender else None
+    lender_max = lender.max_tenure if lender else settings.MAX_TENURE_MONTHS
+
+    if tenure_months and tenure_months > 0:
+        tenure = min(int(tenure_months), int(lender_max))
+    else:
+        tenure = int(lender_max)
+
+    down_rate = (
+        float(down_payment_rate)
+        if down_payment_rate is not None
+        else float(cfg.down_payment_rate or 0.2)
+    )
+    horizon = (
+        int(horizon_years)
+        if horizon_years and horizon_years > 0
+        else int(cfg.default_horizon_years or 5)
+    )
+
+    result = compare_products(
+        products,
+        electricity_bill,
+        fuel_bill,
+        compare_type,
+        profit_rate,
+        tenure,
+        down_rate,
+        horizon,
+    )
+    result["lender_name"] = lender.name if lender else None
+    result["lender_max_tenure"] = lender_max
+    result["categories"] = categories
+    return result
+
+
 @router.get("/financing")
 def financing_defaults(db: Session = Depends(get_db)):
     """Public: active lender + formula defaults for marketplace/compare."""
@@ -34,6 +99,7 @@ def financing_defaults(db: Session = Depends(get_db)):
         "down_payment_rate": cfg.down_payment_rate,
         "default_horizon_years": cfg.default_horizon_years,
         "horizon_options": [3, 5, 7, 10],
+        "ollama_model": settings.OLLAMA_MODEL,
     }
     if not lender:
         return {
@@ -74,56 +140,62 @@ def update_compare_settings(
     return row
 
 
+@router.get("/ai/health")
+async def ai_health():
+    return await ollama_recommend_service.health()
+
+
 @router.post("/", response_model=schemas.CompareResponse)
 def compare(payload: schemas.CompareInput, db: Session = Depends(get_db)):
-    query = db.query(models.Product).filter(models.Product.is_active == True)  # noqa: E712
-    if payload.category and payload.category.lower() not in ("", "all"):
-        query = query.filter(models.Product.category == payload.category)
-    if payload.product_ids:
-        query = query.filter(models.Product.id.in_(payload.product_ids))
-    products = query.all()
-
-    all_cats = (
-        db.query(models.Product.category)
-        .filter(models.Product.is_active == True)  # noqa: E712
-        .distinct()
-        .all()
-    )
-    categories = sorted({c[0] for c in all_cats if c[0]})
-
-    lender = _active_lender(db)
-    cfg = get_or_create_compare_settings(db)
-    profit_rate = lender.profit_rate if lender else None
-    lender_max = lender.max_tenure if lender else settings.MAX_TENURE_MONTHS
-
-    # Tenure: override capped by lender max
-    if payload.tenure_months and payload.tenure_months > 0:
-        tenure = min(int(payload.tenure_months), int(lender_max))
-    else:
-        tenure = int(lender_max)
-
-    down_rate = (
-        float(payload.down_payment_rate)
-        if payload.down_payment_rate is not None
-        else float(cfg.down_payment_rate or 0.2)
-    )
-    horizon = (
-        int(payload.horizon_years)
-        if payload.horizon_years and payload.horizon_years > 0
-        else int(cfg.default_horizon_years or 5)
+    return _run_compare(
+        db,
+        electricity_bill=payload.electricity_bill,
+        fuel_bill=payload.fuel_bill,
+        compare_type=payload.compare_type,
+        tenure_months=payload.tenure_months,
+        down_payment_rate=payload.down_payment_rate,
+        horizon_years=payload.horizon_years,
+        category=payload.category,
+        product_ids=payload.product_ids,
     )
 
-    result = compare_products(
-        products,
-        payload.electricity_bill,
-        payload.fuel_bill,
-        payload.compare_type,
-        profit_rate,
-        tenure,
-        down_rate,
-        horizon,
+
+@router.post("/ai-recommend", response_model=schemas.CompareAiResponse)
+async def ai_recommend(payload: schemas.CompareAiRequest, db: Session = Depends(get_db)):
+    """Ask host Ollama (qwen2.5:1.5b) which product best matches the user query."""
+    result = _run_compare(
+        db,
+        electricity_bill=payload.electricity_bill,
+        fuel_bill=payload.fuel_bill,
+        compare_type=payload.compare_type,
+        tenure_months=payload.tenure_months,
+        down_payment_rate=payload.down_payment_rate,
+        horizon_years=payload.horizon_years,
+        category=payload.category,
+        product_ids=payload.product_ids,
     )
-    result["lender_name"] = lender.name if lender else None
-    result["lender_max_tenure"] = lender_max
-    result["categories"] = categories
-    return result
+    products = result.get("results") or []
+    if not products:
+        raise HTTPException(status_code=400, detail="No products available to recommend")
+
+    best = result.get("best_product") or {}
+    context = {
+        "current_bill": result.get("total_current_bill"),
+        "tenure_months": result.get("tenure_months"),
+        "down_payment_pct": round(float(result.get("down_payment_rate") or 0) * 100),
+        "horizon_years": result.get("horizon_years"),
+        "formula_best": best.get("product_name"),
+    }
+    try:
+        text = await ollama_recommend_service.recommend(payload.query, products, context)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=502,
+            detail=f"Ollama unavailable ({settings.OLLAMA_MODEL}): {exc}",
+        ) from exc
+
+    return schemas.CompareAiResponse(
+        recommendation=text,
+        model=settings.OLLAMA_MODEL,
+        formula_best=best.get("product_name"),
+    )

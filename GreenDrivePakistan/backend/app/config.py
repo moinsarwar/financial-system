@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     LENDER_PROFIT_RATE: float = 0.13
     MAX_TENURE_MONTHS: int = 24
     UPLOAD_ROOT: str = "/app/uploads"
+    # Same pattern as finOS — host Ollama directly (not qwenChat)
+    OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
+    OLLAMA_MODEL: str = "qwen2.5:1.5b"
+    OLLAMA_TIMEOUT: float = 120.0
 
     class Config:
         env_file = ".env"

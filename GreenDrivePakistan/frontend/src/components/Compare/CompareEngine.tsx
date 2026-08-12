@@ -19,6 +19,7 @@ type FinancingDefaults = {
   down_payment_rate?: number;
   default_horizon_years?: number;
   horizon_options?: number[];
+  ollama_model?: string;
 };
 
 export default function CompareEngine() {
@@ -34,7 +35,14 @@ export default function CompareEngine() {
   const [defaults, setDefaults] = useState<FinancingDefaults | null>(null);
   const [data, setData] = useState<CompareResponse | null>(null);
   const [error, setError] = useState('');
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiText, setAiText] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiManual, setAiManual] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>();
+  const aiTimer = useRef<ReturnType<typeof setTimeout>>();
+  const aiReqId = useRef(0);
 
   useEffect(() => {
     api<FinancingDefaults>('/compare/financing')
@@ -54,35 +62,80 @@ export default function CompareEngine() {
     return ['all', ...fromApi];
   }, [data?.categories]);
 
+  const buildCompareBody = useCallback(() => {
+    const tenureNum = parseInt(tenure, 10);
+    const downNum = parseFloat(downPct);
+    const horizonNum = parseInt(horizon, 10);
+    const body: Record<string, unknown> = {
+      electricity_bill: parseFloat(electric) || 0,
+      fuel_bill: parseFloat(fuel) || 0,
+      compare_type: compareType,
+      category: category === 'all' ? null : category,
+      horizon_years: Number.isFinite(horizonNum) && horizonNum > 0 ? horizonNum : 5,
+    };
+    if (Number.isFinite(tenureNum) && tenureNum > 0) {
+      body.tenure_months = tenureNum;
+    }
+    if (Number.isFinite(downNum) && downNum >= 0) {
+      body.down_payment_rate = Math.min(100, downNum) / 100;
+    }
+    if (narrowToSelected && selectedIds.length) {
+      body.product_ids = selectedIds;
+    }
+    return body;
+  }, [electric, fuel, compareType, category, tenure, downPct, horizon, selectedIds, narrowToSelected]);
+
+  const buildAiQueryFromForm = useCallback(() => {
+    const e = parseFloat(electric) || 0;
+    const f = parseFloat(fuel) || 0;
+    const t = parseInt(tenure, 10) || maxTenure;
+    const d = parseFloat(downPct);
+    const down = Number.isFinite(d) ? Math.min(100, Math.max(0, d)) : 20;
+    const h = parseInt(horizon, 10) || 5;
+    const typeLabel =
+      compareType === 'electricity'
+        ? 'electricity only'
+        : compareType === 'fuel'
+          ? 'fuel only'
+          : 'electricity and fuel';
+    const catLabel = category === 'all' ? 'any category' : `${category} products`;
+    const parts = [
+      `I pay about PKR ${Math.round(e).toLocaleString()} electricity and PKR ${Math.round(f).toLocaleString()} fuel per month.`,
+      `Compare against ${typeLabel}.`,
+      `I want the best matching product from ${catLabel}.`,
+      `Financing: ${t} months tenure, ${down}% down payment, focus on ${h}-year net savings.`,
+      'Recommend one product that fits this situation and explain briefly using the numbers.',
+    ];
+    if (narrowToSelected && selectedIds.length) {
+      parts.push(`Only consider the ${selectedIds.length} products I selected.`);
+    }
+    return parts.join(' ');
+  }, [
+    electric,
+    fuel,
+    compareType,
+    category,
+    tenure,
+    downPct,
+    horizon,
+    maxTenure,
+    narrowToSelected,
+    selectedIds,
+  ]);
+
   const run = useCallback(async () => {
     try {
-      const tenureNum = parseInt(tenure, 10);
-      const downNum = parseFloat(downPct);
-      const horizonNum = parseInt(horizon, 10);
-      const body: Record<string, unknown> = {
-        electricity_bill: parseFloat(electric) || 0,
-        fuel_bill: parseFloat(fuel) || 0,
-        compare_type: compareType,
-        category: category === 'all' ? null : category,
-        horizon_years: Number.isFinite(horizonNum) && horizonNum > 0 ? horizonNum : 5,
-      };
-      if (Number.isFinite(tenureNum) && tenureNum > 0) {
-        body.tenure_months = tenureNum;
-      }
-      if (Number.isFinite(downNum) && downNum >= 0) {
-        body.down_payment_rate = Math.min(100, downNum) / 100;
-      }
-      if (narrowToSelected && selectedIds.length) {
-        body.product_ids = selectedIds;
-      }
-      const res = await api<CompareResponse>('/compare/', { method: 'POST', body });
+      const res = await api<CompareResponse>('/compare/', {
+        method: 'POST',
+        body: buildCompareBody(),
+      });
       setData(res);
       setError('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Compare unavailable');
       setData(null);
     }
-  }, [electric, fuel, compareType, category, tenure, downPct, horizon, selectedIds, narrowToSelected]);
+  }, [buildCompareBody]);
 
   useEffect(() => {
     run();
@@ -91,6 +144,53 @@ export default function CompareEngine() {
   const schedule = () => {
     clearTimeout(timer.current);
     timer.current = setTimeout(run, 400);
+    setAiManual(false);
+  };
+
+  const askAiWithQuery = useCallback(
+    async (q: string) => {
+      const query = q.trim();
+      if (query.length < 3) return;
+      const req = ++aiReqId.current;
+      setAiLoading(true);
+      setAiError('');
+      try {
+        const res = await api<{ recommendation: string; model: string; formula_best?: string }>(
+          '/compare/ai-recommend',
+          {
+            method: 'POST',
+            body: { ...buildCompareBody(), query },
+          },
+        );
+        if (req !== aiReqId.current) return;
+        setAiText(res.recommendation);
+      } catch (e) {
+        if (req !== aiReqId.current) return;
+        setAiText('');
+        setAiError(e instanceof Error ? e.message : 'AI unavailable');
+      } finally {
+        if (req === aiReqId.current) setAiLoading(false);
+      }
+    },
+    [buildCompareBody],
+  );
+
+  // When form-driven compare data updates, regenerate query and auto-ask AI
+  useEffect(() => {
+    if (!data?.results?.length) return;
+    if (aiManual) return;
+    const q = buildAiQueryFromForm();
+    setAiQuery(q);
+    clearTimeout(aiTimer.current);
+    aiTimer.current = setTimeout(() => {
+      askAiWithQuery(q);
+    }, 900);
+    return () => clearTimeout(aiTimer.current);
+  }, [data, buildAiQueryFromForm, askAiWithQuery, aiManual]);
+
+  const askAi = () => {
+    setAiManual(true);
+    askAiWithQuery(aiQuery);
   };
 
   const best = data?.best_product;
@@ -101,9 +201,9 @@ export default function CompareEngine() {
   const horizonLabel = data?.horizon_years ?? parsedHorizon;
   const netKey = (p: CompareResult) => p.horizon_net_saving ?? p.five_year_net_saving;
 
-  const toggleProduct = (id: number) => {
-    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  };
+  const formulaBanner =
+    best &&
+    `${best.product_name} — New bill: ${formatCurrency(best.new_total_bill)} + installment ${formatCurrency(best.monthly_installment)} = ${formatCurrency(best.new_total_bill + best.monthly_installment)}. Monthly saving: ${formatCurrency(best.monthly_saving)} (${formatCurrency(best.yearly_saving)}/year). ${horizonLabel}-year net: ${formatCurrency(netKey(best))}${best.down_payment != null ? ` (down ${formatCurrency(best.down_payment)} @ ${Math.round((data?.down_payment_rate ?? 0.2) * 100)}%).` : '.'}`;
 
   const clearProductFilter = () => {
     setSelectedIds([]);
@@ -116,6 +216,10 @@ export default function CompareEngine() {
       return;
     }
     setNarrowToSelected(true);
+  };
+
+  const toggleProduct = (id: number) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   return (
@@ -329,20 +433,50 @@ export default function CompareEngine() {
               borderRadius: 10,
             }}
           >
-            <i className="fas fa-star" /> 🏆 <strong>{best.product_name}</strong> — New bill:{' '}
-            {formatCurrency(best.new_total_bill)} + installment{' '}
-            {formatCurrency(best.monthly_installment)} ={' '}
-            {formatCurrency(best.new_total_bill + best.monthly_installment)}. Monthly saving:{' '}
-            <strong>{formatCurrency(best.monthly_saving)}</strong> (
-            {formatCurrency(best.yearly_saving)}/year). {horizonLabel}-year net:{' '}
-            <strong>{formatCurrency(netKey(best))}</strong>
-            {best.down_payment != null && (
-              <>
-                {' '}
-                (down {formatCurrency(best.down_payment)} @{' '}
-                {Math.round((data?.down_payment_rate ?? 0.2) * 100)}%).
-              </>
-            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+              <input
+                type="text"
+                placeholder="Auto-generated from the form above — edit then Ask AI if you want"
+                value={aiQuery}
+                onChange={(e) => {
+                  setAiManual(true);
+                  setAiQuery(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') askAi();
+                }}
+                style={{ ...inputStyle, flex: 1, minWidth: 220 }}
+              />
+              <Button onClick={askAi} disabled={aiLoading}>
+                <i className="fas fa-robot" /> {aiLoading ? 'Thinking…' : 'Ask AI'}
+              </Button>
+            </div>
+            <div style={{ fontSize: 14, lineHeight: 1.55 }}>
+              {aiLoading ? (
+                <span className="text-muted">
+                  <i className="fas fa-spinner fa-spin" /> Asking{' '}
+                  {defaults?.ollama_model || 'qwen2.5:1.5b'} with form-based query…
+                </span>
+              ) : aiError ? (
+                <span style={{ color: '#b91c1c' }}>
+                  <i className="fas fa-exclamation-triangle" /> {aiError}
+                </span>
+              ) : aiText ? (
+                <>
+                  <i className="fas fa-star" /> 🤖 <strong>AI pick</strong> — {aiText}
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-star" /> 🏆 <strong>{best.product_name}</strong> —{' '}
+                  {formulaBanner?.replace(`${best.product_name} — `, '')}
+                </>
+              )}
+            </div>
+            <p className="text-muted" style={{ fontSize: 11, marginTop: 8, marginBottom: 0 }}>
+              Form change → query auto-builds from bills/tenure/down/horizon/category → Ollama{' '}
+              {defaults?.ollama_model || 'qwen2.5:1.5b'} recommends. You can edit the query and press
+              Ask AI.
+            </p>
           </div>
         </div>
       )}

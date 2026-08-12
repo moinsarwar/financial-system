@@ -302,6 +302,24 @@ class CompareSettingsResponse(BaseModel):
         from_attributes = True
 
 
+class CompareAiRequest(BaseModel):
+    query: str = Field(..., min_length=3, max_length=500)
+    electricity_bill: float = 0
+    fuel_bill: float = 0
+    compare_type: str = "both"
+    tenure_months: Optional[int] = None
+    down_payment_rate: Optional[float] = Field(default=None, ge=0, le=1)
+    horizon_years: Optional[int] = Field(default=None, ge=1, le=30)
+    category: Optional[str] = None
+    product_ids: Optional[List[int]] = None
+
+
+class CompareAiResponse(BaseModel):
+    recommendation: str
+    model: str
+    formula_best: Optional[str] = None
+
+
 class AdminStats(BaseModel):
     total_users: int
     total_vendors: int
