@@ -23,6 +23,15 @@ docker compose up -d --build
 
 ## Production deploy (VPS)
 
+After the first pull into `comparison-engine/`, copy prod `.env` files if they are still at the old paths:
+
+```bash
+cp -a finOS/.env comparison-engine/finos/.env      # if needed
+cp -a reseller/.env comparison-engine/reseller/.env  # if needed
+```
+
+Then:
+
 ```bash
 cd /root/financial-system/comparison-engine/finos
 docker compose -f docker-compose.prod.yml -p finos up -d --build
