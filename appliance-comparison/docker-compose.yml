@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: homecompare_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: appliance_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d appliance_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: homecompare_backend
+    ports:
+      - "9014:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/appliance_db
+      ELECTRIC_RATE: "45"
+      GAS_CYLINDER_PRICE: "2800"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:9015,http://localhost:3000,https://appliance-comparison.thecomparisonengine.com}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: /api
+    container_name: homecompare_frontend
+    ports:
+      - "9015:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

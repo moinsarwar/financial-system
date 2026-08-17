@@ -1,0 +1,10 @@
+services:
+  web:
+    image: nginx:alpine
+    container_name: drive2earn_web
+    ports:
+      - "9017:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped

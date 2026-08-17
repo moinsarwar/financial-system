@@ -8,6 +8,9 @@
 | `*.thecomparisonengine.com` (partner subdomains) | Same finOS UI, category filter via reseller verify |
 | [reseller.thecomparisonengine.com](https://reseller.thecomparisonengine.com) | Reseller partner portal |
 | [greendrivepakistan.thecomparisonengine.com](https://greendrivepakistan.thecomparisonengine.com) | GreenDrivePakistan marketplace |
+| [appliance-comparison.thecomparisonengine.com](https://appliance-comparison.thecomparisonengine.com) | HomeCompare PK — appliance comparison |
+| [autocompare.thecomparisonengine.com](https://autocompare.thecomparisonengine.com) | AutoCompare PK — car comparison (static HTML) |
+| [drive-to-earn.thecomparisonengine.com](https://drive-to-earn.thecomparisonengine.com) | Drive to Earn — vehicle access prototype (static HTML) |
 
 ## How the pieces relate
 
@@ -53,7 +56,8 @@
 | ↳ [reseller](./comparison-engine/reseller/) | Partner signup, dashboards, commissions | FastAPI, React (CRA), PostgreSQL | FE `9004`, API `9005`, DB `5433` |
 | [qwenChat](./qwenChat/) | Read-only chat over live finOS + reseller data | FastAPI, React/Vite, Ollama (no DB) | FE `9010`, API `9011` |
 | [adminPortal](./adminPortal/) | Ops console + Docker control + finOS admin screens | FastAPI, React/Vite, SQLite | BE `9000`, FE `9001` |
-| [GreenDrivePakistan](./GreenDrivePakistan/) | Sharia green marketplace + Murabaha BNPL + savings compare | FastAPI, static HTML, PostgreSQL, nginx | FE `9013`, API `9012`, DB `5434` |
+| [GreenDrivePakistan](./GreenDrivePakistan/) | Sharia green marketplace + Murabaha BNPL + savings compare | FastAPI, React, PostgreSQL, nginx | FE `9013`, API `9012`, DB `5434` |
+| [appliance-comparison](./appliance-comparison/) | HomeCompare PK — appliance specs, compare, running costs | FastAPI, React (CRA), PostgreSQL, nginx | FE `9015`, API `9014`, DB `5435` |
 
 Details (flows, changelog, env) are in each project’s `README.md`.
 
