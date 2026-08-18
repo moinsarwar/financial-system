@@ -87,11 +87,25 @@ export const AppProvider = ({ children }) => {
         showToast('Please select a vehicle from the list first');
         return false;
       }
-      const fullOpts = { ...opts, vehicle, applicationType: opts.applicationType || 'testdrive' };
+      const fullOpts = {
+        title: opts.title || 'Book a Test Drive',
+        applicationType: opts.applicationType || 'testdrive',
+        source: opts.source || 'site',
+        meta: opts.meta || '',
+        vehicle: vehicle
+          ? {
+              key: vehicle.key,
+              name: vehicle.name,
+              logo: vehicle.logo,
+              mfg: vehicle.mfg,
+              category: vehicle.category,
+            }
+          : null,
+      };
       if (!user) {
         savePendingAction({ type: 'application', payload: fullOpts });
         showToast('Please sign in or register to book a test drive');
-        navigate('/login?reason=testdrive');
+        navigate('/login?reason=testdrive&next=/');
         return false;
       }
       openApplicationForm(fullOpts);
@@ -100,12 +114,20 @@ export const AppProvider = ({ children }) => {
     [user, selectedVehicle, openApplicationForm, navigate, showToast],
   );
 
+  const restoredPending = useRef(false);
+
   const closeFormModal = useCallback(() => setFormModal(emptyFormModal), []);
 
   useEffect(() => {
-    if (!user || location.pathname !== '/') return;
+    if (!user) {
+      restoredPending.current = false;
+      return;
+    }
+    if (location.pathname !== '/' || restoredPending.current) return;
     const pending = popPendingAction();
     if (pending?.type === 'application' && pending.payload) {
+      restoredPending.current = true;
+      if (pending.payload.vehicle) setSelectedVehicle(pending.payload.vehicle);
       openApplicationForm(pending.payload);
     }
   }, [user, location.pathname, openApplicationForm]);

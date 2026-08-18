@@ -48,28 +48,21 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="auth-shell">
-      <div className="auth-visual">
-        <div className="auth-visual-inner">
-          <div className="auth-visual-badge">
-            <i className="fas fa-gauge-high" /> Drive to Earn portal
-          </div>
-          <h2>Track vehicle applications in one place</h2>
-          <p>Drivers apply for bike, rickshaw, car or fleet access. Admins follow up estimates and applications.</p>
-          <ul className="auth-feature-list">
-            <li><i className="fas fa-check-circle" /> Affordability estimates</li>
-            <li><i className="fas fa-check-circle" /> Vehicle access applications</li>
-            <li><i className="fas fa-check-circle" /> Admin status management</li>
-          </ul>
-        </div>
-      </div>
-      <div className="auth-panel">
-        <div className="auth-card">
-          <div className="brand">
-            <h1><span>Drive</span> to Earn</h1>
-          </div>
+    <div className="auth-shell portal-drive2earn layout-d2e-auth">
+      <div className="d2e-auth-stack">
+        <Link to="/" className="d2e-auth-home">
+          <i className="fas fa-arrow-left" /> Public site
+        </Link>
+        <p className="d2e-kicker">Driver hub</p>
+        <h1 className="d2e-auth-title">
+          <span>Drive</span> to Earn
+        </h1>
+        <p className="d2e-auth-lead">Sign in like a mobile wallet — then track applications and estimates.</p>
+
+        <div className="d2e-phone">
+          <div className="d2e-phone-notch" />
           <h2>Sign in</h2>
-          <p className="auth-sub">Access your dashboard as admin or driver.</p>
+          <p className="auth-sub">Admin or driver access.</p>
           {reason === 'apply' && (
             <div className="auth-notice">
               <i className="fas fa-lock" /> Sign in or register to apply for the selected vehicle.
@@ -92,29 +85,28 @@ const LoginPage = () => {
             <button type="submit" className="btn-submit auth-submit" disabled={loading}>
               {loading ? 'Signing in…' : (
                 <>
-                  Sign in <i className="fas fa-arrow-right" />
+                  Open hub <i className="fas fa-arrow-right" />
                 </>
               )}
             </button>
           </form>
-          <div className="auth-demo">
-            <p className="auth-demo-title">Quick demo login</p>
-            <div className="auth-demo-btns">
-              <button type="button" onClick={() => fillDemo('admin')}>
-                <i className="fas fa-user-shield" /> Admin
-              </button>
-              <button type="button" onClick={() => fillDemo('user')}>
-                <i className="fas fa-user" /> Driver
-              </button>
-            </div>
-          </div>
           <p className="auth-switch">
             New driver?{' '}
             <Link to={reason === 'apply' ? '/register?reason=apply' : '/register'}>Create an account</Link>
           </p>
-          <Link to="/" className="auth-back">
-            <i className="fas fa-arrow-left" /> Back to public site
-          </Link>
+        </div>
+
+        <div className="d2e-demo-cards">
+          <button type="button" onClick={() => fillDemo('admin')}>
+            <i className="fas fa-user-shield" />
+            <strong>Admin demo</strong>
+            <span>Review applications</span>
+          </button>
+          <button type="button" onClick={() => fillDemo('user')}>
+            <i className="fas fa-motorcycle" />
+            <strong>Driver demo</strong>
+            <span>Track your pathway</span>
+          </button>
         </div>
       </div>
     </div>

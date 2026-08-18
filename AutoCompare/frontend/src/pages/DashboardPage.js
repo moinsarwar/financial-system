@@ -94,7 +94,7 @@ const DashboardPage = () => {
 
   if (authLoading) {
     return (
-      <div className="dash-shell">
+      <div className="dash-shell portal-autocompare layout-ac-dash">
         <div className="dash-loading">
           <div className="dash-spinner" />
           <p>Loading dashboard…</p>
@@ -106,59 +106,67 @@ const DashboardPage = () => {
   if (!user) return <Navigate to="/login?next=/dashboard" replace />;
 
   return (
-    <div className="dash-shell">
-      <aside className="dash-sidebar">
-        <div className="dash-brand">
-          <i className="fas fa-car" />
-          <div>
-            <strong>AutoCompare</strong>
-            <small>Dashboard</small>
-          </div>
+    <div className="dash-shell portal-autocompare layout-ac-dash">
+      <aside className="ac-icon-rail" aria-label="Console navigation">
+        <div className="ac-rail-brand" title="AutoCompare">
+          <i className="fas fa-car-side" />
         </div>
         <nav className="dash-nav">
-          <button type="button" className={activeTab === 'inquiries' ? 'active' : ''} onClick={() => setActiveTab('inquiries')}>
+          <button
+            type="button"
+            className={activeTab === 'inquiries' ? 'active' : ''}
+            onClick={() => setActiveTab('inquiries')}
+            title="Inquiries"
+          >
             <i className="fas fa-envelope" />
-            Inquiries
-            {stats ? <span className="dash-nav-count">{stats.inquiries}</span> : null}
+            <span>Leads</span>
           </button>
-          <button type="button" className={activeTab === 'applications' ? 'active' : ''} onClick={() => setActiveTab('applications')}>
+          <button
+            type="button"
+            className={activeTab === 'applications' ? 'active' : ''}
+            onClick={() => setActiveTab('applications')}
+            title="Test drives"
+          >
             <i className="fas fa-key" />
-            Test drives
-            {stats ? <span className="dash-nav-count">{stats.applications}</span> : null}
+            <span>Drives</span>
           </button>
         </nav>
-        <div className="dash-sidebar-foot">
-          <div className="dash-user-card">
-            <div className="dash-user-avatar">{user.name?.charAt(0) || 'U'}</div>
-            <div>
-              <strong>{user.name}</strong>
-              <span className={`role-badge role-${user.role}`}>{user.role}</span>
-            </div>
-          </div>
-          <Link to="/" className="dash-sidebar-link">
-            <i className="fas fa-arrow-left" /> Back to site
+        <div className="ac-rail-foot">
+          <Link to="/" className="dash-sidebar-link" title="Public site">
+            <i className="fas fa-globe" />
           </Link>
-          <button type="button" className="dash-sidebar-link dash-logout" onClick={logout}>
-            <i className="fas fa-right-from-bracket" /> Logout
+          <button type="button" className="dash-sidebar-link dash-logout" onClick={logout} title="Logout">
+            <i className="fas fa-right-from-bracket" />
           </button>
         </div>
       </aside>
 
-      <main className="dash-main">
-        <div className="dash-topbar">
+      <div className="ac-dash-body">
+        <header className="ac-toolbar">
           <div>
-            <div className="dash-eyebrow">Welcome back</div>
-            <h1>{isAdmin ? 'Ops overview' : 'Your activity'}</h1>
-            <p className="dash-subtitle">
-              {isAdmin
-                ? 'Manage vehicle info requests and test-drive bookings.'
-                : 'Track your inquiries and test-drive requests.'}
-            </p>
+            <p className="dash-eyebrow">Showroom console</p>
+            <h1>{isAdmin ? 'Ops board' : 'Your activity'}</h1>
           </div>
-          <button type="button" className="dash-refresh-btn" onClick={load} disabled={loading}>
-            <i className={`fas fa-rotate ${loading ? 'spin' : ''}`} /> Refresh
-          </button>
-        </div>
+          <div className="ac-toolbar-right">
+            <button type="button" className="dash-refresh-btn" onClick={load} disabled={loading}>
+              <i className={`fas fa-rotate ${loading ? 'spin' : ''}`} /> Refresh
+            </button>
+            <div className="dash-user-card">
+              <div className="dash-user-avatar">{user.name?.charAt(0) || 'U'}</div>
+              <div>
+                <strong>{user.name}</strong>
+                <span className={`role-badge role-${user.role}`}>{user.role}</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="dash-main">
+          <p className="dash-subtitle">
+            {isAdmin
+              ? 'Manage vehicle info requests and test-drive bookings.'
+              : 'Track your inquiries and test-drive requests.'}
+          </p>
 
         {error && (
           <div className="dash-alert">
@@ -194,26 +202,38 @@ const DashboardPage = () => {
             inquiries.length === 0 ? (
               <EmptyState icon="fa-inbox" title="No inquiries yet" text="Request info from the public site and it will appear here." />
             ) : (
-              <div className="dash-record-list">
+              <div className="dash-table-wrap">
+                <div className="dash-table-head" aria-hidden="true">
+                  <span>Lead</span>
+                  <span>Vehicle</span>
+                  <span>Message</span>
+                  <span>Status</span>
+                </div>
                 {inquiries.map((row) => (
-                  <article key={row.id} className="dash-record-card">
-                    <div className="dash-record-top">
-                      <div className="dash-record-id">#{row.id}</div>
-                      <span className={`dash-status-pill ${statusClass(row.status)}`}>{row.status}</span>
-                    </div>
-                    <h3>{row.customer_name}</h3>
-                    <div className="dash-record-meta">
-                      <span><i className="fas fa-phone" /> {row.phone}</span>
-                      {row.email && <span><i className="fas fa-at" /> {row.email}</span>}
-                      <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
-                    </div>
-                    {row.vehicle_name && (
-                      <div className="dash-record-tag">
-                        <i className="fas fa-car" /> {row.vehicle_name}
+                  <article key={row.id} className="dash-row">
+                    <div className="dash-row-lead">
+                      <div className="dash-row-avatar">{(row.customer_name || '?').charAt(0)}</div>
+                      <div>
+                        <h3>{row.customer_name}</h3>
+                        <div className="dash-record-meta">
+                          <span>#{row.id}</span>
+                          <span><i className="fas fa-phone" /> {row.phone}</span>
+                          {row.email && <span><i className="fas fa-at" /> {row.email}</span>}
+                          <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
+                        </div>
                       </div>
-                    )}
-                    {row.message && <p className="dash-record-message">{row.message}</p>}
-                    <div className="dash-record-foot">
+                    </div>
+                    <div className="dash-row-vehicle">
+                      {row.vehicle_name ? (
+                        <>
+                          <i className="fas fa-car" /> {row.vehicle_name}
+                        </>
+                      ) : (
+                        <span className="dash-muted">No vehicle</span>
+                      )}
+                    </div>
+                    <p className="dash-row-message">{row.message || '—'}</p>
+                    <div className="dash-row-status">
                       <span className="dash-source-chip">{(row.source || 'site').replace(/_/g, ' ')}</span>
                       {isAdmin ? (
                         <select
@@ -236,35 +256,49 @@ const DashboardPage = () => {
           ) : applications.length === 0 ? (
             <EmptyState icon="fa-key" title="No test drives yet" text="Book a test drive from the public site after signing in." />
           ) : (
-            <div className="dash-record-list">
+            <div className="dash-table-wrap">
+              <div className="dash-table-head" aria-hidden="true">
+                <span>Customer</span>
+                <span>Vehicle</span>
+                <span>Schedule</span>
+                <span>Status</span>
+              </div>
               {applications.map((row) => (
-                <article key={row.id} className="dash-record-card">
-                  <div className="dash-record-top">
-                    <div className="dash-record-type">
-                      <i className="fas fa-key" /> Test drive
+                <article key={row.id} className="dash-row">
+                  <div className="dash-row-lead">
+                    <div className="dash-row-avatar">{(row.customer_name || '?').charAt(0)}</div>
+                    <div>
+                      <h3>{row.customer_name}</h3>
+                      <div className="dash-record-meta">
+                        <span>#{row.id}</span>
+                        <span><i className="fas fa-phone" /> {row.phone}</span>
+                        {row.email && <span><i className="fas fa-at" /> {row.email}</span>}
+                        {row.city && <span><i className="fas fa-location-dot" /> {row.city}</span>}
+                        <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
+                      </div>
                     </div>
-                    <span className="dash-record-id">#{row.id}</span>
                   </div>
-                  <h3>{row.customer_name}</h3>
-                  <div className="dash-record-meta">
-                    <span><i className="fas fa-phone" /> {row.phone}</span>
-                    {row.email && <span><i className="fas fa-at" /> {row.email}</span>}
-                    {row.city && <span><i className="fas fa-location-dot" /> {row.city}</span>}
-                    <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
+                  <div className="dash-row-vehicle">
+                    {row.vehicle_name ? (
+                      <>
+                        <i className="fas fa-car" /> {row.vehicle_name}
+                      </>
+                    ) : (
+                      <span className="dash-muted">No vehicle</span>
+                    )}
                   </div>
-                  {row.vehicle_name && (
-                    <div className="dash-record-tag">
-                      <i className="fas fa-car" /> {row.vehicle_name}
-                    </div>
-                  )}
-                  {(row.preferred_date || row.preferred_time || row.notes) && (
-                    <div className="dash-record-details">
-                      {row.preferred_date && <p><strong>Date:</strong> {row.preferred_date}</p>}
-                      {row.preferred_time && <p><strong>Time:</strong> {row.preferred_time}</p>}
-                      {row.notes && <p><strong>Notes:</strong> {row.notes}</p>}
-                    </div>
-                  )}
-                  <div className="dash-record-foot">
+                  <div className="dash-row-message">
+                    {row.preferred_date || row.preferred_time || row.notes ? (
+                      <>
+                        {row.preferred_date && <div><strong>Date:</strong> {row.preferred_date}</div>}
+                        {row.preferred_time && <div><strong>Time:</strong> {row.preferred_time}</div>}
+                        {row.notes && <div>{row.notes}</div>}
+                      </>
+                    ) : (
+                      '—'
+                    )}
+                  </div>
+                  <div className="dash-row-status">
                     <span className="dash-source-chip">{(row.source || 'site').replace(/_/g, ' ')}</span>
                     {isAdmin ? (
                       <select
@@ -285,7 +319,8 @@ const DashboardPage = () => {
             </div>
           )}
         </section>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

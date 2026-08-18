@@ -50,35 +50,34 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="auth-shell">
-      <div className="auth-visual">
-        <div className="auth-visual-inner">
-          <div className="auth-visual-badge">
-            <i className="fas fa-gauge-high" /> Dashboard Portal
-          </div>
-          <h2>Manage inquiries &amp; applications in one place</h2>
-          <p>
-            Track customer info requests, delivery bookings, warranty quotes and service applications from
-            HomeCompare PK.
-          </p>
-          <ul className="auth-feature-list">
-            <li><i className="fas fa-check-circle" /> Real-time stats overview</li>
-            <li><i className="fas fa-check-circle" /> Inquiry &amp; application tracking</li>
-            <li><i className="fas fa-check-circle" /> Admin status management</li>
-          </ul>
+    <div className="auth-shell portal-homecompare layout-hc-auth">
+      <header className="hc-auth-top">
+        <div className="brand">
+          <i className="fas fa-house-chimney" />
+          <h1>
+            HomeCompare <small>PK</small>
+          </h1>
         </div>
-      </div>
+        <Link to="/" className="auth-back">
+          <i className="fas fa-arrow-left" /> Public site
+        </Link>
+      </header>
 
-      <div className="auth-panel">
+      <section className="hc-auth-hero">
+        <p className="hc-auth-kicker">Appliance workspace</p>
+        <h2>Sign in to manage bookings</h2>
+        <p>Inquiries, delivery, installation and warranty requests live in one household-style console.</p>
+        <ul className="hc-auth-pills">
+          <li><i className="fas fa-snowflake" /> Inquiries</li>
+          <li><i className="fas fa-truck" /> Delivery</li>
+          <li><i className="fas fa-screwdriver-wrench" /> Service</li>
+        </ul>
+      </section>
+
+      <div className="hc-auth-card-wrap">
         <div className="auth-card">
-          <div className="brand">
-            <i className="fas fa-house-chimney" />
-            <h1>
-              HomeCompare <small>PK</small>
-            </h1>
-          </div>
-          <h2>Sign in</h2>
-          <p className="auth-sub">Access your dashboard as admin or user.</p>
+          <h2>Welcome back</h2>
+          <p className="auth-sub">Access your dashboard as admin or customer.</p>
 
           {reason === 'service' && (
             <div className="auth-notice">
@@ -133,10 +132,6 @@ const LoginPage = () => {
             New customer?{' '}
             <Link to={reason === 'service' ? '/register?reason=service' : '/register'}>Create an account</Link>
           </p>
-
-          <Link to="/" className="auth-back">
-            <i className="fas fa-arrow-left" /> Back to public site
-          </Link>
         </div>
       </div>
     </div>

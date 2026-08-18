@@ -57,29 +57,31 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="auth-shell">
-      <div className="auth-visual">
-        <div className="auth-visual-inner">
-          <div className="auth-visual-badge">
-            <i className="fas fa-user-plus" /> Create account
-          </div>
-          <h2>Register to book delivery &amp; installation</h2>
-          <p>Create a free account to request installation, delivery and service bookings for your selected appliances.</p>
+    <div className="auth-shell portal-homecompare layout-hc-auth">
+      <header className="hc-auth-top">
+        <div className="brand">
+          <i className="fas fa-house-chimney" />
+          <h1>
+            HomeCompare <small>PK</small>
+          </h1>
         </div>
-      </div>
+        <Link to="/" className="auth-back">
+          <i className="fas fa-arrow-left" /> Public site
+        </Link>
+      </header>
 
-      <div className="auth-panel">
+      <section className="hc-auth-hero">
+        <p className="hc-auth-kicker">New household account</p>
+        <h2>Register to book delivery &amp; installation</h2>
+        <p>Create a free account to request installation, delivery and service bookings for your selected appliances.</p>
+      </section>
+
+      <div className="hc-auth-card-wrap">
         <div className="auth-card">
-          <div className="brand">
-            <i className="fas fa-house-chimney" />
-            <h1>
-              HomeCompare <small>PK</small>
-            </h1>
-          </div>
           <h2>Create account</h2>
           <p className="auth-sub">Sign up as a customer to book installation services.</p>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form onSubmit={handleSubmit} className="auth-form hc-auth-grid">
             <label>
               Full name
               <input name="name" value={form.name} onChange={onChange} required />
@@ -96,16 +98,16 @@ const RegisterPage = () => {
               Password
               <input name="password" type="password" value={form.password} onChange={onChange} required />
             </label>
-            <label>
+            <label className="hc-span-2">
               Confirm password
               <input name="confirm" type="password" value={form.confirm} onChange={onChange} required />
             </label>
             {error && (
-              <div className="auth-error-box">
+              <div className="auth-error-box hc-span-2">
                 <i className="fas fa-circle-exclamation" /> {error}
               </div>
             )}
-            <button type="submit" className="compare-btn auth-submit" disabled={loading}>
+            <button type="submit" className="compare-btn auth-submit hc-span-2" disabled={loading}>
               {loading ? 'Creating account…' : 'Create account'}
             </button>
           </form>
@@ -114,9 +116,6 @@ const RegisterPage = () => {
             Already have an account?{' '}
             <Link to={reason === 'service' ? '/login?reason=service' : '/login'}>Sign in</Link>
           </p>
-          <Link to="/" className="auth-back">
-            <i className="fas fa-arrow-left" /> Back to public site
-          </Link>
         </div>
       </div>
     </div>

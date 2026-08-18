@@ -99,7 +99,7 @@ const DashboardPage = () => {
 
   if (authLoading) {
     return (
-      <div className="dash-shell">
+      <div className="dash-shell portal-drive2earn layout-d2e-dash">
         <div className="dash-loading">
           <div className="dash-spinner" />
           <p>Loading dashboard…</p>
@@ -111,76 +111,65 @@ const DashboardPage = () => {
   if (!user) return <Navigate to="/login?next=/dashboard" replace />;
 
   return (
-    <div className="dash-shell">
-      <aside className="dash-sidebar">
-        <div className="dash-brand">
-          <i className="fas fa-car" />
-          <div>
-            <strong>Drive to Earn</strong>
-            <small>Dashboard</small>
-          </div>
+    <div className="dash-shell portal-drive2earn layout-d2e-dash">
+      <header className="d2e-dash-head">
+        <div>
+          <p className="d2e-kicker">Driver hub</p>
+          <h1>{isAdmin ? `Salaam, ${user.name}` : `Ready to earn, ${user.name}`}</h1>
+          <p className="dash-subtitle">
+            {isAdmin
+              ? 'Review vehicle access applications and affordability estimates.'
+              : 'Track your applications and saved affordability estimates.'}
+          </p>
         </div>
-        <nav className="dash-nav">
-          <button type="button" className={activeTab === 'applications' ? 'active' : ''} onClick={() => setActiveTab('applications')}>
-            <i className="fas fa-clipboard-list" />
-            Applications
-            {stats ? <span className="dash-nav-count">{stats.applications}</span> : null}
-          </button>
-          <button type="button" className={activeTab === 'estimates' ? 'active' : ''} onClick={() => setActiveTab('estimates')}>
-            <i className="fas fa-calculator" />
-            Estimates
-            {stats ? <span className="dash-nav-count">{stats.estimates}</span> : null}
-          </button>
-        </nav>
-        <div className="dash-sidebar-foot">
-          <div className="dash-user-card">
-            <div className="dash-user-avatar">{user.name?.charAt(0) || 'U'}</div>
-            <div>
-              <strong>{user.name}</strong>
-              <span className={`role-badge role-${user.role}`}>{user.role}</span>
-            </div>
-          </div>
-          <Link to="/" className="dash-sidebar-link">
-            <i className="fas fa-arrow-left" /> Back to site
-          </Link>
-          <button type="button" className="dash-sidebar-link dash-logout" onClick={logout}>
-            <i className="fas fa-right-from-bracket" /> Logout
-          </button>
-        </div>
-      </aside>
-
-      <main className="dash-main">
-        <div className="dash-topbar">
-          <div>
-            <div className="dash-eyebrow">Welcome back</div>
-            <h1>{isAdmin ? 'Ops overview' : 'Your pathway'}</h1>
-            <p className="dash-subtitle">
-              {isAdmin
-                ? 'Manage vehicle access applications and affordability estimates.'
-                : 'Track your applications and saved affordability estimates.'}
-            </p>
-          </div>
+        <div className="d2e-dash-head-actions">
           <button type="button" className="dash-refresh-btn" onClick={load} disabled={loading}>
             <i className={`fas fa-rotate ${loading ? 'spin' : ''}`} /> Refresh
           </button>
+          <div className="dash-user-avatar">{user.name?.charAt(0) || 'U'}</div>
+          <span className={`role-badge role-${user.role}`}>{user.role}</span>
+          <button type="button" className="dash-sidebar-link dash-logout" onClick={logout}>
+            Logout
+          </button>
         </div>
+      </header>
 
-        {error && (
-          <div className="dash-alert">
-            <i className="fas fa-circle-exclamation" /> {error}
-          </div>
-        )}
+      {error && (
+        <div className="dash-alert">
+          <i className="fas fa-circle-exclamation" /> {error}
+        </div>
+      )}
 
-        {stats && (
-          <div className="dash-stats-grid">
+      {stats && (
+        <section className="d2e-wallet">
+          <article className="d2e-wallet-hero">
+            <span>Pending applications</span>
+            <strong>{stats.pending_applications ?? '—'}</strong>
+            <p>Items waiting for follow-up</p>
+          </article>
+          <div className="d2e-wallet-grid">
             <StatCard icon="fa-car" label="Catalog vehicles" value={stats.vehicles} accent="blue" />
             <StatCard icon="fa-clipboard-list" label="Applications" value={stats.applications} accent="indigo" />
-            <StatCard icon="fa-clock" label="Pending applications" value={stats.pending_applications} accent="amber" />
             <StatCard icon="fa-calculator" label="Estimates" value={stats.estimates} accent="teal" />
             <StatCard icon="fa-inbox" label="New estimates" value={stats.new_estimates} accent="rose" />
           </div>
-        )}
+        </section>
+      )}
 
+      <nav className="d2e-seg" aria-label="Hub sections">
+        <button type="button" className={activeTab === 'applications' ? 'active' : ''} onClick={() => setActiveTab('applications')}>
+          <i className="fas fa-clipboard-list" />
+          Applications
+          {stats ? <span className="dash-nav-count">{stats.applications}</span> : null}
+        </button>
+        <button type="button" className={activeTab === 'estimates' ? 'active' : ''} onClick={() => setActiveTab('estimates')}>
+          <i className="fas fa-calculator" />
+          Estimates
+          {stats ? <span className="dash-nav-count">{stats.estimates}</span> : null}
+        </button>
+      </nav>
+
+      <main className="dash-main">
         <section className="dash-panel">
           <div className="dash-panel-head">
             <h2>
@@ -298,6 +287,11 @@ const DashboardPage = () => {
           )}
         </section>
       </main>
+      <footer className="d2e-dash-foot">
+        <Link to="/">
+          <i className="fas fa-arrow-left" /> Back to public site
+        </Link>
+      </footer>
     </div>
   );
 };

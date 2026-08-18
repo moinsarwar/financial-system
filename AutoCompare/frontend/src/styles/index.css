@@ -282,7 +282,18 @@ button { font-family: inherit; }
 .form-modal input, .form-modal select {
   width: 100%; padding: 10px 12px; border-radius: 14px; border: 1.5px solid #cddce9; font: inherit;
 }
-body:has(.auth-shell), body:has(.dash-shell) { padding: 0; background: #f4f7fc; }
+body:has(.auth-shell), body:has(.dash-shell) {
+  padding: 0;
+  background: #eef3f9;
+  display: block;
+  align-items: stretch;
+}
+html:has(.dash-shell), html:has(.auth-shell),
+body:has(.dash-shell), body:has(.auth-shell),
+body:has(.dash-shell) #root, body:has(.auth-shell) #root {
+  width: 100%;
+  min-height: 100%;
+}
 .manufacturer-card.active { background: #eef6fb; border-color: #0b4f6c; box-shadow: 0 0 0 3px rgba(11, 79, 108, 0.12); }
 .model-list-empty { grid-column: 1 / -1; text-align: center; color: #5e7d92; padding: 28px 12px; background: #f8fafd; border-radius: 16px; }
 .retry-btn { margin-top: 8px; }

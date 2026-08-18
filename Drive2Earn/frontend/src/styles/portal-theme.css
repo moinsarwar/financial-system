@@ -1,0 +1,308 @@
+/* Drive2Earn — centered phone-wallet auth + stacked hub dashboard */
+
+.layout-d2e-auth.auth-shell {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 0%, #bbf7d0 0%, transparent 45%),
+    linear-gradient(180deg, #064e3b 0%, #ecfdf5 42%, #f8fafc 100%);
+}
+
+.d2e-auth-stack {
+  width: min(440px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.d2e-auth-home {
+  align-self: flex-start;
+  color: #ecfdf5;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.d2e-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fbbf24;
+  margin-bottom: 6px;
+}
+
+.d2e-auth-title {
+  color: white;
+  font-size: clamp(28px, 5vw, 36px);
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.d2e-auth-title span {
+  color: #fde68a;
+}
+
+.d2e-auth-lead {
+  color: rgba(236, 253, 245, 0.9);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  max-width: 360px;
+}
+
+.d2e-phone {
+  width: 100%;
+  background: white;
+  border: 2px solid #a7f3d0;
+  border-radius: 36px;
+  padding: 18px 20px 24px;
+  box-shadow: 0 28px 50px -18px rgba(6, 95, 70, 0.35);
+}
+
+.d2e-phone-wide {
+  border-radius: 28px;
+}
+
+.d2e-phone-notch {
+  width: 86px;
+  height: 8px;
+  border-radius: 999px;
+  background: #d1fae5;
+  margin: 0 auto 16px;
+}
+
+.d2e-phone h2 {
+  color: #065f46;
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.d2e-phone .auth-sub {
+  text-align: center;
+}
+
+.layout-d2e-auth .btn-submit.auth-submit {
+  background: linear-gradient(135deg, #047857, #059669);
+  border-radius: 999px;
+  width: 100%;
+}
+
+.layout-d2e-auth .auth-form input:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.14);
+}
+
+.layout-d2e-auth .auth-notice {
+  background: #fef9c3;
+  border-color: #fde047;
+  color: #854d0e;
+}
+
+.d2e-demo-cards {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.d2e-demo-cards button {
+  border: 0;
+  background: white;
+  border-radius: 18px;
+  padding: 14px 12px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(6, 95, 70, 0.12);
+  font-family: inherit;
+}
+
+.d2e-demo-cards i {
+  color: #059669;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.d2e-demo-cards strong {
+  display: block;
+  color: #065f46;
+  font-size: 13px;
+}
+
+.d2e-demo-cards span {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* Dashboard — stacked wallet hub, no sidebar */
+.layout-d2e-dash.dash-shell {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: 1fr;
+  min-height: 100vh;
+  background: #ecfdf5;
+  max-width: 920px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.d2e-dash-head {
+  padding: 24px 20px 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.d2e-dash-head h1 {
+  color: #065f46;
+  font-size: clamp(22px, 4vw, 30px);
+  margin: 4px 0 6px;
+}
+
+.d2e-dash-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.d2e-dash-head-actions .dash-user-avatar {
+  background: #fbbf24;
+  color: #422006;
+  border-radius: 50%;
+}
+
+.d2e-dash-head-actions .dash-sidebar-link {
+  width: auto;
+  color: #065f46;
+  background: white;
+  border-radius: 999px;
+}
+
+.d2e-dash-head-actions .dash-logout {
+  color: #dc2626;
+}
+
+.d2e-wallet {
+  display: grid;
+  gap: 12px;
+  padding: 8px 16px 4px;
+}
+
+@media (min-width: 760px) {
+  .d2e-wallet {
+    grid-template-columns: 1.1fr 1.4fr;
+    align-items: stretch;
+  }
+}
+
+.d2e-wallet-hero {
+  background: linear-gradient(145deg, #065f46, #047857);
+  color: white;
+  border-radius: 28px;
+  padding: 24px;
+  min-height: 160px;
+}
+
+.d2e-wallet-hero span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fde68a;
+}
+
+.d2e-wallet-hero strong {
+  display: block;
+  font-size: 48px;
+  letter-spacing: -1px;
+  margin: 8px 0;
+}
+
+.d2e-wallet-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.d2e-wallet-grid .dash-stat-card {
+  border-color: #bbf7d0;
+  border-radius: 18px;
+  margin: 0;
+}
+
+.d2e-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 16px 0;
+  padding: 6px;
+  background: white;
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+}
+
+.d2e-seg button {
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-weight: 700;
+  color: #065f46;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.d2e-seg button.active {
+  background: #065f46;
+  color: white;
+}
+
+.d2e-seg .dash-nav-count {
+  background: rgba(251, 191, 36, 0.3);
+  color: inherit;
+}
+
+.layout-d2e-dash .dash-main {
+  padding-top: 12px;
+}
+
+.layout-d2e-dash .dash-panel {
+  border-color: #bbf7d0;
+  border-radius: 22px;
+}
+
+.layout-d2e-dash .dash-panel-head h2 {
+  color: #065f46;
+}
+
+.layout-d2e-dash .dash-refresh-btn {
+  color: #065f46;
+  border-color: #6ee7b7;
+  border-radius: 999px;
+}
+
+.layout-d2e-dash .dash-spinner {
+  border-top-color: #059669;
+}
+
+.d2e-dash-foot {
+  padding: 8px 20px 28px;
+}
+
+.d2e-dash-foot a {
+  color: #047857;
+  font-weight: 600;
+  text-decoration: none;
+}

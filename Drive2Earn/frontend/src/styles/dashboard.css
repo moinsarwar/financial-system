@@ -910,20 +910,6 @@ body:has(.auth-shell) {
 }
 
 
-body:has(.auth-shell),
-body:has(.dash-shell) {
-  padding: 0;
-  background: #eef3f9;
-}
-
-.auth-visual {
-  background: linear-gradient(145deg, #0b2b4a 0%, #1a4a7a 50%, #2a7de1 100%) !important;
-}
-
-.dash-sidebar {
-  background: linear-gradient(180deg, #0b2b4a 0%, #0a2238 100%) !important;
-}
-
 .header-actions {
   display: flex;
   align-items: center;
