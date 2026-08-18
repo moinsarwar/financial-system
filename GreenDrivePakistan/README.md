@@ -1,10 +1,55 @@
 # GreenDrive Pakistan
 
-Sharia-compliant green product marketplace (solar, EV, battery, appliances) with Murabaha BNPL, dynamic savings compare, and vendor/admin dashboards.
+Sharia-compliant **green product marketplace** (solar, EV, battery, appliances) with Murabaha BNPL, dynamic savings compare, documents, repayments, and vendor/admin dashboards.
 
 **Live:** https://greendrivepakistan.thecomparisonengine.com
 
-Frontend is a **React (Vite + TypeScript + Tailwind)** SPA served by nginx; `/api` is proxied to FastAPI. Products, vendors, users, applications, repayments, documents, and compare results are real DB operations (not a client-side simulation).
+## Who this targets
+
+| Audience | Job to be done |
+|----------|----------------|
+| **Households / SMEs in Pakistan** | Buy solar, EV, or efficient kit and see **installment vs bill savings** under a Murabaha-style profit, not interest-as-APR theatre |
+| **Vendors** | List products, take cash or BNPL applications, approve/reject |
+| **Platform admin** | Vendors, lenders (profit % + max tenure), compare formula defaults, catalog |
+
+This is the **strongest vertical product story** in the repo after finOS: green + Sharia finance is a real Pakistan market, not a generic clone of Daraz.
+
+## What is running today
+
+Frontend is a **React (Vite + TypeScript + Tailwind)** SPA served by nginx; `/api` is proxied to FastAPI. Products, vendors, users, applications, repayments, documents, and compare results are **real DB operations** (not a client-side simulation).
+
+- Marketplace + compare using the **active lender**, down payment %, tenure, and savings horizon.
+- Vendor and admin CRUD on products; admin manages vendors, lenders, users (`role=user` only in that UI).
+- Applications: approve generates repayments; pay endpoint updates balances.
+- Documents: multipart upload + list/download.
+- Optional **AI recommend** on Compare via host Ollama (`qwen2.5:1.5b`) — not qwenChat.
+
+Seeded demo accounts exist (`user@demo.com`, `vendor@demo.com`, `admin@demo.com`, etc.). Catalog and numbers are **illustrative**.
+
+## Smoothness
+
+**Highest of the Pakistan verticals.** Roles, formula, documents, and repayments are wired. UI is TypeScript + Tailwind (ahead of the CRA HomeCompare/AutoCompare/Drive2Earn family).
+
+Still a marketplace **prototype**:
+
+- Demo logins and a small illustrative catalog.
+- “Pay” is an API balance update, not JazzCash / card / bank.
+- Sharia / SBP posture is product copy and Murabaha math — not a fatwa pack or licensed NBFC flow.
+- AI recommend is a small CPU model over candidate rows.
+
+**Smoothness: ~8/10 for a working marketplace demo, ~5/10 for public checkout.**
+
+## Public adoption chance
+
+**Medium — best vertical odds in the monorepo besides the Comparison Engine core.**
+
+Solar and EV financing in Pakistan is a real demand. People will not treat this as a shop until:
+
+1. Real vendors own real SKUs and installation.
+2. Profit rate and tenure come from an actual financier.
+3. CNIC / application / payment feel legitimate.
+
+**Without those three: low consumer adoption (nice demo). With a vendor + lender pair: medium, and higher than HomeCompare/AutoCompare because the category is less crowded with a Sharia + savings-compare angle.**
 
 ## Ports (host)
 

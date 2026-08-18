@@ -4,6 +4,51 @@ Core system of record for **The Comparison Engine**: products, clients, applicat
 
 Live: [thecomparisonengine.com](https://thecomparisonengine.com)
 
+## Who this targets
+
+| Audience | Job to be done |
+|----------|----------------|
+| **Retail users** (PK, UAE, KSA) | Rank savings, credit cards, personal loans, and health / motor / life insurance against eligibility (age, income, jurisdiction) |
+| **Staff** | Client, Operations, and Company Admin roles: applications, documents, claims, information requests |
+| **Partner sites** | Same public UI on `{partner}.thecomparisonengine.com`, filtered to that partner’s categories |
+
+finOS is the **source of truth**. Reseller, qwenChat, and adminPortal consume it; they do not replace this database.
+
+## What is running today
+
+- Public comparison: eligibility → ranked list → **Cost** and **Matrix** tabs → **AI Explain** (Ollama stream, template fallback).
+- Staff portal (React + Vite): 3 roles + `super_admin`.
+- Marketplace catalog as `front_products` (profit rate, APR, fees, coverage) for reseller to proxy.
+- Application lifecycle that can post a **commission webhook** to reseller on approval.
+- Partner subdomain verify against reseller so white-label sites only show allowed categories.
+
+Catalog and demo users are **seeded / illustrative**. This is not live bank or insurer pricing.
+
+## Smoothness
+
+**Highest in the monorepo.** The ranking rules, staff workflows, partner filter, and AI explain path are complete enough to run a real demo end-to-end.
+
+What still feels unfinished for a public consumer launch:
+
+- Public site is **`vanilla.html`**, while staff is a modern React/Tailwind portal — two UX generations on one product.
+- Ranking is only as good as the catalog. Today that catalog is not a live feed.
+- AI Explain uses `qwen2.5:1.5b` on CPU. Fine for a short “why this product” blurb; not advice, not always on-brand.
+- Payments / KYC / regulated disclosures are not a consumer-grade onboarding flow.
+
+**Smoothness score (demo): high. Smoothness score (public launch): medium.**
+
+## Public adoption chance
+
+**Medium as a B2B comparison engine. Low–medium as a household brand.**
+
+People already use bank sites, PriceOye-style lists, and insurer aggregators. They will switch only if:
+
+1. Rates and eligibility look **current and trustworthy**.
+2. Applying actually reaches a human or a real underwriting path.
+3. A known brand (or many partner subdomains) sits in front of the engine.
+
+The **technical chance of adoption is decent** — the product does the comparison job. The **market chance** is gated by data partnerships, compliance copy, and distribution (reseller), not by missing screens. Treat this as the piece most worth taking public **with partners first**, consumers second.
+
 ## How it works
 
 ### Public comparison (`vanilla.html`)

@@ -1,6 +1,63 @@
 # HomeCompare PK
 
-Appliance comparison platform for Pakistan — compare specs, running costs (electric + gas), and filter by category.
+Appliance comparison for Pakistan: specs, **running costs** (electric + gas), manufacturer filters, and a lead-gen dashboard for inquiries and service applications.
+
+Live: [appliance-comparison.thecomparisonengine.com](https://appliance-comparison.thecomparisonengine.com)
+
+## Who this targets
+
+**Households in Pakistan** choosing an AC, fridge, washer, or similar — especially people who care about **monthly electricity/gas cost**, not only sticker price.
+
+Secondary audience: **retailers / installers** who want inbound “Request Info / Delivery / Service” leads instead of building their own compare site.
+
+This is **not** trying to replace Daraz or Pakmart as a shop. It is a **compare + running-cost + lead** prototype.
+
+## What is running today
+
+- Public catalog from Postgres (~**22 illustrative appliances**), filters (brand, new / budget / premium / inverter), search.
+- Side-by-side comparison and a running-cost calculator.
+- Public forms (Request Info, Delivery, Services) save without login.
+- JWT auth, register, and a **professional sidebar dashboard** (teal theme).
+- **Admin** sees all inquiries and applications and can update status.
+- **User** sees only their own submissions.
+
+Demo logins (seeded):
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@homecompare.pk | admin123 |
+| User | user@homecompare.pk | user123 |
+
+Prices, kWh, and gas figures are **illustrative**, not live retailer stock.
+
+## Smoothness
+
+**High as a demo. Medium as a product you would send strangers to.**
+
+The public compare flow, cost calc, and dashboard are coherent. Auth and role-split records work. Layout is a classic sidebar console (not a gimmick).
+
+Gaps that keep it from feeling “live”:
+
+- Tiny catalog vs Daraz / Pakmart / manufacturer sites.
+- No live prices, availability, or delivery SLA.
+- Service applications are CRM tickets, not booked technicians.
+- Same CRA family as AutoCompare — familiar, not unique.
+
+**Smoothness: ~8/10 for a pitch demo, ~5/10 for public consumer use.**
+
+## Public adoption chance
+
+**Low–medium as a standalone consumer site. Medium as lead-gen for a retailer or installer network.**
+
+Pakistan already has marketplaces for buying appliances. HomeCompare only wins if **running-cost compare** is obviously better than a price list — and if the numbers are believed.
+
+Realistic path:
+
+1. Partner with 1–2 retailers or brands; replace seed data with their SKUs and tariffs.
+2. Treat the dashboard as a lead inbox, not a shop admin.
+3. Do not expect organic consumer adoption from a 22-item catalog on a comparisonengine subdomain.
+
+**Adoption chance without partners: low. With a real catalog + tariff data: medium (niche, not mass).**
 
 ## Stack
 
@@ -32,21 +89,9 @@ docker compose up -d --build
 
 Database seeds automatically on first backend startup (~22 illustrative appliances).
 
-## Dashboard (admin + user)
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@homecompare.pk | admin123 |
-| User | user@homecompare.pk | user123 |
-
 - Login: `/login` · Dashboard: `/dashboard`
-- **Admin** sees all inquiries & applications; can update application status
-- **User** sees only their own submissions (when logged in)
-- Public site forms (Request Info, Delivery, Services) save to DB without login
 
 ## Production (VPS)
-
-Live: https://appliance-comparison.thecomparisonengine.com
 
 ```bash
 ssh root@163.245.222.160 "cd /root/financial-system/appliance-comparison && docker compose up -d --build"
