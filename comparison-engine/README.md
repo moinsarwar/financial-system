@@ -9,6 +9,38 @@
 
 Partner subdomains (`*.thecomparisonengine.com`) serve the finos public UI with category filters from reseller verify.
 
+## Who this targets
+
+- **Consumers** in Pakistan / UAE / KSA who want a ranked shortlist of savings, credit cards, personal loans, and insurance — not a bank’s own product page.
+- **Partner agents** who want a white-label comparison site (`{partner}.thecomparisonengine.com`) and a commission when an application is approved.
+
+This is the **core commercial product** in the monorepo. The Pakistan verticals (GreenDrive, HomeCompare, AutoCompare, Drive2Earn) are separate apps, not part of this stack.
+
+## What is running today
+
+1. Public ranking engine with eligibility, Cost, and Matrix tabs.
+2. Staff portal (Client / Operations / Company Admin) for applications, documents, and claims.
+3. Partner signup, admin approval, product browse (proxied from finOS), and commission webhook.
+4. AI Explain via host Ollama (`qwen2.5:1.5b`) with a template fallback.
+
+Canonical catalog lives **only in finOS**. Reseller does not duplicate products.
+
+## Smoothness
+
+**Best in the repo as an end-to-end product.** Ranking, partner verify, staff workflows, and commission posting are real. Gaps that still show in a public launch:
+
+- Public UI is `vanilla.html`, not the React staff stack — it works, but it does not feel like one design system.
+- Product data is seeded / illustrative, not live bank or insurer feeds.
+- AI Explain is a small CPU model; useful as a summary, not a regulated advice engine.
+
+## Public adoption chance
+
+**Medium for B2B / partner distribution. Low–medium for mass consumer brand.**
+
+Comparison sites get adopted when (1) rates are trusted and current, (2) applying actually goes somewhere, and (3) a known brand sits in front. The **engine and partner loop are ready to demo and iterate**. Public consumer adoption waits on real product data, regulated copy, and a go-to-market brand. Partner adoption can move first if commissions actually pay.
+
+See each subfolder README for a fuller assessment.
+
 ## Run (local WSL Docker)
 
 ```bash
