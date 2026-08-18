@@ -1,10 +1,44 @@
 services:
-  web:
-    image: nginx:alpine
-    container_name: drive2earn_web
+  db:
+    image: postgres:15-alpine
+    container_name: drive2earn_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: drive2earn_db
     ports:
-      - "9017:80"
+      - "5436:5432"
     volumes:
-      - ./index.html:/usr/share/nginx/html/index.html:ro
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    restart: unless-stopped
+      - drive2earn_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d drive2earn_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: drive2earn_backend
+    ports:
+      - "9018:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/drive2earn_db
+      SECRET_KEY: ${SECRET_KEY:-drive2earn-dev-secret-change-in-production}
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:9017,http://localhost:3000,https://drive-to-earn.thecomparisonengine.com}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: /api
+    container_name: drive2earn_frontend
+    ports:
+      - "9017:3000"
+    depends_on:
+      - backend
+
+volumes:
+  drive2earn_postgres:
