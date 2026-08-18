@@ -27,6 +27,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/appliance_db
       ELECTRIC_RATE: "45"
       GAS_CYLINDER_PRICE: "2800"
+      SECRET_KEY: ${SECRET_KEY:-homecompare-dev-secret-change-in-production}
       CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:9015,http://localhost:3000,https://appliance-comparison.thecomparisonengine.com}"
     depends_on:
       db:

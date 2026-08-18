@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 
 const ComparisonResults = () => {
-  const { comparisonResults, showDifferences } = useContext(AppContext);
+  const { comparisonResults, showDifferences, openInquiryForm, requestApplication } = useContext(AppContext);
 
   if (!comparisonResults) {
     return null;
@@ -62,6 +62,45 @@ const ComparisonResults = () => {
             </li>
           )}
         </ul>
+      </div>
+
+      <div className="comparison-actions">
+        {[appliance_a, appliance_b].map((appliance) => (
+          <div key={appliance.key} className="comparison-action-card">
+            <span>
+              {appliance.logo} {appliance.name}
+            </span>
+            <div className="comparison-action-btns">
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() =>
+                  openInquiryForm({
+                    title: 'Request Info',
+                    appliance,
+                    source: 'comparison',
+                  })
+                }
+              >
+                Info
+              </button>
+              <button
+                type="button"
+                className="action-btn secondary"
+                onClick={() =>
+                  requestApplication({
+                    title: 'Delivery & Install',
+                    applicationType: 'installation',
+                    appliance,
+                    source: 'comparison',
+                  })
+                }
+              >
+                Delivery
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="result-grid" role="table">

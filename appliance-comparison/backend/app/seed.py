@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from .models import Appliance
+from .models import Appliance, User, UserRole
 from .database import SessionLocal, engine, Base
+from . import auth
 
 APPLIANCES = [
     # ACs
@@ -540,10 +541,44 @@ APPLIANCES = [
 ]
 
 
+def ensure_users(db: Session) -> None:
+    users = [
+        {
+            "email": "admin@homecompare.pk",
+            "password": "admin123",
+            "name": "Admin User",
+            "phone": "03001234567",
+            "role": UserRole.ADMIN,
+        },
+        {
+            "email": "user@homecompare.pk",
+            "password": "user123",
+            "name": "Demo User",
+            "phone": "03007654321",
+            "role": UserRole.USER,
+        },
+    ]
+    for data in users:
+        existing = db.query(User).filter(User.email == data["email"]).first()
+        if existing:
+            continue
+        db.add(
+            User(
+                email=data["email"],
+                password_hash=auth.get_password_hash(data["password"]),
+                name=data["name"],
+                phone=data["phone"],
+                role=data["role"],
+            )
+        )
+    db.commit()
+
+
 def seed_data():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
+        ensure_users(db)
         if db.query(Appliance).count() > 0:
             return
         for data in APPLIANCES:

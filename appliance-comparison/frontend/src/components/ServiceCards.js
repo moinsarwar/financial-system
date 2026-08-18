@@ -2,47 +2,26 @@ import React, { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 
 const ServiceCards = () => {
-  const { openModal } = useContext(AppContext);
+  const { requestApplication, selectedAppliance, showToast } = useContext(AppContext);
 
   const services = [
-    { id: 'delivery', icon: 'fa-truck', label: 'Delivery' },
-    { id: 'installation', icon: 'fa-wrench', label: 'Installation' },
-    { id: 'warranty', icon: 'fa-file-contract', label: 'Warranty' },
-    { id: 'repair', icon: 'fa-screwdriver', label: 'Repair' },
+    { id: 'delivery', icon: 'fa-truck', label: 'Delivery', type: 'delivery' },
+    { id: 'installation', icon: 'fa-wrench', label: 'Installation', type: 'installation' },
+    { id: 'warranty', icon: 'fa-file-contract', label: 'Warranty', type: 'warranty' },
+    { id: 'repair', icon: 'fa-screwdriver', label: 'Repair', type: 'repair' },
   ];
 
-  const serviceData = {
-    delivery: {
-      title: 'Delivery & Installation',
-      body: `<div class="simulated-badge">🔬 PROTOTYPE · SIMULATED SERVICE</div>
-          <p>Get your appliance delivered and installed professionally.</p>
-          <ul><li><strong>Delivery:</strong> Free within city limits</li>
-          <li><strong>Installation:</strong> Professional setup included</li></ul>`,
-      meta: 'Prototype · Simulated delivery',
-    },
-    installation: {
-      title: 'Professional Installation',
-      body: `<div class="simulated-badge">🔬 PROTOTYPE · SIMULATED SERVICE</div>
-          <p>Expert installation for all major appliances.</p>`,
-      meta: 'Prototype · Simulated installation',
-    },
-    warranty: {
-      title: 'Extended Warranty',
-      body: `<div class="simulated-badge">🔬 PROTOTYPE · SIMULATED SERVICE</div>
-          <p>Protect your appliance with extended warranty coverage.</p>`,
-      meta: 'Prototype · Simulated warranty',
-    },
-    repair: {
-      title: 'Repair Service',
-      body: `<div class="simulated-badge">🔬 PROTOTYPE · SIMULATED SERVICE</div>
-          <p>Fast and reliable repair service for all appliance types.</p>`,
-      meta: 'Prototype · Simulated repair',
-    },
-  };
-
-  const handleServiceClick = (serviceId) => {
-    const data = serviceData[serviceId];
-    if (data) openModal(data.title, data.body, data.meta);
+  const handleServiceClick = (service) => {
+    if (!selectedAppliance) {
+      showToast('Please select an appliance from the list first');
+      return;
+    }
+    requestApplication({
+      title: service.label,
+      applicationType: service.type,
+      appliance: selectedAppliance,
+      source: `service_${service.id}`,
+    });
   };
 
   return (
@@ -58,7 +37,7 @@ const ServiceCards = () => {
             type="button"
             className="service-card"
             data-service={service.id}
-            onClick={() => handleServiceClick(service.id)}
+            onClick={() => handleServiceClick(service)}
           >
             <i className={`fas ${service.icon}`} /> {service.label}
           </button>

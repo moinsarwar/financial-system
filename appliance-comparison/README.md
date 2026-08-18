@@ -32,6 +32,18 @@ docker compose up -d --build
 
 Database seeds automatically on first backend startup (~22 illustrative appliances).
 
+## Dashboard (admin + user)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@homecompare.pk | admin123 |
+| User | user@homecompare.pk | user123 |
+
+- Login: `/login` · Dashboard: `/dashboard`
+- **Admin** sees all inquiries & applications; can update application status
+- **User** sees only their own submissions (when logged in)
+- Public site forms (Request Info, Delivery, Services) save to DB without login
+
 ## Production (VPS)
 
 Live: https://appliance-comparison.thecomparisonengine.com
@@ -51,6 +63,14 @@ Caddy proxies `appliance-comparison.thecomparisonengine.com` → `127.0.0.1:9015
 | GET | `/api/comparison/{key_a}/{key_b}` |
 | GET | `/api/costs/{key}` |
 | GET | `/api/services` |
+| POST | `/api/auth/login` |
+| GET | `/api/auth/me` |
+| POST | `/api/inquiries` |
+| POST | `/api/applications` |
+| PATCH | `/api/applications/{id}/status` (admin) |
+| GET | `/api/dashboard/stats` |
+| GET | `/api/dashboard/inquiries` |
+| GET | `/api/dashboard/applications` |
 
 ## Local dev (no Docker)
 

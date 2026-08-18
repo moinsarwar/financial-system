@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Link, Route, Routes } from 'react-router-dom';
 import './App.css';
 import ComparisonSelector from './components/ComparisonSelector';
 import ComparisonResults from './components/ComparisonResults';
@@ -7,16 +8,22 @@ import CostCalculator from './components/CostCalculator';
 import Filters from './components/Filters';
 import ManufacturerGrid from './components/ManufacturerGrid';
 import Modal from './components/Modal';
+import FormModal from './components/FormModal';
 import Toast from './components/Toast';
 import ServiceCards from './components/ServiceCards';
 import TrustBadge from './components/TrustBadge';
 import LegalFooter from './components/LegalFooter';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
 import { AppProvider, AppContext } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { getAppliances } from './api/client';
 import { CATEGORY_TITLES } from './utils/categories';
 
 function AppShell() {
-  const { openModal } = React.useContext(AppContext);
+  const { openModal, openInquiryForm, requestApplication, selectedAppliance, showToast } = React.useContext(AppContext);
+  const { user } = useAuth();
   const [allAppliances, setAllAppliances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -90,7 +97,12 @@ function AppShell() {
             HomeCompare <small>PK</small>
           </h1>
         </div>
-        <TrustBadge />
+        <div className="header-actions">
+          <Link to={user ? '/dashboard' : '/login?next=/dashboard'} className="dashboard-link">
+            <i className="fas fa-gauge-high" /> Dashboard
+          </Link>
+          <TrustBadge />
+        </div>
       </header>
 
       <div className="tagline">
@@ -136,8 +148,8 @@ function AppShell() {
           className="trust-slim-item"
           onClick={() =>
             openModal(
-              'Verified dealers (Prototype)',
-              '<div class="simulated-badge">🔬 PROTOTYPE</div><p>Dealer verification workflow planned.</p>',
+              'Verified dealers',
+              '<p>Dealer verification workflow — contact us via Request Info.</p>',
             )
           }
         >
@@ -146,24 +158,14 @@ function AppShell() {
         <button
           type="button"
           className="trust-slim-item"
-          onClick={() =>
-            openModal(
-              'Warranty check (Prototype)',
-              '<div class="simulated-badge">🔬 PROTOTYPE</div><p>Warranty lookup by serial number planned.</p>',
-            )
-          }
+          onClick={() => openInquiryForm({ title: 'Warranty check', source: 'warranty_check' })}
         >
           <i className="fas fa-file-signature" /> Warranty check
         </button>
         <button
           type="button"
           className="trust-slim-item"
-          onClick={() =>
-            openModal(
-              'Buyer protection (Prototype)',
-              '<div class="simulated-badge">🔬 PROTOTYPE</div><p>Escrow and dispute resolution planned.</p>',
-            )
-          }
+          onClick={() => openInquiryForm({ title: 'Buyer protection', source: 'buyer_protection' })}
         >
           <i className="fas fa-hand-holding-heart" /> Buyer protection
         </button>
@@ -175,16 +177,17 @@ function AppShell() {
         <button
           type="button"
           className="btn-primary"
-          onClick={() =>
-            openModal(
-              'Request Info',
-              `<div class="simulated-badge">🔬 PROTOTYPE</div>
-               <form><label>Name<input name="name" required /></label>
-               <label>Phone<input name="phone" required /></label>
-               <button type="button" class="action-btn" data-action="form_submit">Submit demo</button></form>`,
-              'Prototype · Request info',
-            )
-          }
+          onClick={() => {
+            if (!selectedAppliance) {
+              showToast('Please select an appliance from the list first');
+              return;
+            }
+            openInquiryForm({
+              title: 'Request Info',
+              appliance: selectedAppliance,
+              source: 'universal_bar',
+            });
+          }}
         >
           <i className="fas fa-envelope" /> Request Info
         </button>
@@ -192,10 +195,12 @@ function AppShell() {
           type="button"
           className="btn-secondary"
           onClick={() =>
-            openModal(
-              'Delivery & Install',
-              '<div class="simulated-badge">🔬 PROTOTYPE</div><p>Schedule delivery through verified partners.</p>',
-            )
+            requestApplication({
+              title: 'Delivery & Install',
+              applicationType: 'installation',
+              appliance: selectedAppliance,
+              source: 'universal_bar',
+            })
           }
         >
           <i className="fas fa-truck" /> Delivery/Install
@@ -206,16 +211,30 @@ function AppShell() {
       </div>
 
       <Modal />
+      <FormModal />
       <Toast />
     </div>
   );
 }
 
-function App() {
+function AppRoutes() {
   return (
     <AppProvider>
-      <AppShell />
+      <Routes>
+        <Route path="/" element={<AppShell />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
+      </Routes>
     </AppProvider>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 

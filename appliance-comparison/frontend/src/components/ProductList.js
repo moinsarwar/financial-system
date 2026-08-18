@@ -8,7 +8,7 @@ const ProductList = ({ appliances, loading, error, categoryTitle, onRetry }) => 
     setSelectedAppliance(appliance);
     showToast(`🔌 ${appliance.name} selected`);
     const body = `
-      <div class="simulated-badge">🔬 PROTOTYPE · ILLUSTRATIVE DATA</div>
+      <div class="simulated-badge">Product details</div>
       <p><strong>Price:</strong> ${appliance.price}</p>
       <p><strong>Brand:</strong> ${appliance.brand}</p>
       <p><strong>Type:</strong> ${appliance.category}</p>
@@ -22,8 +22,8 @@ const ProductList = ({ appliances, loading, error, categoryTitle, onRetry }) => 
         Source: ${appliance.source}
       </p>
       <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
-        <button type="button" class="action-btn" data-action="info"><i class="fas fa-envelope"></i> Request info</button>
-        <button type="button" class="action-btn secondary" data-action="delivery"><i class="fas fa-truck"></i> Delivery/Install</button>
+        <button type="button" class="action-btn" data-action="info" data-appliance-key="${appliance.key}" data-appliance-name="${appliance.name}" data-source="product_detail"><i class="fas fa-envelope"></i> Request info</button>
+        <button type="button" class="action-btn secondary" data-action="delivery" data-appliance-key="${appliance.key}" data-appliance-name="${appliance.name}" data-source="product_detail"><i class="fas fa-truck"></i> Delivery/Install</button>
       </div>`;
     openModal(`${appliance.logo} ${appliance.name} (${appliance.category})`, body, `Brand: ${appliance.brand}`);
   };
