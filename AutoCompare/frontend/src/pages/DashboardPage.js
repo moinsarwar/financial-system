@@ -94,7 +94,7 @@ const DashboardPage = () => {
 
   if (authLoading) {
     return (
-      <div className="dash-shell portal-autocompare layout-ac-dash">
+      <div className="dash-shell portal-autocompare">
         <div className="dash-loading">
           <div className="dash-spinner" />
           <p>Loading dashboard…</p>
@@ -106,67 +106,59 @@ const DashboardPage = () => {
   if (!user) return <Navigate to="/login?next=/dashboard" replace />;
 
   return (
-    <div className="dash-shell portal-autocompare layout-ac-dash">
-      <aside className="ac-icon-rail" aria-label="Console navigation">
-        <div className="ac-rail-brand" title="AutoCompare">
+    <div className="dash-shell portal-autocompare">
+      <aside className="dash-sidebar">
+        <div className="dash-brand">
           <i className="fas fa-car-side" />
+          <div>
+            <strong>AutoCompare</strong>
+            <small>Dashboard</small>
+          </div>
         </div>
         <nav className="dash-nav">
-          <button
-            type="button"
-            className={activeTab === 'inquiries' ? 'active' : ''}
-            onClick={() => setActiveTab('inquiries')}
-            title="Inquiries"
-          >
+          <button type="button" className={activeTab === 'inquiries' ? 'active' : ''} onClick={() => setActiveTab('inquiries')}>
             <i className="fas fa-envelope" />
-            <span>Leads</span>
+            Inquiries
+            {stats ? <span className="dash-nav-count">{stats.inquiries}</span> : null}
           </button>
-          <button
-            type="button"
-            className={activeTab === 'applications' ? 'active' : ''}
-            onClick={() => setActiveTab('applications')}
-            title="Test drives"
-          >
+          <button type="button" className={activeTab === 'applications' ? 'active' : ''} onClick={() => setActiveTab('applications')}>
             <i className="fas fa-key" />
-            <span>Drives</span>
+            Test drives
+            {stats ? <span className="dash-nav-count">{stats.applications}</span> : null}
           </button>
         </nav>
-        <div className="ac-rail-foot">
-          <Link to="/" className="dash-sidebar-link" title="Public site">
-            <i className="fas fa-globe" />
+        <div className="dash-sidebar-foot">
+          <div className="dash-user-card">
+            <div className="dash-user-avatar">{user.name?.charAt(0) || 'U'}</div>
+            <div>
+              <strong>{user.name}</strong>
+              <span className={`role-badge role-${user.role}`}>{user.role}</span>
+            </div>
+          </div>
+          <Link to="/" className="dash-sidebar-link">
+            <i className="fas fa-arrow-left" /> Back to site
           </Link>
-          <button type="button" className="dash-sidebar-link dash-logout" onClick={logout} title="Logout">
-            <i className="fas fa-right-from-bracket" />
+          <button type="button" className="dash-sidebar-link dash-logout" onClick={logout}>
+            <i className="fas fa-right-from-bracket" /> Logout
           </button>
         </div>
       </aside>
 
-      <div className="ac-dash-body">
-        <header className="ac-toolbar">
+      <main className="dash-main">
+        <div className="dash-topbar">
           <div>
-            <p className="dash-eyebrow">Showroom console</p>
-            <h1>{isAdmin ? 'Ops board' : 'Your activity'}</h1>
+            <div className="dash-eyebrow">Welcome back</div>
+            <h1>{isAdmin ? 'Operations overview' : 'Your activity'}</h1>
+            <p className="dash-subtitle">
+              {isAdmin
+                ? 'Manage vehicle info requests and test-drive bookings.'
+                : 'Track your inquiries and test-drive requests.'}
+            </p>
           </div>
-          <div className="ac-toolbar-right">
-            <button type="button" className="dash-refresh-btn" onClick={load} disabled={loading}>
-              <i className={`fas fa-rotate ${loading ? 'spin' : ''}`} /> Refresh
-            </button>
-            <div className="dash-user-card">
-              <div className="dash-user-avatar">{user.name?.charAt(0) || 'U'}</div>
-              <div>
-                <strong>{user.name}</strong>
-                <span className={`role-badge role-${user.role}`}>{user.role}</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="dash-main">
-          <p className="dash-subtitle">
-            {isAdmin
-              ? 'Manage vehicle info requests and test-drive bookings.'
-              : 'Track your inquiries and test-drive requests.'}
-          </p>
+          <button type="button" className="dash-refresh-btn" onClick={load} disabled={loading}>
+            <i className={`fas fa-rotate ${loading ? 'spin' : ''}`} /> Refresh
+          </button>
+        </div>
 
         {error && (
           <div className="dash-alert">
@@ -319,8 +311,7 @@ const DashboardPage = () => {
             </div>
           )}
         </section>
-        </main>
-      </div>
+      </main>
     </div>
   );
 };

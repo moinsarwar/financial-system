@@ -53,21 +53,24 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="auth-shell portal-drive2earn layout-d2e-auth">
-      <div className="d2e-auth-stack">
-        <Link to="/" className="d2e-auth-home">
-          <i className="fas fa-arrow-left" /> Public site
-        </Link>
-        <p className="d2e-kicker">New driver</p>
-        <h1 className="d2e-auth-title">
-          <span>Drive</span> to Earn
-        </h1>
-        <p className="d2e-auth-lead">Create a profile to save estimates and submit vehicle access applications.</p>
-
-        <div className="d2e-phone d2e-phone-wide">
-          <div className="d2e-phone-notch" />
+    <div className="auth-shell portal-drive2earn">
+      <div className="auth-visual">
+        <div className="auth-visual-inner">
+          <div className="auth-visual-badge">
+            <i className="fas fa-id-card" /> Driver account
+          </div>
+          <h2>Create your Drive to Earn profile</h2>
+          <p>Save affordability estimates and submit a vehicle access application.</p>
+        </div>
+      </div>
+      <div className="auth-panel">
+        <div className="auth-card">
+          <div className="brand">
+            <i className="fas fa-route" />
+            <h1><span>Drive</span> to Earn</h1>
+          </div>
           <h2>Register</h2>
-          <p className="auth-sub">Demo account — not credit approval.</p>
+          <p className="auth-sub">This is a demo account — not credit approval.</p>
           {reason === 'apply' && (
             <div className="auth-notice">
               <i className="fas fa-lock" /> After registering you can complete your vehicle application.
@@ -111,6 +114,9 @@ const RegisterPage = () => {
             Already have an account?{' '}
             <Link to={reason === 'apply' ? '/login?reason=apply' : '/login'}>Sign in</Link>
           </p>
+          <Link to="/" className="auth-back">
+            <i className="fas fa-arrow-left" /> Back to public site
+          </Link>
         </div>
       </div>
     </div>

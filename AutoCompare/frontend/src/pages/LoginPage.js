@@ -49,87 +49,78 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="auth-shell portal-autocompare layout-ac-auth">
-      <section className="ac-auth-stage">
-        <div className="ac-auth-stage-inner">
-          <p className="ac-auth-kicker">Dealer console</p>
-          <h2>Showroom ops for inquiries &amp; test drives</h2>
-          <p>Buyers request vehicle info and book drives. Admins work the queue from a dark ops rail.</p>
-          <div className="ac-auth-tiles">
-            <article>
-              <i className="fas fa-envelope-open-text" />
-              <strong>Info requests</strong>
-              <span>Lead capture from the catalog</span>
-            </article>
-            <article>
-              <i className="fas fa-key" />
-              <strong>Test drives</strong>
-              <span>Bookings with date &amp; time</span>
-            </article>
-            <article>
-              <i className="fas fa-gauge-high" />
-              <strong>Status board</strong>
-              <span>Admin follow-up in one table</span>
-            </article>
+    <div className="auth-shell portal-autocompare">
+      <div className="auth-visual">
+        <div className="auth-visual-inner">
+          <div className="auth-visual-badge">
+            <i className="fas fa-car-side" /> AutoCompare portal
           </div>
+          <h2>Track inquiries and test drives</h2>
+          <p>Buyers request vehicle info and book test drives. Admins follow up from the dashboard.</p>
+          <ul className="auth-feature-list">
+            <li><i className="fas fa-check-circle" /> Vehicle info requests</li>
+            <li><i className="fas fa-check-circle" /> Test-drive bookings</li>
+            <li><i className="fas fa-check-circle" /> Admin status management</li>
+          </ul>
         </div>
-      </section>
-
-      <aside className="ac-auth-rail">
-        <div className="brand">
-          <i className="fas fa-car-side" />
-          <h1>
-            AutoCompare <small>PK</small>
-          </h1>
-        </div>
-        <h2>Staff sign-in</h2>
-        <p className="auth-sub">Access the showroom dashboard as admin or buyer.</p>
-        {reason === 'testdrive' && (
-          <div className="auth-notice">
-            <i className="fas fa-lock" /> Sign in or register to book a test drive for the selected vehicle.
+      </div>
+      <div className="auth-panel">
+        <div className="auth-card">
+          <div className="brand">
+            <i className="fas fa-car-side" />
+            <h1>
+              AutoCompare <small>PK</small>
+            </h1>
           </div>
-        )}
-        <form onSubmit={handleSubmit} className="auth-form">
-          <label>
-            Email address
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-          <label>
-            Password
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </label>
-          {error && (
-            <div className="auth-error-box">
-              <i className="fas fa-circle-exclamation" /> {error}
+          <h2>Sign in</h2>
+          <p className="auth-sub">Access your dashboard as admin or user.</p>
+          {reason === 'testdrive' && (
+            <div className="auth-notice">
+              <i className="fas fa-lock" /> Sign in or register to book a test drive for the selected vehicle.
             </div>
           )}
-          <button type="submit" className="btn-submit auth-submit" disabled={loading}>
-            {loading ? 'Signing in…' : (
-              <>
-                Enter console <i className="fas fa-arrow-right" />
-              </>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label>
+              Email address
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </label>
+            <label>
+              Password
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </label>
+            {error && (
+              <div className="auth-error-box">
+                <i className="fas fa-circle-exclamation" /> {error}
+              </div>
             )}
-          </button>
-        </form>
-        <div className="auth-demo">
-          <p className="auth-demo-title">Demo keys</p>
-          <div className="auth-demo-btns">
-            <button type="button" onClick={() => fillDemo('admin')}>
-              <i className="fas fa-user-shield" /> Admin
+            <button type="submit" className="btn-submit auth-submit" disabled={loading}>
+              {loading ? 'Signing in…' : (
+                <>
+                  Sign in <i className="fas fa-arrow-right" />
+                </>
+              )}
             </button>
-            <button type="button" onClick={() => fillDemo('user')}>
-              <i className="fas fa-user" /> User
-            </button>
+          </form>
+          <div className="auth-demo">
+            <p className="auth-demo-title">Quick demo login</p>
+            <div className="auth-demo-btns">
+              <button type="button" onClick={() => fillDemo('admin')}>
+                <i className="fas fa-user-shield" /> Admin
+              </button>
+              <button type="button" onClick={() => fillDemo('user')}>
+                <i className="fas fa-user" /> User
+              </button>
+            </div>
           </div>
+          <p className="auth-switch">
+            New here?{' '}
+            <Link to={reason === 'testdrive' ? '/register?reason=testdrive' : '/register'}>Create an account</Link>
+          </p>
+          <Link to="/" className="auth-back">
+            <i className="fas fa-arrow-left" /> Back to public site
+          </Link>
         </div>
-        <p className="auth-switch">
-          New here?{' '}
-          <Link to={reason === 'testdrive' ? '/register?reason=testdrive' : '/register'}>Create an account</Link>
-        </p>
-        <Link to="/" className="auth-back">
-          <i className="fas fa-arrow-left" /> Back to public site
-        </Link>
-      </aside>
+      </div>
     </div>
   );
 };

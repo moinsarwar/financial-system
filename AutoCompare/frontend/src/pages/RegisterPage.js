@@ -54,70 +54,74 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="auth-shell portal-autocompare layout-ac-auth">
-      <section className="ac-auth-stage">
-        <div className="ac-auth-stage-inner">
-          <p className="ac-auth-kicker">Buyer profile</p>
-          <h2>Create your AutoCompare account</h2>
-          <p>Save info requests and book a test drive after you sign in. This is a demo account — not a dealer booking.</p>
-        </div>
-      </section>
-      <aside className="ac-auth-rail">
-        <div className="brand">
-          <i className="fas fa-car-side" />
-          <h1>
-            AutoCompare <small>PK</small>
-          </h1>
-        </div>
-        <h2>Register</h2>
-        <p className="auth-sub">Open a buyer console account.</p>
-        {reason === 'testdrive' && (
-          <div className="auth-notice">
-            <i className="fas fa-lock" /> After registering you can complete your test-drive request.
+    <div className="auth-shell portal-autocompare">
+      <div className="auth-visual">
+        <div className="auth-visual-inner">
+          <div className="auth-visual-badge">
+            <i className="fas fa-id-card" /> Buyer account
           </div>
-        )}
-        <form onSubmit={handleSubmit} className="auth-form">
-          <label>
-            Full name
-            <input name="name" value={form.name} onChange={onChange} required />
-          </label>
-          <label>
-            Email
-            <input name="email" type="email" value={form.email} onChange={onChange} required />
-          </label>
-          <label>
-            Phone
-            <input name="phone" value={form.phone} onChange={onChange} />
-          </label>
-          <label>
-            Password
-            <input name="password" type="password" value={form.password} onChange={onChange} required />
-          </label>
-          <label>
-            Confirm password
-            <input name="confirm" type="password" value={form.confirm} onChange={onChange} required />
-          </label>
-          {error && (
-            <div className="auth-error-box">
-              <i className="fas fa-circle-exclamation" /> {error}
+          <h2>Create your AutoCompare profile</h2>
+          <p>Save info requests and book a test drive after you sign in.</p>
+        </div>
+      </div>
+      <div className="auth-panel">
+        <div className="auth-card">
+          <div className="brand">
+            <i className="fas fa-car-side" />
+            <h1>
+              AutoCompare <small>PK</small>
+            </h1>
+          </div>
+          <h2>Register</h2>
+          <p className="auth-sub">This is a demo account — not a dealer booking.</p>
+          {reason === 'testdrive' && (
+            <div className="auth-notice">
+              <i className="fas fa-lock" /> After registering you can complete your test-drive request.
             </div>
           )}
-          <button type="submit" className="btn-submit auth-submit" disabled={loading}>
-            {loading ? 'Creating…' : (
-              <>
-                Create account <i className="fas fa-arrow-right" />
-              </>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <label>
+              Full name
+              <input name="name" value={form.name} onChange={onChange} required />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" value={form.email} onChange={onChange} required />
+            </label>
+            <label>
+              Phone
+              <input name="phone" value={form.phone} onChange={onChange} />
+            </label>
+            <label>
+              Password
+              <input name="password" type="password" value={form.password} onChange={onChange} required />
+            </label>
+            <label>
+              Confirm password
+              <input name="confirm" type="password" value={form.confirm} onChange={onChange} required />
+            </label>
+            {error && (
+              <div className="auth-error-box">
+                <i className="fas fa-circle-exclamation" /> {error}
+              </div>
             )}
-          </button>
-        </form>
-        <p className="auth-switch">
-          Already have an account?{' '}
-          <Link to={reason === 'testdrive' ? '/login?reason=testdrive' : '/login'}>Sign in</Link>
-        </p>
-        <Link to="/" className="auth-back">
-          <i className="fas fa-arrow-left" /> Back to public site
-        </Link>
-      </aside>
+            <button type="submit" className="btn-submit auth-submit" disabled={loading}>
+              {loading ? 'Creating…' : (
+                <>
+                  Create account <i className="fas fa-arrow-right" />
+                </>
+              )}
+            </button>
+          </form>
+          <p className="auth-switch">
+            Already have an account?{' '}
+            <Link to={reason === 'testdrive' ? '/login?reason=testdrive' : '/login'}>Sign in</Link>
+          </p>
+          <Link to="/" className="auth-back">
+            <i className="fas fa-arrow-left" /> Back to public site
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

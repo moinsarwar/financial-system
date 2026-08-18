@@ -119,7 +119,7 @@ const DashboardPage = () => {
 
   if (authLoading) {
     return (
-      <div className="dash-shell portal-homecompare layout-hc-dash">
+      <div className="dash-shell portal-homecompare">
         <div className="dash-loading">
           <div className="dash-spinner" />
           <p>Loading dashboard…</p>
@@ -131,13 +131,13 @@ const DashboardPage = () => {
   if (!user) return <Navigate to="/login?next=/dashboard" replace />;
 
   return (
-    <div className="dash-shell portal-homecompare layout-hc-dash">
-      <header className="hc-dash-bar">
+    <div className="dash-shell portal-homecompare">
+      <aside className="dash-sidebar">
         <div className="dash-brand">
           <i className="fas fa-house-chimney" />
           <div>
             <strong>HomeCompare</strong>
-            <small>Household console</small>
+            <small>Operations</small>
           </div>
         </div>
         <nav className="dash-nav">
@@ -160,10 +160,7 @@ const DashboardPage = () => {
             {stats ? <span className="dash-nav-count">{stats.applications}</span> : null}
           </button>
         </nav>
-        <div className="hc-dash-tools">
-          <button type="button" className="dash-refresh-btn" onClick={load} disabled={loading}>
-            <i className={`fas fa-rotate-right ${loading ? 'spin' : ''}`} /> Refresh
-          </button>
+        <div className="dash-sidebar-foot">
           <div className="dash-user-card">
             <div className="dash-user-avatar">{user.name?.charAt(0) || 'U'}</div>
             <div>
@@ -172,25 +169,28 @@ const DashboardPage = () => {
             </div>
           </div>
           <Link to="/" className="dash-sidebar-link">
-            <i className="fas fa-arrow-left" /> Site
+            <i className="fas fa-arrow-left" /> Back to site
           </Link>
           <button type="button" className="dash-sidebar-link dash-logout" onClick={logout}>
             <i className="fas fa-right-from-bracket" /> Logout
           </button>
         </div>
-      </header>
+      </aside>
 
       <main className="dash-main">
         <header className="dash-topbar">
           <div>
             <p className="dash-eyebrow">Welcome back</p>
-            <h1>{isAdmin ? 'Admin Overview' : 'My Activity'}</h1>
+            <h1>{isAdmin ? 'Admin overview' : 'My activity'}</h1>
             <p className="dash-subtitle">
               {isAdmin
                 ? 'Manage customer inquiries, service applications and catalog activity.'
                 : 'Track your submitted inquiries and service requests.'}
             </p>
           </div>
+          <button type="button" className="dash-refresh-btn" onClick={load} disabled={loading}>
+            <i className={`fas fa-rotate-right ${loading ? 'spin' : ''}`} /> Refresh
+          </button>
         </header>
 
         {error && (
