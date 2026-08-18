@@ -1,21 +1,23 @@
 # AutoCompare PK
 
-Static prototype — car comparison UI (single HTML page).
+React + FastAPI + PostgreSQL car comparison app (same stack as HomeCompare / Drive2Earn).
 
-**Live:** https://autocompare.thecomparisonengine.com
+**Local:** frontend `http://localhost:9016` · API `http://localhost:9019` · Postgres `5437`
 
 ## Local
 
 ```bash
 cd ~/financial-system/AutoCompare
-docker compose up -d
-# http://localhost:9016
+docker compose up -d --build
 ```
 
-## Production
+Demo logins:
 
-```bash
-ssh root@163.245.222.160 "cd /root/financial-system/AutoCompare && docker compose up -d"
-```
+- Admin: `admin@autocompare.pk` / `admin123`
+- User: `user@autocompare.pk` / `user123`
 
-Caddy: `autocompare.thecomparisonengine.com` → `127.0.0.1:9016`
+Request Info is public. Test Drive requires login and appears on the dashboard.
+
+## Production (when asked)
+
+Keep frontend on **9016** so existing Caddy (`autocompare.thecomparisonengine.com` → `127.0.0.1:9016`) still works. Stop the old static `autocompare_web` container first.

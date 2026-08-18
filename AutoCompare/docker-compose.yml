@@ -1,10 +1,44 @@
 services:
-  web:
-    image: nginx:alpine
-    container_name: autocompare_web
+  db:
+    image: postgres:15-alpine
+    container_name: autocompare_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: autocompare_db
     ports:
-      - "9016:80"
+      - "5437:5432"
     volumes:
-      - ./index.html:/usr/share/nginx/html/index.html:ro
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    restart: unless-stopped
+      - autocompare_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d autocompare_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: autocompare_backend
+    ports:
+      - "9019:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/autocompare_db
+      SECRET_KEY: ${SECRET_KEY:-autocompare-dev-secret-change-in-production}
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:9016,http://localhost:3000,https://autocompare.thecomparisonengine.com}"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: /api
+    container_name: autocompare_frontend
+    ports:
+      - "9016:3000"
+    depends_on:
+      - backend
+
+volumes:
+  autocompare_postgres:
