@@ -1,6 +1,19 @@
-body:has(.auth-shell) {
-  align-items: stretch;
+body:has(.auth-shell),
+body:has(.dash-shell) {
   padding: 0;
+  background: #eef3f9;
+  display: block;
+  align-items: stretch;
+}
+
+html:has(.dash-shell),
+html:has(.auth-shell),
+body:has(.dash-shell),
+body:has(.auth-shell),
+body:has(.dash-shell) #root,
+body:has(.auth-shell) #root {
+  width: 100%;
+  min-height: 100%;
 }
 
 .auth-shell {
@@ -676,12 +689,141 @@ body:has(.auth-shell) {
   padding: 16px;
 }
 
-@media (min-width: 768px) {
-  .dash-record-list {
-    grid-template-columns: repeat(2, 1fr);
-    padding: 20px;
+.dash-table-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-table-head {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .dash-table-head {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.4fr) minmax(160px, 0.9fr) minmax(180px, 1.1fr) 170px;
+    gap: 16px;
+    padding: 10px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #7a9aaf;
+    background: #f7fafc;
+    border-bottom: 1px solid #eef4f9;
   }
 }
+
+.dash-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid #eef4f9;
+  align-items: start;
+}
+
+.dash-row:last-child {
+  border-bottom: none;
+}
+
+.dash-row:hover {
+  background: #f8fbfd;
+}
+
+@media (min-width: 900px) {
+  .dash-row {
+    grid-template-columns: minmax(220px, 1.4fr) minmax(160px, 0.9fr) minmax(180px, 1.1fr) 170px;
+    gap: 16px;
+    padding: 16px 20px;
+    align-items: center;
+  }
+}
+
+.dash-row-lead {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dash-row-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #065f46;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.dash-row h3 {
+  font-size: 15px;
+  color: #0b2b3b;
+  margin: 0 0 4px;
+}
+
+.dash-row .dash-record-meta {
+  margin-bottom: 0;
+  gap: 6px 12px;
+}
+
+.dash-row-vehicle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #065f46;
+  background: #ecfdf5;
+  border-radius: 12px;
+  padding: 8px 10px;
+  width: fit-content;
+}
+
+.dash-row-message {
+  font-size: 13px;
+  color: #3d5a6e;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.dash-row-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-status-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 7px 28px 7px 12px;
+  border-radius: 999px;
+  border: 0;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: capitalize;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%23065f46' d='M1 1l5 5 5-5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px;
+}
+
+.dash-status-select.status-new { background-color: #e0f2fe; color: #0369a1; }
+.dash-status-select.status-pending { background-color: #fef0c7; color: #b54708; }
+.dash-status-select.status-contacted { background-color: #f3e8ff; color: #7e22ce; }
+.dash-status-select.status-answered { background-color: #d1fadf; color: #027a48; }
+.dash-status-select.status-closed { background-color: #f2f4f7; color: #475467; }
+.dash-status-select.status-scheduled { background-color: #ccfbf1; color: #0f766e; }
+.dash-status-select.status-completed { background-color: #d1fadf; color: #027a48; }
+.dash-status-select.status-cancelled { background-color: #f2f4f7; color: #475467; }
 
 .dash-record-card {
   background: #f8fafd;
@@ -841,17 +983,6 @@ body:has(.auth-shell) {
 .status-cancelled {
   background: #f2f4f7;
   color: #475467;
-}
-
-.dash-status-select {
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid #cddce9;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  background: white;
 }
 
 .dash-empty {

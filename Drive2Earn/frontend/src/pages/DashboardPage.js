@@ -203,32 +203,41 @@ const DashboardPage = () => {
                 text="Apply from the public site after choosing a vehicle and signing in."
               />
             ) : (
-              <div className="dash-record-list">
+              <div className="dash-table-wrap">
+                <div className="dash-table-head" aria-hidden="true">
+                  <span>Applicant</span>
+                  <span>Vehicle</span>
+                  <span>Finance</span>
+                  <span>Status</span>
+                </div>
                 {applications.map((row) => (
-                  <article key={row.id} className="dash-record-card">
-                    <div className="dash-record-top">
-                      <div className="dash-record-type">
-                        <i className={`fas ${row.pathway === 'fleet' ? 'fa-people-arrows' : 'fa-user'}`} />
-                        {row.pathway === 'fleet' ? 'Fleet' : 'I Drive'}
+                  <article key={row.id} className="dash-row">
+                    <div className="dash-row-lead">
+                      <div className="dash-row-avatar">{(row.customer_name || '?').charAt(0)}</div>
+                      <div>
+                        <h3>{row.customer_name}</h3>
+                        <div className="dash-record-meta">
+                          <span>#{row.id}</span>
+                          <span className="dash-record-type">
+                            <i className={`fas ${row.pathway === 'fleet' ? 'fa-people-arrows' : 'fa-user'}`} />
+                            {row.pathway === 'fleet' ? 'Fleet' : 'I Drive'}
+                          </span>
+                          <span><i className="fas fa-phone" /> {row.phone}</span>
+                          {row.email && <span><i className="fas fa-at" /> {row.email}</span>}
+                          {row.city && <span><i className="fas fa-location-dot" /> {row.city}</span>}
+                          <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
+                        </div>
                       </div>
-                      <span className="dash-record-id">#{row.id}</span>
                     </div>
-                    <h3>{row.customer_name}</h3>
-                    <div className="dash-record-meta">
-                      <span><i className="fas fa-phone" /> {row.phone}</span>
-                      {row.email && <span><i className="fas fa-at" /> {row.email}</span>}
-                      {row.city && <span><i className="fas fa-location-dot" /> {row.city}</span>}
-                      <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
-                    </div>
-                    <div className="dash-record-tag">
+                    <div className="dash-row-vehicle">
                       <i className="fas fa-car" /> {row.vehicle_label} · {formatPkr(row.vehicle_price)}
                     </div>
-                    <div className="dash-record-details">
-                      <p><strong>Deposit:</strong> {formatPkr(row.deposit)}</p>
-                      <p><strong>Income:</strong> {formatPkr(row.income)} / month · {row.employment}</p>
-                      {row.notes && <p><strong>Notes:</strong> {row.notes}</p>}
+                    <div className="dash-row-message">
+                      <div><strong>Deposit:</strong> {formatPkr(row.deposit)}</div>
+                      <div><strong>Income:</strong> {formatPkr(row.income)} / month · {row.employment}</div>
+                      {row.notes && <div>{row.notes}</div>}
                     </div>
-                    <div className="dash-record-foot">
+                    <div className="dash-row-status">
                       <span className="dash-source-chip">{row.pathway}</span>
                       {isAdmin ? (
                         <select
@@ -255,29 +264,37 @@ const DashboardPage = () => {
               text="Run Estimate affordability on the public site. Logged-in estimates appear here."
             />
           ) : (
-            <div className="dash-record-list">
+            <div className="dash-table-wrap">
+              <div className="dash-table-head" aria-hidden="true">
+                <span>Lead</span>
+                <span>Vehicle</span>
+                <span>Affordability</span>
+                <span>Follow-up</span>
+              </div>
               {estimates.map((row) => (
-                <article key={row.id} className="dash-record-card">
-                  <div className="dash-record-top">
-                    <div className="dash-record-id">#{row.id}</div>
+                <article key={row.id} className="dash-row">
+                  <div className="dash-row-lead">
+                    <div className="dash-row-avatar">{(row.customer_name || row.customer_email || '?').charAt(0)}</div>
+                    <div>
+                      <h3>{row.customer_name || row.customer_email || 'Anonymous estimate'}</h3>
+                      <div className="dash-record-meta">
+                        <span>#{row.id}</span>
+                        {row.customer_email && <span><i className="fas fa-at" /> {row.customer_email}</span>}
+                        <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="dash-row-vehicle">
+                    <i className="fas fa-car" /> {row.vehicle_key} · {formatPkr(row.monthly_vehicle_cost)} / mo
+                  </div>
+                  <div className="dash-row-message">
+                    <div><strong>Income:</strong> {formatPkr(row.income)} ({row.employment})</div>
+                    <div><strong>Deposit:</strong> {formatPkr(row.deposit)}</div>
+                    <div><strong>Ratio:</strong> {Math.round(row.repayment_ratio * 100)}%</div>
+                    {row.suggested_vehicle && <div><strong>Suggested:</strong> {row.suggested_vehicle}</div>}
+                  </div>
+                  <div className="dash-row-status">
                     <span className={`dash-status-pill ${statusClass(row.status)}`}>{row.status.replace('-', ' ')}</span>
-                  </div>
-                  <h3>{row.customer_name || row.customer_email || 'Anonymous estimate'}</h3>
-                  <div className="dash-record-meta">
-                    {row.customer_email && <span><i className="fas fa-at" /> {row.customer_email}</span>}
-                    <span><i className="fas fa-calendar" /> {formatDate(row.created_at)}</span>
-                  </div>
-                  <div className="dash-record-tag">
-                    <i className="fas fa-car" /> {row.vehicle_key} · monthly {formatPkr(row.monthly_vehicle_cost)}
-                  </div>
-                  <div className="dash-record-details">
-                    <p><strong>Income:</strong> {formatPkr(row.income)} ({row.employment})</p>
-                    <p><strong>Deposit:</strong> {formatPkr(row.deposit)}</p>
-                    <p><strong>Ratio:</strong> {Math.round(row.repayment_ratio * 100)}%</p>
-                    {row.suggested_vehicle && <p><strong>Suggested:</strong> {row.suggested_vehicle}</p>}
-                  </div>
-                  <div className="dash-record-foot">
-                    <span className="dash-source-chip">follow-up</span>
                     {isAdmin ? (
                       <select
                         className={`dash-status-select ${statusClass(row.follow_up)}`}
